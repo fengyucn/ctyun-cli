@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include requirements.txt
+include MONITOR_USAGE.md
+include PROJECT_SUMMARY.md
+recursive-include src *.py
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
