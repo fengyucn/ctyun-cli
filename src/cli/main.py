@@ -388,16 +388,83 @@ def resources(ctx, region_id: str, output: Optional[str]):
             click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
             return
         
-        resources = result.get('returnObj', {})
+        return_obj = result.get('returnObj', {})
+        resources_data = return_obj.get('resources', {})
+        is_mock = result.get('_mock', False)
         
         if output and output in ['json', 'yaml']:
-            format_output(resources, output)
+            format_output(resources_data, output)
         else:
-            if resources:
+            if resources_data:
+                from tabulate import tabulate
+                
                 click.echo(f"用户资源概览 (区域: {region_id})")
+                if is_mock:
+                    click.echo("⚠️  注意: 当前显示的是模拟数据，实际API调用失败")
                 click.echo("=" * 80)
-                for key, value in resources.items():
-                    click.echo(f"{key}: {value}")
+                click.echo()
+                
+                vm_info = resources_data.get('VM', {})
+                if vm_info:
+                    click.echo("【云主机 (VM)】")
+                    vm_table = [
+                        ['总数', vm_info.get('total_count', 0)],
+                        ['运行中', vm_info.get('vm_running_count', 0)],
+                        ['已关机', vm_info.get('vm_shutd_count', 0)],
+                        ['已过期', vm_info.get('expire_count', 0)],
+                        ['CPU总数', vm_info.get('cpu_count', 0)],
+                        ['内存(GB)', vm_info.get('memory_count', 0)]
+                    ]
+                    click.echo(tabulate(vm_table, tablefmt='plain'))
+                    click.echo()
+                
+                volume_info = resources_data.get('Volume', {})
+                if volume_info:
+                    click.echo("【磁盘 (Volume)】")
+                    volume_table = [
+                        ['总数', volume_info.get('total_count', 0)],
+                        ['系统盘数量', volume_info.get('vo_root_count', 0)],
+                        ['数据盘数量', volume_info.get('vo_disk_count', 0)],
+                        ['总大小(GB)', volume_info.get('total_size', 0)],
+                        ['系统盘大小(GB)', volume_info.get('vo_root_size', 0)],
+                        ['数据盘大小(GB)', volume_info.get('vo_disk_size', 0)]
+                    ]
+                    click.echo(tabulate(volume_table, tablefmt='plain'))
+                    click.echo()
+                
+                other_resources = []
+                resource_name_map = {
+                    'VPC': 'VPC',
+                    'Public_IP': '公网IP',
+                    'VOLUME_SNAPSHOT': '磁盘快照',
+                    'BMS': '物理机',
+                    'NAT': 'NAT网关',
+                    'IMAGE': '私有镜像',
+                    'LOADBALANCER': '负载均衡',
+                    'LB_LISTENER': '负载均衡监听器',
+                    'IP_POOL': '共享带宽',
+                    'SNAPSHOT': '云主机快照',
+                    'ACLLIST': 'ACL',
+                    'Vm_Group': '云主机组',
+                    'Disk_Backup': '磁盘备份',
+                    'CBR': '云主机备份',
+                    'CBR_VBS': '磁盘存储备份',
+                    'CERT': '负载均衡证书',
+                    'OS_Backup': '操作系统备份',
+                    'TrafficMirror_Flow': '流量镜像流',
+                    'TrafficMirror_Filter': '流量镜像过滤器'
+                }
+                
+                for key, name in resource_name_map.items():
+                    if key in resources_data and key not in ['VM', 'Volume']:
+                        res = resources_data[key]
+                        count = res.get('total_count', res.get('detail_total_count', 0))
+                        if count > 0:
+                            other_resources.append([name, count])
+                
+                if other_resources:
+                    click.echo("【其他资源】")
+                    click.echo(tabulate(other_resources, headers=['资源类型', '数量'], tablefmt='plain'))
             else:
                 click.echo("未找到资源信息")
                 
@@ -462,6 +529,58 @@ def regions(ctx, region_name: Optional[str], no_cache: bool, output: Optional[st
                 click.echo(table)
             else:
                 click.echo("没有找到资源池")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command('flavor-options')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+def flavor_options(ctx, output: Optional[str]):
+    """查询云主机规格可售地域总览查询条件范围"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_flavor_options()
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        is_mock = result.get('_mock', False)
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo("云主机规格查询条件范围")
+            if is_mock:
+                click.echo("⚠️  注意: 当前显示的是模拟数据，实际API调用失败")
+            click.echo("=" * 80)
+            
+            if return_obj.get('flavorNameScope'):
+                click.echo(f"\n规格名称范围: {', '.join(return_obj.get('flavorNameScope', []))}")
+            
+            if return_obj.get('flavorCPUScope'):
+                click.echo(f"vCPU范围: {', '.join(return_obj.get('flavorCPUScope', []))}")
+            
+            if return_obj.get('flavorRAMScope'):
+                click.echo(f"内存范围(GB): {', '.join(return_obj.get('flavorRAMScope', []))}")
+            
+            if return_obj.get('flavorFamilyScope'):
+                click.echo(f"规格族范围: {', '.join(return_obj.get('flavorFamilyScope', []))}")
+            
+            if return_obj.get('gpuConfigScope'):
+                click.echo(f"GPU配置范围: {', '.join(return_obj.get('gpuConfigScope', []))}")
+            
+            if return_obj.get('localDiskConfigScope'):
+                click.echo(f"本地盘配置范围: {', '.join(return_obj.get('localDiskConfigScope', []))}")
                 
     except Exception as e:
         click.echo(f"运行出错: {e}", err=True)

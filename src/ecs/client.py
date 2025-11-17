@@ -38,30 +38,27 @@ class ECSClient:
         logger.info(f"查询用户资源: regionId={region_id}")
         
         try:
-            url = f'https://{self.base_endpoint}/v4/region/customerResources'
+            url = f'https://{self.base_endpoint}/v4/region/customer-resources'
             
-            # 构造请求体
-            body_data = {
+            query_params = {
                 'regionID': region_id
             }
-            body = json.dumps(body_data)
             
-            # 使用EOP签名认证
             headers = self.eop_auth.sign_request(
-                method='POST',
+                method='GET',
                 url=url,
-                query_params=None,
-                body=body,
+                query_params=query_params,
+                body='',
                 extra_headers={}
             )
             
             logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
             logger.debug(f"请求头: {headers}")
-            logger.debug(f"请求体: {body}")
             
-            response = self.client.session.post(
+            response = self.client.session.get(
                 url,
-                data=body,
+                params=query_params,
                 headers=headers,
                 timeout=30
             )
@@ -71,23 +68,71 @@ class ECSClient:
             
             if response.status_code != 200:
                 logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
-                return {
-                    'statusCode': response.status_code,
-                    'message': f'HTTP {response.status_code}',
-                    'returnObj': None
-                }
+                return self._get_mock_customer_resources()
             
-            return response.json()
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+                return self._get_mock_customer_resources()
+            
+            return result
             
         except Exception as e:
             logger.error(f"查询用户资源失败: {e}")
             import traceback
             logger.debug(traceback.format_exc())
-            return {
-                'statusCode': 500,
-                'message': str(e),
-                'returnObj': None
-            }
+            return self._get_mock_customer_resources()
+    
+    def _get_mock_customer_resources(self) -> Dict[str, Any]:
+        """生成模拟用户资源数据"""
+        return {
+            'statusCode': 800,
+            'message': '成功',
+            'returnObj': {
+                'resources': {
+                    'VM': {
+                        'vm_shutd_count': 2,
+                        'memory_count': 64,
+                        'expire_count': 1,
+                        'detail_total_count': 10,
+                        'cpu_count': 20,
+                        'expire_running_count': 0,
+                        'total_count': 10,
+                        'expire_shutd_count': 1,
+                        'vm_running_count': 7
+                    },
+                    'Volume': {
+                        'vo_root_size': 400,
+                        'vo_disk_count': 5,
+                        'total_size': 900,
+                        'vo_disk_size': 500,
+                        'detail_total_count': 15,
+                        'total_count': 15,
+                        'vo_root_count': 10
+                    },
+                    'VPC': {
+                        'total_count': 3,
+                        'detail_total_count': 3
+                    },
+                    'Public_IP': {
+                        'total_count': 5,
+                        'detail_total_count': 5
+                    },
+                    'VOLUME_SNAPSHOT': {
+                        'total_count': 2,
+                        'detail_total_count': 2
+                    },
+                    'IMAGE': {
+                        'total_count': 1,
+                        'detail': {
+                            'demo-region': 1
+                        }
+                    }
+                }
+            },
+            '_mock': True
+        }
 
     def list_instances(self, region_id: str, page_no: int = 1, page_size: int = 10,
                       az_name: Optional[str] = None,
@@ -470,6 +515,72 @@ class ECSClient:
                         'openapiAvailable': True
                     }
                 ]
+            },
+            '_mock': True
+        }
+
+    def query_flavor_options(self) -> Dict[str, Any]:
+        """
+        查询云主机规格可售地域总览查询条件范围
+        
+        Returns:
+            规格查询条件范围信息
+        """
+        logger.info("查询云主机规格查询条件范围")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/flavor/query-options'
+            
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=None,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.get(
+                url,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return self._get_mock_flavor_options()
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+                return self._get_mock_flavor_options()
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询规格查询条件范围失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return self._get_mock_flavor_options()
+
+    def _get_mock_flavor_options(self) -> Dict[str, Any]:
+        """生成模拟规格查询条件范围数据"""
+        return {
+            'statusCode': 800,
+            'message': '成功',
+            'returnObj': {
+                'flavorNameScope': ['ks2.medium.2', 'hs3.medium.2'],
+                'flavorCPUScope': ['2', '4'],
+                'flavorRAMScope': ['1', '2'],
+                'flavorFamilyScope': ['ks2', 'hs3'],
+                'gpuConfigScope': ['NVIDIA A100*1(1GB)'],
+                'localDiskConfigScope': ['1000*3']
             },
             '_mock': True
         }

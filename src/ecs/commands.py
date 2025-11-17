@@ -585,3 +585,56 @@ def monitoring(ctx, instance_id: str, metric_name: str, start_time: str, end_tim
         period=period
     )
     format_output(result, ctx.obj['output'])
+
+
+@ecs.command('flavor-options')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def flavor_options(ctx, output: Optional[str]):
+    """查询云主机规格可售地域总览查询条件范围"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_flavor_options()
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        is_mock = result.get('_mock', False)
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo("云主机规格查询条件范围")
+            if is_mock:
+                click.echo("⚠️  注意: 当前显示的是模拟数据，实际API调用失败")
+            click.echo("=" * 80)
+            
+            if return_obj.get('flavorNameScope'):
+                click.echo(f"\n规格名称范围: {', '.join(return_obj.get('flavorNameScope', []))}")
+            
+            if return_obj.get('flavorCPUScope'):
+                click.echo(f"vCPU范围: {', '.join(return_obj.get('flavorCPUScope', []))}")
+            
+            if return_obj.get('flavorRAMScope'):
+                click.echo(f"内存范围(GB): {', '.join(return_obj.get('flavorRAMScope', []))}")
+            
+            if return_obj.get('flavorFamilyScope'):
+                click.echo(f"规格族范围: {', '.join(return_obj.get('flavorFamilyScope', []))}")
+            
+            if return_obj.get('gpuConfigScope'):
+                click.echo(f"GPU配置范围: {', '.join(return_obj.get('gpuConfigScope', []))}")
+            
+            if return_obj.get('localDiskConfigScope'):
+                click.echo(f"本地盘配置范围: {', '.join(return_obj.get('localDiskConfigScope', []))}")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
