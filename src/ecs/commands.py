@@ -114,32 +114,44 @@ def list(ctx, region_id: str, page: int, page_size: int, az_name: Optional[str],
                 from tabulate import tabulate
                 
                 table_data = []
-                headers = ['实例ID', '实例名称', '状态', '可用区', '私网IP', '公网IP', '到期时间']
+                headers = ['实例ID', '实例名称', '状态', 'IP地址', '规格', '镜像', '到期时间']
                 
                 for instance in instances:
                     private_ips = instance.get('privateIP', [])
-                    eip_addresses = instance.get('eipAddress', [])
+                    instance_id = instance.get('instanceID', '')
+                    flavor_name = instance.get('flavorName', '')
+                    flavor_id = instance.get('flavorID', '')
+                    image_name = instance.get('imageName', '')
+                    
+                    flavor_display = f"{flavor_name}\n{flavor_id}" if flavor_name and flavor_id else (flavor_name or flavor_id or '')
+                    
+                    expire_time = instance.get('expireTime', '')
+                    if expire_time == '0':
+                        expire_time = '按量付费'
                     
                     table_data.append([
-                        instance.get('instanceID', '')[:20],
+                        instance_id,
                         instance.get('displayName', instance.get('instanceName', '')),
                         instance.get('instanceStatusStr', instance.get('instanceStatus', '')),
-                        instance.get('azName', ''),
                         private_ips[0] if private_ips else '',
-                        eip_addresses[0] if eip_addresses else '',
-                        instance.get('expireTime', '')
+                        flavor_display,
+                        image_name,
+                        expire_time
                     ])
                 
                 total_count = return_obj.get('totalCount', 0)
                 current_count = return_obj.get('currentCount', len(instances))
+                total_pages = (total_count + page_size - 1) // page_size if page_size > 0 else 0
                 
-                click.echo(f"云主机列表 (总计: {total_count} 台, 当前页: {current_count} 台)")
+                click.echo(f"云主机列表 (总计: {total_count} 台, 当前页: {current_count} 台, 第{page}/{total_pages}页)\n")
                 if is_mock:
                     click.echo("⚠️  注意: 当前显示的是模拟数据，实际API调用失败")
-                click.echo()
                 
                 table = tabulate(table_data, headers=headers, tablefmt='grid')
                 click.echo(table)
+                
+                if page < total_pages:
+                    click.echo(f"\n提示: 使用 --page 参数查看其他页")
             else:
                 click.echo("没有找到云主机实例")
                 

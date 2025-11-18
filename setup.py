@@ -11,7 +11,7 @@ def read_long_description():
 
 setup(
     name="ctyun-cli",
-    version="1.2.0",
+    version="1.2.1",
     description="天翼云CLI工具 - 基于终端的云资源管理平台（支持ECS 27个查询API + 监控28个API）",
     long_description=read_long_description(),
     long_description_content_type="text/markdown",

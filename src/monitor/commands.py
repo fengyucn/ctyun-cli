@@ -1631,7 +1631,7 @@ def query_latest_metric_data(ctx, region_id: str, service: str, dimension: str,
                 item_name = item.get('itemName', '')
                 item_desc = item.get('itemDesc', '')
                 item_unit = item.get('itemUnit', '')
-                value = item.get('value', '')
+                item_value = item.get('value', '')
                 timestamp = item.get('timestamp', 0)
                 
                 # 格式化时间
@@ -1653,11 +1653,17 @@ def query_latest_metric_data(ctx, region_id: str, service: str, dimension: str,
                             dim_parts.append(f"{name}={value}")
                     dim_str = ', '.join(dim_parts)
                 
+                # 格式化监控值，保留2位小数
+                if isinstance(item_value, (int, float)):
+                    formatted_value = f"{item_value:.2f}"
+                else:
+                    formatted_value = str(item_value)
+                
                 table_data.append([
                     item_name,
                     item_desc,
                     item_unit,
-                    str(value),
+                    formatted_value,
                     dt,
                     dim_str
                 ])

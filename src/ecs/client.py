@@ -2585,18 +2585,8 @@ class ECSClient:
                 'message': str(e),
                 'returnObj': None
             }
-                }
-            
-            result = response.json()
-            
-            if result.get('statusCode') != 800:
-                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
-            
-            return result
-            
-        except Exception as e:
-            logger.error(f"查询云主机规格族列表失败: {e}")
-            import traceback
+
+    def get_vnc_details(self, region_id: str, instance_id: str) -> Dict[str, Any]:
             logger.debug(traceback.format_exc())
             return {
                 'statusCode': 500,
