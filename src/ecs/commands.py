@@ -638,3 +638,1060 @@ def flavor_options(ctx, output: Optional[str]):
         click.echo(f"运行出错: {e}", err=True)
         import traceback
         traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_auto_renew_config(ctx, region_id: str, instance_id: str, output: Optional[str]):
+    """查询包周期云主机自动续订配置"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_auto_renew_config(region_id=region_id, instance_id=instance_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo("云主机自动续订配置")
+            click.echo("=" * 80)
+            click.echo(f"云主机ID: {return_obj.get('instanceID', 'N/A')}")
+            
+            auto_renew_status = return_obj.get('autoRenewStatus', '0')
+            status_text = '自动续费' if auto_renew_status == '1' else '不续费'
+            click.echo(f"续订状态: {status_text}")
+            
+            if auto_renew_status == '1':
+                cycle_type = return_obj.get('autoRenewCycleType', '')
+                cycle_type_text = '按年' if cycle_type == 'YEAR' else '按月' if cycle_type == 'MONTH' else cycle_type
+                click.echo(f"续订周期类型: {cycle_type_text}")
+                click.echo(f"订购时长: {return_obj.get('autoRenewCycleCount', 'N/A')}")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_dns_record(ctx, region_id: str, instance_id: str, output: Optional[str]):
+    """查询云主机的内网DNS记录"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_dns_record(region_id=region_id, instance_id=instance_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo("云主机内网DNS记录")
+            click.echo("=" * 80)
+            click.echo(f"云主机ID: {return_obj.get('instanceID', 'N/A')}")
+            
+            dns_records = return_obj.get('privateDnsRecordList', [])
+            if dns_records:
+                click.echo(f"\nDNS记录数量: {len(dns_records)}")
+                for idx, record in enumerate(dns_records, 1):
+                    click.echo(f"\n记录 {idx}:")
+                    click.echo(f"  域名选项: {record.get('dnsOption', 'N/A')}")
+                    click.echo(f"  域名类型: {record.get('dnsType', 'N/A')}")
+                    click.echo(f"  域名: {record.get('dnsName', 'N/A')}")
+                    click.echo(f"  内网IP: {record.get('privateIP', 'N/A')}")
+            else:
+                click.echo("\n无DNS记录")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--instance-id', help='云主机ID')
+@click.option('--snapshot-status', help='快照状态（pending/available/restoring/error）')
+@click.option('--snapshot-id', help='快照ID')
+@click.option('--snapshot-name', help='快照名称')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_snapshots(ctx, region_id: str, page: int, page_size: int, 
+                   project_id: Optional[str], instance_id: Optional[str],
+                   snapshot_status: Optional[str], snapshot_id: Optional[str],
+                   snapshot_name: Optional[str], output: Optional[str]):
+    """查询云主机快照列表"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_snapshots(
+            region_id=region_id,
+            page_no=page,
+            page_size=page_size,
+            project_id=project_id,
+            instance_id=instance_id,
+            snapshot_status=snapshot_status,
+            snapshot_id=snapshot_id,
+            snapshot_name=snapshot_name
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            results = return_obj.get('results', [])
+            click.echo(f"云主机快照列表 (共 {return_obj.get('totalCount', 0)} 个)")
+            click.echo("=" * 120)
+            
+            if results:
+                for idx, snapshot in enumerate(results, 1):
+                    click.echo(f"\n快照 {idx}:")
+                    click.echo(f"  快照ID: {snapshot.get('snapshotID', 'N/A')}")
+                    click.echo(f"  快照名称: {snapshot.get('snapshotName', 'N/A')}")
+                    click.echo(f"  云主机ID: {snapshot.get('instanceID', 'N/A')}")
+                    click.echo(f"  云主机名称: {snapshot.get('instanceName', 'N/A')}")
+                    click.echo(f"  快照状态: {snapshot.get('snapshotStatus', 'N/A')}")
+                    click.echo(f"  云主机状态: {snapshot.get('instanceStatus', 'N/A')}")
+                    click.echo(f"  可用区: {snapshot.get('azName', 'N/A')}")
+                    click.echo(f"  CPU核数: {snapshot.get('cpu', 'N/A')}")
+                    click.echo(f"  内存(MB): {snapshot.get('memory', 'N/A')}")
+                    click.echo(f"  创建时间: {snapshot.get('createdTime', 'N/A')}")
+                    click.echo(f"  更新时间: {snapshot.get('updatedTime', 'N/A')}")
+                    
+                    members = snapshot.get('members', [])
+                    if members:
+                        click.echo(f"  云硬盘快照:")
+                        for disk in members:
+                            click.echo(f"    - 磁盘ID: {disk.get('diskID', 'N/A')}, "
+                                     f"类型: {disk.get('diskType', 'N/A')}, "
+                                     f"大小: {disk.get('diskSize', 'N/A')}GB, "
+                                     f"启动盘: {'是' if disk.get('isBootable') else '否'}, "
+                                     f"快照状态: {disk.get('diskSnapshotStatus', 'N/A')}")
+                
+                click.echo(f"\n当前页: {page}/{return_obj.get('totalPage', 1)}")
+            else:
+                click.echo("\n无快照数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--snapshot-id', required=True, help='快照ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_snapshot_details(ctx, region_id: str, snapshot_id: str, output: Optional[str]):
+    """查询云主机快照详情"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_snapshot_details(region_id=region_id, snapshot_id=snapshot_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        results = return_obj.get('results', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            if results:
+                snapshot = results[0]
+                click.echo("云主机快照详情")
+                click.echo("=" * 120)
+                click.echo(f"快照ID: {snapshot.get('snapshotID', 'N/A')}")
+                click.echo(f"快照名称: {snapshot.get('snapshotName', 'N/A')}")
+                click.echo(f"快照描述: {snapshot.get('snapshotDescription', 'N/A')}")
+                click.echo(f"快照状态: {snapshot.get('snapshotStatus', 'N/A')}")
+                click.echo(f"\n云主机信息:")
+                click.echo(f"  云主机ID: {snapshot.get('instanceID', 'N/A')}")
+                click.echo(f"  云主机名称: {snapshot.get('instanceName', 'N/A')}")
+                click.echo(f"  云主机状态: {snapshot.get('instanceStatus', 'N/A')}")
+                click.echo(f"  可用区: {snapshot.get('azName', 'N/A')}")
+                click.echo(f"  CPU核数: {snapshot.get('cpu', 'N/A')}")
+                click.echo(f"  内存(MB): {snapshot.get('memory', 'N/A')}")
+                click.echo(f"  规格ID: {snapshot.get('flavorID', 'N/A')}")
+                click.echo(f"  镜像ID: {snapshot.get('imageID', 'N/A')}")
+                click.echo(f"\n其他信息:")
+                click.echo(f"  企业项目ID: {snapshot.get('projectID', 'N/A')}")
+                click.echo(f"  创建时间: {snapshot.get('createdTime', 'N/A')}")
+                click.echo(f"  更新时间: {snapshot.get('updatedTime', 'N/A')}")
+                
+                members = snapshot.get('members', [])
+                if members:
+                    click.echo(f"\n云硬盘快照 ({len(members)}个):")
+                    for idx, disk in enumerate(members, 1):
+                        click.echo(f"\n  磁盘 {idx}:")
+                        click.echo(f"    磁盘ID: {disk.get('diskID', 'N/A')}")
+                        click.echo(f"    磁盘名称: {disk.get('diskName', 'N/A')}")
+                        click.echo(f"    磁盘类型: {disk.get('diskType', 'N/A')}")
+                        click.echo(f"    磁盘大小: {disk.get('diskSize', 'N/A')}GB")
+                        click.echo(f"    启动盘: {'是' if disk.get('isBootable') else '否'}")
+                        click.echo(f"    加密: {'是' if disk.get('isEncrypt') else '否'}")
+                        click.echo(f"    快照ID: {disk.get('diskSnapshotID', 'N/A')}")
+                        click.echo(f"    快照状态: {disk.get('diskSnapshotStatus', 'N/A')}")
+            else:
+                click.echo("未找到快照详情")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--keypair-name', help='密钥对名称')
+@click.option('--query-content', help='模糊查询内容')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_keypairs(ctx, region_id: str, page: int, page_size: int, 
+                  project_id: Optional[str], keypair_name: Optional[str],
+                  query_content: Optional[str], output: Optional[str]):
+    """查询一个或多个密钥对"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_keypairs(
+            region_id=region_id,
+            page_no=page,
+            page_size=page_size,
+            project_id=project_id,
+            keypair_name=keypair_name,
+            query_content=query_content
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            results = return_obj.get('results', [])
+            click.echo(f"密钥对列表 (共 {return_obj.get('totalCount', 0)} 个)")
+            click.echo("=" * 120)
+            
+            if results:
+                for idx, keypair in enumerate(results, 1):
+                    click.echo(f"\n密钥对 {idx}:")
+                    click.echo(f"  密钥对ID: {keypair.get('keyPairID', 'N/A')}")
+                    click.echo(f"  密钥对名称: {keypair.get('keyPairName', 'N/A')}")
+                    click.echo(f"  指纹: {keypair.get('fingerPrint', 'N/A')}")
+                    click.echo(f"  绑定实例数: {keypair.get('bindInstanceNum', 0)}")
+                    click.echo(f"  企业项目ID: {keypair.get('projectID', 'N/A')}")
+                    
+                    desc = keypair.get('keyPairDescription', '')
+                    if desc:
+                        click.echo(f"  描述: {desc}")
+                    
+                    labels = keypair.get('labelList', [])
+                    if labels:
+                        click.echo(f"  标签:")
+                        for label in labels:
+                            click.echo(f"    - {label.get('labelKey', 'N/A')}: {label.get('labelValue', 'N/A')}")
+                
+                click.echo(f"\n当前页记录数: {return_obj.get('currentCount', 0)}")
+            else:
+                click.echo("\n无密钥对数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--job-ids', required=True, help='异步任务ID列表，以英文逗号分隔')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_jobs(ctx, region_id: str, job_ids: str, output: Optional[str]):
+    """查询多个异步任务的结果"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_jobs(region_id=region_id, job_ids=job_ids)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            job_list = return_obj.get('jobList', [])
+            click.echo(f"异步任务查询结果 (共 {len(job_list)} 个)")
+            click.echo("=" * 80)
+            
+            if job_list:
+                status_map = {
+                    0: '执行中',
+                    1: '执行成功',
+                    2: '执行失败'
+                }
+                
+                for idx, job in enumerate(job_list, 1):
+                    job_status = job.get('jobStatus', -1)
+                    status_text = status_map.get(job_status, '未知状态')
+                    click.echo(f"\n任务 {idx}:")
+                    click.echo(f"  任务ID: {job.get('jobID', 'N/A')}")
+                    click.echo(f"  任务状态: {status_text} ({job_status})")
+            else:
+                click.echo("\n无任务数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--job-id', required=True, help='异步任务ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_async_result(ctx, region_id: str, job_id: str, output: Optional[str]):
+    """查询一个异步任务的结果"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_async_result(region_id=region_id, job_id=job_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            status_map = {
+                0: '执行中',
+                1: '执行成功',
+                2: '执行失败'
+            }
+            
+            job_status = return_obj.get('jobStatus', -1)
+            status_text = status_map.get(job_status, '未知状态')
+            
+            click.echo("异步任务查询结果")
+            click.echo("=" * 80)
+            click.echo(f"任务ID: {job_id}")
+            click.echo(f"任务状态: {status_text} ({job_status})")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_volume_statistics(ctx, region_id: str, project_id: Optional[str], output: Optional[str]):
+    """查询用户云硬盘统计信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_volume_statistics(region_id=region_id, project_id=project_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        stats = return_obj.get('volumeStatistics', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(stats, output)
+        else:
+            click.echo("云硬盘统计信息")
+            click.echo("=" * 80)
+            click.echo(f"云硬盘总数: {stats.get('totalCount', 0)}")
+            click.echo(f"  系统盘数量: {stats.get('rootDiskCount', 0)}")
+            click.echo(f"  数据盘数量: {stats.get('dataDiskCount', 0)}")
+            click.echo(f"\n云硬盘总大小: {stats.get('totalSize', 0)} GB")
+            click.echo(f"  系统盘大小: {stats.get('rootDiskSize', 0)} GB")
+            click.echo(f"  数据盘大小: {stats.get('dataDiskSize', 0)} GB")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_fixed_ip_list(ctx, region_id: str, instance_id: str, output: Optional[str]):
+    """查询云主机的固定IP"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_fixed_ip_list(region_id=region_id, instance_id=instance_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        fixed_ips = return_obj.get('fixedIPList', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo("云主机固定IP")
+            click.echo("=" * 80)
+            click.echo(f"云主机ID: {instance_id}")
+            
+            if fixed_ips:
+                click.echo(f"\n固定IP列表 ({len(fixed_ips)}个):")
+                for idx, ip in enumerate(fixed_ips, 1):
+                    click.echo(f"  {idx}. {ip}")
+            else:
+                click.echo("\n无固定IP")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--policy-id', help='备份策略ID')
+@click.option('--policy-name', help='备份策略名称')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_backup_policies(ctx, region_id: str, page: int, page_size: int,
+                         policy_id: Optional[str], policy_name: Optional[str],
+                         project_id: Optional[str], output: Optional[str]):
+    """查询云主机备份策略列表"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_backup_policies(
+            region_id=region_id,
+            page_no=page,
+            page_size=page_size,
+            policy_id=policy_id,
+            policy_name=policy_name,
+            project_id=project_id
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            policies = return_obj.get('policyList', [])
+            click.echo(f"云主机备份策略列表 (共 {return_obj.get('totalCount', 0)} 个)")
+            click.echo("=" * 120)
+            
+            if policies:
+                for idx, policy in enumerate(policies, 1):
+                    click.echo(f"\n策略 {idx}:")
+                    click.echo(f"  策略ID: {policy.get('policyID', 'N/A')}")
+                    click.echo(f"  策略名称: {policy.get('policyName', 'N/A')}")
+                    click.echo(f"  状态: {'启用' if policy.get('status') == 1 else '停用'}")
+                    click.echo(f"  资源池ID: {policy.get('regionID', 'N/A')}")
+                    click.echo(f"  企业项目ID: {policy.get('projectID', 'N/A')}")
+                    
+                    cycle_type = policy.get('cycleType', '')
+                    if cycle_type == 'day':
+                        click.echo(f"  备份周期: 每 {policy.get('cycleDay', 'N/A')} 天")
+                    elif cycle_type == 'week':
+                        click.echo(f"  备份周期: 每周 {policy.get('cycleWeek', 'N/A')}")
+                    
+                    click.echo(f"  备份时间: {policy.get('time', 'N/A')} 点")
+                    
+                    retention_type = policy.get('retentionType', '')
+                    if retention_type == 'num':
+                        click.echo(f"  保留策略: 保留 {policy.get('retentionNum', 'N/A')} 个备份")
+                    elif retention_type == 'date':
+                        click.echo(f"  保留策略: 保留 {policy.get('retentionDay', 'N/A')} 天")
+                    elif retention_type == 'all':
+                        click.echo(f"  保留策略: 永久保留")
+                    
+                    click.echo(f"  绑定云主机数: {policy.get('resourceCount', 0)}")
+                    
+                    repos = policy.get('repositoryList', [])
+                    if repos:
+                        click.echo(f"  备份库:")
+                        for repo in repos:
+                            click.echo(f"    - {repo.get('repositoryName', 'N/A')} ({repo.get('repositoryID', 'N/A')})")
+                
+                click.echo(f"\n当前页: {return_obj.get('currentPage', 1)}/{return_obj.get('totalPage', 1)}")
+            else:
+                click.echo("\n无备份策略数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-backup-id', required=True, help='云主机备份ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_backup_status(ctx, region_id: str, instance_backup_id: str, output: Optional[str]):
+    """查询云主机备份状态"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_backup_status(region_id=region_id, instance_backup_id=instance_backup_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            status = return_obj.get('instanceBackupStatus', 'N/A')
+            status_map = {
+                'CREATING': '创建中',
+                'ACTIVE': '可用',
+                'MERGING_BACKUP': '合并中',
+                'RESTORING': '恢复中',
+                'DELETING': '删除中',
+                'FROZEN': '已冻结',
+                'ERROR': '错误'
+            }
+            status_text = status_map.get(status, status)
+            
+            click.echo("云主机备份状态")
+            click.echo("=" * 80)
+            click.echo(f"备份ID: {instance_backup_id}")
+            click.echo(f"备份状态: {status_text} ({status})")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_volumes(ctx, region_id: str, instance_id: str, page: int, page_size: int, output: Optional[str]):
+    """查询云主机的云硬盘列表"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_volumes(
+            region_id=region_id,
+            instance_id=instance_id,
+            page_no=page,
+            page_size=page_size
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            results = return_obj.get('results', [])
+            click.echo(f"云主机云硬盘列表 (共 {return_obj.get('totalCount', 0)} 个)")
+            click.echo("=" * 120)
+            click.echo(f"云主机ID: {instance_id}")
+            
+            if results:
+                for idx, volume in enumerate(results, 1):
+                    click.echo(f"\n云硬盘 {idx}:")
+                    click.echo(f"  云硬盘ID: {volume.get('diskID', 'N/A')}")
+                    click.echo(f"  用途分类: {volume.get('diskType', 'N/A')}")
+                    click.echo(f"  云硬盘类型: {volume.get('diskDataType', 'N/A')}")
+                    click.echo(f"  云硬盘属性: {volume.get('diskMode', 'N/A')}")
+                    click.echo(f"  容量大小: {volume.get('diskSize', 'N/A')} GB")
+                    click.echo(f"  是否加密: {'是' if volume.get('isEncrypt') else '否'}")
+                
+                click.echo(f"\n当前页: {page}/{return_obj.get('totalPage', 1)}")
+            else:
+                click.echo("\n无云硬盘数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_affinity_group_details(ctx, region_id: str, instance_id: str, output: Optional[str]):
+    """查询云主机所在云主机组"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_affinity_group_details(region_id=region_id, instance_id=instance_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo("云主机所在云主机组")
+            click.echo("=" * 80)
+            click.echo(f"云主机ID: {instance_id}")
+            
+            if return_obj:
+                click.echo(f"\n云主机组ID: {return_obj.get('affinityGroupID', 'N/A')}")
+                click.echo(f"云主机组名称: {return_obj.get('affinityGroupName', 'N/A')}")
+                click.echo(f"策略类型: {return_obj.get('policyTypeName', 'N/A')}")
+            else:
+                click.echo("\n该云主机未加入任何云主机组")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_regions_details(ctx, output: Optional[str]):
+    """查询账户启用的资源池信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_regions_details()
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        regions = return_obj.get('regionList', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(regions, output)
+        else:
+            click.echo(f"账户启用的资源池 (共 {len(regions)} 个)")
+            click.echo("=" * 100)
+            
+            if regions:
+                for idx, region in enumerate(regions, 1):
+                    click.echo(f"\n资源池 {idx}:")
+                    click.echo(f"  资源池ID: {region.get('regionID', 'N/A')}")
+                    click.echo(f"  资源池UUID: {region.get('regionUUID', 'N/A')}")
+                    click.echo(f"  资源池名称: {region.get('regionName', 'N/A')}")
+            else:
+                click.echo("\n无资源池数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_availability_zones_details(ctx, region_id: str, output: Optional[str]):
+    """查询账户资源池中可用区信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_availability_zones_details(region_id=region_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        az_list = return_obj.get('azList', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(az_list, output)
+        else:
+            click.echo(f"资源池可用区列表 (共 {len(az_list)} 个)")
+            click.echo("=" * 80)
+            click.echo(f"资源池ID: {region_id}")
+            
+            if az_list:
+                for idx, az in enumerate(az_list, 1):
+                    click.echo(f"\n可用区 {idx}:")
+                    click.echo(f"  可用区ID: {az.get('azID', 'N/A')}")
+                    click.echo(f"  可用区名称: {az.get('azName', 'N/A')}")
+            else:
+                click.echo("\n无可用区数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--az-name', help='可用区名称')
+@click.option('--instance-id-list', help='云主机ID列表，多台使用英文逗号分割')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_instance_status(ctx, region_id: str, page: int, page_size: int,
+                         az_name: Optional[str], instance_id_list: Optional[str],
+                         project_id: Optional[str], output: Optional[str]):
+    """获取多台云主机的状态信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_instance_status(
+            region_id=region_id,
+            page_no=page,
+            page_size=page_size,
+            az_name=az_name,
+            instance_id_list=instance_id_list,
+            project_id=project_id
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            status_list = return_obj.get('statusList', [])
+            click.echo(f"云主机状态列表 (共 {return_obj.get('totalCount', 0)} 个)")
+            click.echo("=" * 100)
+            
+            if status_list:
+                status_map = {
+                    'backingup': '备份中',
+                    'creating': '创建中',
+                    'expired': '已到期',
+                    'freezing': '已冻结',
+                    'rebuild': '重装',
+                    'restarting': '重启中',
+                    'running': '运行中',
+                    'starting': '开机中',
+                    'stopped': '已关机',
+                    'stopping': '关机中',
+                    'error': '错误',
+                    'snapshotting': '快照创建中',
+                    'unsubscribed': '包周期已退订',
+                    'unsubscribing': '包周期退订中'
+                }
+                
+                for idx, instance in enumerate(status_list, 1):
+                    status = instance.get('instanceStatus', 'N/A')
+                    status_text = status_map.get(status, status)
+                    click.echo(f"\n{idx}. 云主机ID: {instance.get('instanceID', 'N/A')}")
+                    click.echo(f"   状态: {status_text} ({status})")
+                
+                click.echo(f"\n当前页: {page}/{return_obj.get('totalPage', 1)}")
+            else:
+                click.echo("\n无云主机状态数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--master-order-id', required=True, help='订单ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_uuid_by_order(ctx, master_order_id: str, output: Optional[str]):
+    """根据masterOrderID查询云主机ID"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_uuid_by_order(master_order_id=master_order_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            order_status_map = {
+                '1': '待支付', '2': '已支付', '3': '完成', '4': '取消',
+                '5': '施工失败', '7': '正在支付中', '8': '待审核',
+                '9': '审核通过', '10': '审核未通过', '11': '撤单完成',
+                '12': '退订中', '13': '退订完成', '14': '开通中',
+                '15': '变更移除', '16': '自动撤单中', '17': '手动撤单中',
+                '18': '终止中', '22': '支付失败', '-2': '待撤单',
+                '-1': '未知', '0': '错误', '140': '已初始化', '999': '逻辑错误'
+            }
+            
+            order_status = return_obj.get('orderStatus', '-1')
+            status_text = order_status_map.get(order_status, '未知状态')
+            instance_ids = return_obj.get('instanceIDList', [])
+            
+            click.echo("订单查询结果")
+            click.echo("=" * 80)
+            click.echo(f"订单ID: {master_order_id}")
+            click.echo(f"订单状态: {status_text} ({order_status})")
+            
+            if instance_ids:
+                click.echo(f"\n云主机ID列表 ({len(instance_ids)}个):")
+                for idx, instance_id in enumerate(instance_ids, 1):
+                    click.echo(f"  {idx}. {instance_id}")
+            else:
+                click.echo("\n暂无云主机ID（订单可能还在创建中）")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--affinity-group-id', help='云主机组ID')
+@click.option('--query-content', help='模糊匹配查询内容')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_affinity_groups(ctx, region_id: str, page: int, page_size: int,
+                         affinity_group_id: Optional[str], query_content: Optional[str],
+                         output: Optional[str]):
+    """查询云主机组列表或者详情"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_affinity_groups(
+            region_id=region_id,
+            page_no=page,
+            page_size=page_size,
+            affinity_group_id=affinity_group_id,
+            query_content=query_content
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            results = return_obj.get('results', [])
+            click.echo(f"云主机组列表 (共 {return_obj.get('totalCount', 0)} 个)")
+            click.echo("=" * 100)
+            
+            if results:
+                policy_type_map = {
+                    0: '强制反亲和',
+                    1: '强制亲和',
+                    2: '软反亲和',
+                    3: '软亲和'
+                }
+                
+                for idx, group in enumerate(results, 1):
+                    click.echo(f"\n云主机组 {idx}:")
+                    click.echo(f"  云主机组ID: {group.get('affinityGroupID', 'N/A')}")
+                    click.echo(f"  云主机组名称: {group.get('affinityGroupName', 'N/A')}")
+                    
+                    policy = group.get('affinityGroupPolicy', {})
+                    if policy:
+                        policy_type = policy.get('policyType', -1)
+                        policy_type_text = policy_type_map.get(policy_type, '未知')
+                        click.echo(f"  策略类型: {policy_type_text} ({policy.get('policyTypeName', 'N/A')})")
+                    
+                    click.echo(f"  创建时间: {group.get('createdTime', 'N/A')}")
+                    click.echo(f"  更新时间: {group.get('updatedTime', 'N/A')}")
+                    click.echo(f"  是否删除: {'是' if group.get('deleted') else '否'}")
+                
+                click.echo(f"\n当前页: {page}/{return_obj.get('totalPage', 1)}")
+            else:
+                click.echo("\n无云主机组数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--az-name', help='可用区名称')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_flavor_families(ctx, region_id: str, az_name: Optional[str], output: Optional[str]):
+    """查询云主机规格族列表"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_flavor_families(region_id=region_id, az_name=az_name)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        flavor_families = return_obj.get('flavorFamilyList', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(flavor_families, output)
+        else:
+            click.echo(f"云主机规格族列表 (共 {len(flavor_families)} 个)")
+            click.echo("=" * 80)
+            
+            if flavor_families:
+                for idx, family in enumerate(flavor_families, 1):
+                    click.echo(f"  {idx}. {family}")
+            else:
+                click.echo("\n无规格族数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
