@@ -11,7 +11,7 @@ def read_long_description():
 
 setup(
     name="ctyun-cli",
-    version="1.0.2",
+    version="1.1.0",
     description="天翼云CLI工具 - 基于终端的云资源管理平台",
     long_description=read_long_description(),
     long_description_content_type="text/markdown",
