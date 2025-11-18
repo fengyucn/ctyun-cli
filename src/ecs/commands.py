@@ -1268,6 +1268,221 @@ def get_backup_status(ctx, region_id: str, instance_backup_id: str, output: Opti
 
 
 @ecs.command()
+@click.option('--disk-id', required=True, help='磁盘ID')
+@click.option('--region-id', help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_volume_info(ctx, disk_id: str, region_id: Optional[str], output: Optional[str]):
+    """云硬盘信息查询（基于磁盘ID）"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_volume_info(disk_id=disk_id, region_id=region_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo("云硬盘信息")
+            click.echo("=" * 120)
+            click.echo(f"磁盘ID: {return_obj.get('diskID', 'N/A')}")
+            click.echo(f"磁盘名称: {return_obj.get('diskName', 'N/A')}")
+            click.echo(f"磁盘大小: {return_obj.get('diskSize', 'N/A')} GB")
+            
+            disk_type = return_obj.get('diskType', 'N/A')
+            disk_type_map = {
+                'SATA': '普通IO',
+                'SAS': '高IO',
+                'SSD': '超高IO',
+                'FAST-SSD': '极速型SSD',
+                'XSSD-0': 'X系列云硬盘-0',
+                'XSSD-1': 'X系列云硬盘-1',
+                'XSSD-2': 'X系列云硬盘-2'
+            }
+            disk_type_text = disk_type_map.get(disk_type, disk_type)
+            click.echo(f"磁盘类型: {disk_type_text} ({disk_type})")
+            
+            disk_mode = return_obj.get('diskMode', 'N/A')
+            disk_mode_map = {
+                'VBD': '虚拟块存储设备',
+                'ISCSI': '小型计算机系统接口',
+                'FCSAN': '光纤通道协议的SAN网络'
+            }
+            disk_mode_text = disk_mode_map.get(disk_mode, disk_mode)
+            click.echo(f"磁盘模式: {disk_mode_text} ({disk_mode})")
+            
+            click.echo(f"磁盘状态: {return_obj.get('diskStatus', 'N/A')}")
+            click.echo(f"资源池ID: {return_obj.get('regionID', 'N/A')}")
+            click.echo(f"可用区: {return_obj.get('azName', 'N/A')}")
+            
+            import datetime
+            create_time = return_obj.get('createTime')
+            if create_time:
+                dt = datetime.datetime.fromtimestamp(create_time / 1000)
+                click.echo(f"创建时间: {dt.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            update_time = return_obj.get('updateTime')
+            if update_time:
+                dt = datetime.datetime.fromtimestamp(update_time / 1000)
+                click.echo(f"更新时间: {dt.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            expire_time = return_obj.get('expireTime')
+            if expire_time:
+                dt = datetime.datetime.fromtimestamp(expire_time / 1000)
+                click.echo(f"过期时间: {dt.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            click.echo(f"是否系统盘: {'是' if return_obj.get('isSystemVolume') else '否'}")
+            click.echo(f"是否成套资源: {'是' if return_obj.get('isPackaged') else '否'}")
+            click.echo(f"是否共享云硬盘: {'是' if return_obj.get('multiAttach') else '否'}")
+            click.echo(f"是否加密盘: {'是' if return_obj.get('isEncrypt') else '否'}")
+            
+            if return_obj.get('isEncrypt'):
+                click.echo(f"加密盘密钥UUID: {return_obj.get('kmsUUID', 'N/A')}")
+            
+            click.echo(f"是否按需订购: {'是' if return_obj.get('onDemand') else '否'}")
+            
+            if not return_obj.get('onDemand'):
+                cycle_type_map = {'month': '月', 'year': '年', 'MONTH': '月', 'YEAR': '年'}
+                cycle_type = return_obj.get('cycleType', 'N/A')
+                cycle_type_text = cycle_type_map.get(cycle_type, cycle_type)
+                click.echo(f"订购周期类型: {cycle_type_text}")
+                click.echo(f"订购周期数: {return_obj.get('cycleCount', 'N/A')}")
+            
+            click.echo(f"是否冻结: {'是' if return_obj.get('diskFreeze') else '否'}")
+            click.echo(f"企业项目ID: {return_obj.get('projectID', 'N/A')}")
+            
+            if return_obj.get('provisionedIops'):
+                click.echo(f"预配置IOPS: {return_obj.get('provisionedIops')}")
+            
+            if return_obj.get('volumeSource'):
+                click.echo(f"源快照ID: {return_obj.get('volumeSource')}")
+            
+            if return_obj.get('snapshotPolicyID'):
+                click.echo(f"绑定快照策略ID: {return_obj.get('snapshotPolicyID')}")
+            
+            if return_obj.get('instanceID'):
+                click.echo(f"\n挂载信息:")
+                click.echo(f"  绑定云主机ID: {return_obj.get('instanceID', 'N/A')}")
+                click.echo(f"  绑定云主机名称: {return_obj.get('instanceName', 'N/A')}")
+                click.echo(f"  云主机状态: {return_obj.get('instanceStatus', 'N/A')}")
+            
+            attachments = return_obj.get('attachments', [])
+            if attachments:
+                click.echo(f"\n挂载详情 (共{len(attachments)}个):")
+                for idx, att in enumerate(attachments, 1):
+                    click.echo(f"  挂载 #{idx}")
+                    click.echo(f"    云主机ID: {att.get('instanceID', 'N/A')}")
+                    click.echo(f"    挂载ID: {att.get('attachmentID', 'N/A')}")
+                    click.echo(f"    挂载设备名: {att.get('device', 'N/A')}")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--policy-id', required=True, help='云主机备份策略ID')
+@click.option('--instance-name', help='云主机名称，模糊过滤')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_backup_policy_instances(ctx, region_id: str, policy_id: str, instance_name: Optional[str], page: int, page_size: int, output: Optional[str]):
+    """查询云主机备份策略绑定云主机信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.list_backup_policy_instances(
+            region_id=region_id,
+            policy_id=policy_id,
+            instance_name=instance_name,
+            page_no=page,
+            page_size=page_size
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            instances = return_obj.get('instancePolicies', [])
+            
+            if instances:
+                click.echo(f"备份策略绑定云主机列表 (备份策略ID: {policy_id})")
+                click.echo("=" * 120)
+                
+                for idx, instance in enumerate(instances, 1):
+                    click.echo(f"\n云主机 #{idx}")
+                    click.echo(f"  云主机ID: {instance.get('instanceID', 'N/A')}")
+                    click.echo(f"  云主机名称: {instance.get('instanceName', 'N/A')}")
+                    click.echo(f"  显示名称: {instance.get('displayName', 'N/A')}")
+                    
+                    status = instance.get('status', 'N/A')
+                    status_map = {
+                        'ACTIVE': '运行中',
+                        'SHUTOFF': '已关机',
+                        'backingup': '备份中',
+                        'creating': '创建中',
+                        'expired': '已到期',
+                        'freezing': '已冻结',
+                        'rebuild': '重装',
+                        'restarting': '重启中',
+                        'running': '运行中',
+                        'starting': '开机中',
+                        'stopped': '已关机',
+                        'stopping': '关机中',
+                        'error': '错误',
+                        'snapshotting': '快照创建中',
+                        'unsubscribed': '包周期已退订',
+                        'unsubscribing': '包周期退订中'
+                    }
+                    status_text = status_map.get(status, status)
+                    click.echo(f"  状态: {status_text} ({status})")
+                    
+                    click.echo(f"  资源池ID: {instance.get('regionID', 'N/A')}")
+                    click.echo(f"  创建时间: {instance.get('createTime', 'N/A')}")
+                    click.echo(f"  更新时间: {instance.get('updateTime', 'N/A')}")
+                    
+                    volumes = instance.get('attachedVolumes', [])
+                    if volumes:
+                        click.echo(f"  关联云硬盘数量: {len(volumes)}")
+                        click.echo(f"  云硬盘ID列表:")
+                        for vol_id in volumes:
+                            click.echo(f"    - {vol_id}")
+                    else:
+                        click.echo(f"  关联云硬盘数量: 0")
+                
+                click.echo(f"\n当前页: {return_obj.get('currentPage', 1)}/{return_obj.get('totalPage', 1)}")
+                click.echo(f"总记录数: {return_obj.get('totalCount', 0)}")
+            else:
+                click.echo("\n该备份策略未绑定任何云主机")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
 @click.option('--region-id', required=True, help='资源池ID')
 @click.option('--instance-id', required=True, help='云主机ID')
 @click.option('--page', default=1, type=int, help='页码')
@@ -1658,6 +1873,92 @@ def list_affinity_groups(ctx, region_id: str, page: int, page_size: int,
 
 @ecs.command()
 @click.option('--region-id', required=True, help='资源池ID')
+@click.option('--snapshot-id', required=True, help='云主机快照ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_snapshot_status(ctx, region_id: str, snapshot_id: str, output: Optional[str]):
+    """查询云主机快照状态"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_snapshot_status(region_id=region_id, snapshot_id=snapshot_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            snapshot_status = return_obj.get('snapshotStatus', 'N/A')
+            status_desc = {
+                'pending': '创建中',
+                'available': '可用',
+                'restoring': '恢复中',
+                'error': '错误'
+            }
+            
+            click.echo(f"快照状态信息")
+            click.echo("=" * 80)
+            click.echo(f"  快照ID: {snapshot_id}")
+            click.echo(f"  状态: {snapshot_status} ({status_desc.get(snapshot_status, snapshot_status)})")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_snapshot_count(ctx, region_id: str, output: Optional[str]):
+    """查询云主机快照个数统计"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_snapshot_count(region_id=region_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            total_count = return_obj.get('totalCount', 0)
+            available_count = return_obj.get('availableCount', 0)
+            creating_count = return_obj.get('creatingCount', 0)
+            error_count = return_obj.get('errorCount', 0)
+            
+            click.echo(f"快照统计信息")
+            click.echo("=" * 80)
+            click.echo(f"  总数: {total_count}")
+            click.echo(f"  可用: {available_count}")
+            click.echo(f"  创建中: {creating_count}")
+            click.echo(f"  错误: {error_count}")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
 @click.option('--az-name', help='可用区名称')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
 @click.pass_context
@@ -1690,6 +1991,357 @@ def list_flavor_families(ctx, region_id: str, az_name: Optional[str], output: Op
                     click.echo(f"  {idx}. {family}")
             else:
                 click.echo("\n无规格族数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--flavor-names', help='云主机规格名称列表，逗号分隔')
+@click.option('--flavor-families', help='云主机规格族列表，逗号分隔')
+@click.option('--flavor-cpus', help='云主机规格vcpu个数列表，逗号分隔')
+@click.option('--flavor-rams', help='云主机规格内存大小列表，逗号分隔')
+@click.option('--local-disk-sizes', help='本地盘容量配置列表，逗号分隔')
+@click.option('--gpu-configs', help='GPU配置列表，逗号分隔')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页记录数（最大50）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_flavor_available_regions(ctx, flavor_names: Optional[str], flavor_families: Optional[str],
+                                   flavor_cpus: Optional[str], flavor_rams: Optional[str],
+                                   local_disk_sizes: Optional[str], gpu_configs: Optional[str],
+                                   page: int, page_size: int, output: Optional[str]):
+    """查询云主机规格可售地域总览"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        # 解析参数列表
+        flavor_name_list = flavor_names.split(',') if flavor_names else None
+        flavor_family_list = flavor_families.split(',') if flavor_families else None
+        flavor_cpu_list = [int(cpu) for cpu in flavor_cpus.split(',')] if flavor_cpus else None
+        flavor_ram_list = [int(ram) for ram in flavor_rams.split(',')] if flavor_rams else None
+        local_disk_size_list = local_disk_sizes.split(',') if local_disk_sizes else None
+        gpu_config_list = gpu_configs.split(',') if gpu_configs else None
+        
+        result = ecs_client.query_flavor_available_regions(
+            flavor_name_list=flavor_name_list,
+            flavor_family_list=flavor_family_list,
+            flavor_cpu_list=flavor_cpu_list,
+            flavor_ram_list=flavor_ram_list,
+            local_disk_size_list=local_disk_size_list,
+            gpu_config_list=gpu_config_list,
+            page_no=page,
+            page_size=page_size
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            total_count = return_obj.get('totalCount', 0)
+            current_count = return_obj.get('currentCount', 0)
+            total_page = return_obj.get('totalPage', 1)
+            resource_list = return_obj.get('availableStatusResourceList', []) or return_obj.get('AvailableStatusResourceList', [])
+            
+            click.echo(f"云主机规格可售地域总览 (共 {total_count} 条记录)")
+            click.echo("=" * 120)
+            
+            if resource_list:
+                for idx, resource in enumerate(resource_list, 1):
+                    click.echo(f"\n规格 {idx}:")
+                    click.echo(f"  规格名称: {resource.get('flavorName', 'N/A')}")
+                    click.echo(f"  规格族: {resource.get('flavorFamily', 'N/A')}")
+                    click.echo(f"  vCPU: {resource.get('flavorCPU', 'N/A')}")
+                    click.echo(f"  内存(GB): {resource.get('flavorRAM', 'N/A')}")
+                    
+                    if resource.get('gpuConfig'):
+                        click.echo(f"  GPU配置: {resource.get('gpuConfig')}")
+                    if resource.get('localDiskConfig'):
+                        click.echo(f"  本地盘配置: {resource.get('localDiskConfig')}")
+                    
+                    region_list = resource.get('availableStatusRegionList', []) or resource.get('AvailableStatusRegionList', [])
+                    if region_list:
+                        click.echo(f"  可售地域:")
+                        for region in region_list:
+                            available_status = "✓ 可用" if region.get('available') else "✗ 售罄"
+                            click.echo(f"    - {region.get('regionName', 'N/A')} ({region.get('azName', 'N/A')}) - {available_status}")
+                
+                click.echo(f"\n当前页: {page}/{total_page}, 本页记录: {current_count}")
+            else:
+                click.echo("\n无规格数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_flavor_query_options(ctx, output: Optional[str]):
+    """查询云主机规格可售地域总览查询条件范围"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_flavor_query_options()
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            click.echo(f"云主机规格查询条件范围")
+            click.echo("=" * 80)
+            
+            flavor_names = return_obj.get('flavorNameScope', [])
+            if flavor_names:
+                click.echo(f"\n规格名称: {', '.join(flavor_names[:10])}")
+                if len(flavor_names) > 10:
+                    click.echo(f"  ... 等共 {len(flavor_names)} 个规格")
+            
+            flavor_families = return_obj.get('flavorFamilyScope', [])
+            if flavor_families:
+                click.echo(f"\n规格族: {', '.join(flavor_families)}")
+            
+            flavor_cpus = return_obj.get('flavorCPUScope', [])
+            if flavor_cpus:
+                click.echo(f"\nvCPU: {', '.join(flavor_cpus)}")
+            
+            flavor_rams = return_obj.get('flavorRAMScope', [])
+            if flavor_rams:
+                click.echo(f"\n内存(GB): {', '.join(flavor_rams)}")
+            
+            gpu_configs = return_obj.get('gpuConfigScope', [])
+            if gpu_configs:
+                click.echo(f"\nGPU配置: {', '.join(gpu_configs)}")
+            
+            local_disk_configs = return_obj.get('localDiskConfigScope', [])
+            if local_disk_configs:
+                click.echo(f"\n本地盘配置: {', '.join(local_disk_configs)}")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_cold_resize_flavors(ctx, region_id: str, instance_id: str, output: Optional[str]):
+    """查询云主机支持的冷变配规格信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_cold_resize_flavors(region_id=region_id, instance_id=instance_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        flavor_list = return_obj.get('flavorList', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(flavor_list, output)
+        else:
+            click.echo(f"云主机支持的冷变配规格列表 (共 {len(flavor_list)} 个)")
+            click.echo("=" * 120)
+            
+            if flavor_list:
+                for idx, flavor in enumerate(flavor_list, 1):
+                    click.echo(f"\n规格 {idx}:")
+                    click.echo(f"  规格名称: {flavor.get('flavorName', 'N/A')}")
+                    click.echo(f"  规格ID: {flavor.get('flavorID', 'N/A')}")
+                    click.echo(f"  vCPU: {flavor.get('flavorCPU', 'N/A')} 核")
+                    click.echo(f"  内存: {flavor.get('flavorRAM', 'N/A')} GB")
+                    click.echo(f"  规格系列: {flavor.get('flavorSeriesName', flavor.get('flavorSeries', 'N/A'))}")
+                    click.echo(f"  规格类型: {flavor.get('flavorType', 'N/A')}")
+                    click.echo(f"  CPU架构: {flavor.get('cpuInfo', 'N/A')}")
+                    click.echo(f"  基准带宽: {flavor.get('baseBandwidth', 'N/A')} Gbps")
+                    click.echo(f"  带宽: {flavor.get('bandwidth', 'N/A')} Gbps")
+                    click.echo(f"  网卡多队列: {flavor.get('nicMultiQueue', 'N/A')}")
+                    
+                    if flavor.get('gpuType'):
+                        click.echo(f"  GPU类型: {flavor.get('gpuType', 'N/A')}")
+                        click.echo(f"  GPU厂商: {flavor.get('gpuVendor', 'N/A')}")
+                        click.echo(f"  GPU数量: {flavor.get('gpuCount', 'N/A')}")
+                        click.echo(f"  显存大小: {flavor.get('videoMemSize', 'N/A')} GB")
+                    
+                    available = flavor.get('available', False)
+                    click.echo(f"  可用状态: {'✓ 可用' if available else '✗ 售罄'}")
+                    
+                    az_list = flavor.get('azList', [])
+                    if az_list:
+                        click.echo(f"  可用区: {', '.join(az_list)}")
+            else:
+                click.echo("\n无冷变配规格数据")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_hot_resize_flavors(ctx, region_id: str, instance_id: str, output: Optional[str]):
+    """查询云主机支持的热变配规格信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.query_hot_resize_flavors(region_id=region_id, instance_id=instance_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        flavor_list = return_obj.get('flavorList', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(flavor_list, output)
+        else:
+            click.echo(f"云主机支持的热变配规格列表 (共 {len(flavor_list)} 个)")
+            click.echo("=" * 120)
+            
+            if flavor_list:
+                for idx, flavor in enumerate(flavor_list, 1):
+                    click.echo(f"\n规格 {idx}:")
+                    click.echo(f"  规格名称: {flavor.get('flavorName', 'N/A')}")
+                    click.echo(f"  规格ID: {flavor.get('flavorID', 'N/A')}")
+                    click.echo(f"  vCPU: {flavor.get('flavorCPU', 'N/A')} 核")
+                    click.echo(f"  内存: {flavor.get('flavorRAM', 'N/A')} GB")
+                    click.echo(f"  规格系列: {flavor.get('flavorSeries', 'N/A')}")
+                    click.echo(f"  规格类型: {flavor.get('flavorType', 'N/A')}")
+                    click.echo(f"  CPU架构: {flavor.get('cpuInfo', 'N/A')}")
+                    click.echo(f"  基准带宽: {flavor.get('baseBandwidth', 'N/A')} Gbps")
+                    click.echo(f"  带宽: {flavor.get('bandwidth', 'N/A')} Gbps")
+                    click.echo(f"  网卡多队列: {flavor.get('nicMultiQueue', 'N/A')}")
+            else:
+                click.echo("\n无热变配规格数据（可能该云主机不支持热变配）")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_vnc_details(ctx, region_id: str, instance_id: str, output: Optional[str]):
+    """查询云主机的WEB管理终端地址"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_vnc_details(region_id=region_id, instance_id=instance_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            token_url = return_obj.get('token', 'N/A')
+            
+            click.echo(f"云主机WEB管理终端信息")
+            click.echo("=" * 120)
+            click.echo(f"  云主机ID: {instance_id}")
+            click.echo(f"  VNC访问地址: {token_url}")
+            
+            if token_url.startswith('wss://'):
+                click.echo(f"\n  说明: 这是多可用区WebSocket VNC地址")
+                click.echo(f"  使用方法: 可使用noVNC等客户端访问")
+            elif token_url.startswith('http'):
+                click.echo(f"\n  说明: 这是单可用区HTTP VNC地址")
+                click.echo(f"  使用方法: 可直接在浏览器中打开")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_instance_statistics(ctx, region_id: str, project_id: Optional[str], output: Optional[str]):
+    """查询用户云主机统计信息"""
+    try:
+        from ecs.client import ECSClient
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.get_instance_statistics(region_id=region_id, project_id=project_id)
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        stats = return_obj.get('instanceStatistics', {})
+        
+        if output and output in ['json', 'yaml']:
+            format_output(stats, output)
+        else:
+            click.echo(f"云主机统计信息")
+            click.echo("=" * 80)
+            click.echo(f"  云主机总数: {stats.get('totalCount', 0)}")
+            click.echo(f"  运行中: {stats.get('RunningCount', 0)}")
+            click.echo(f"  已关机: {stats.get('shutdownCount', 0)}")
+            click.echo(f"  过期总数: {stats.get('expireCount', 0)}")
+            click.echo(f"    - 过期运行中: {stats.get('expireRunningCount', 0)}")
+            click.echo(f"    - 过期已关机: {stats.get('expireShutdownCount', 0)}")
+            click.echo(f"\n  资源统计:")
+            click.echo(f"  CPU总数: {stats.get('cpuCount', 0)} 核")
+            click.echo(f"  内存总量: {stats.get('memoryCount', 0)} GB")
                 
     except Exception as e:
         click.echo(f"运行出错: {e}", err=True)

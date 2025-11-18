@@ -1426,6 +1426,152 @@ class ECSClient:
                 'returnObj': None
             }
 
+    def get_volume_info(self, disk_id: str, region_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        云硬盘信息查询（基于磁盘ID）
+        
+        Args:
+            disk_id: 磁盘ID
+            region_id: 资源池ID，可选
+            
+        Returns:
+            云硬盘详细信息
+        """
+        logger.info(f"查询云硬盘信息: diskId={disk_id}, regionId={region_id}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/volume/show'
+            
+            query_params = {
+                'diskID': disk_id
+            }
+            
+            if region_id:
+                query_params['regionID'] = region_id
+            
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求头: {headers}")
+            logger.debug(f"查询参数: {query_params}")
+            
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云硬盘信息失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def list_backup_policy_instances(self, region_id: str, policy_id: str, instance_name: Optional[str] = None, page_no: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询云主机备份策略绑定云主机信息
+        
+        Args:
+            region_id: 资源池ID
+            policy_id: 云主机备份策略ID
+            instance_name: 云主机名称，模糊过滤，可选
+            page_no: 页码，默认1
+            page_size: 每页记录数，默认10，最大50
+            
+        Returns:
+            备份策略绑定的云主机列表
+        """
+        logger.info(f"查询备份策略绑定云主机: policyId={policy_id}, instanceName={instance_name}, pageNo={page_no}, pageSize={page_size}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/backup-policy/list-instances'
+            
+            query_params = {
+                'regionID': region_id,
+                'policyID': policy_id,
+                'pageNo': page_no,
+                'pageSize': page_size
+            }
+            
+            if instance_name:
+                query_params['instanceName'] = instance_name
+            
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求头: {headers}")
+            logger.debug(f"查询参数: {query_params}")
+            
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询备份策略绑定云主机失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
     def list_volumes(self, region_id: str, instance_id: str, page_no: int = 1, page_size: int = 10) -> Dict[str, Any]:
         """
         查询云主机的云硬盘列表
@@ -1938,6 +2084,140 @@ class ECSClient:
                 'returnObj': None
             }
 
+    def get_snapshot_status(self, region_id: str, snapshot_id: str) -> Dict[str, Any]:
+        """
+        查询云主机快照状态
+        
+        Args:
+            region_id: 资源池ID
+            snapshot_id: 云主机快照ID
+            
+        Returns:
+            快照状态信息
+        """
+        logger.info(f"查询云主机快照状态: regionId={region_id}, snapshotId={snapshot_id}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/snapshot/status'
+            
+            query_params = {
+                'regionID': region_id,
+                'snapshotID': snapshot_id
+            }
+            
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机快照状态失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def get_snapshot_count(self, region_id: str) -> Dict[str, Any]:
+        """
+        云主机快照个数统计
+        
+        Args:
+            region_id: 资源池ID
+            
+        Returns:
+            快照个数统计信息
+        """
+        logger.info(f"查询云主机快照个数统计: regionId={region_id}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/snapshot/count'
+            
+            query_params = {
+                'regionID': region_id
+            }
+            
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机快照个数统计失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
     def list_flavor_families(self, region_id: str, az_name: Optional[str] = None) -> Dict[str, Any]:
         """
         查询云主机规格族列表
@@ -2001,6 +2281,458 @@ class ECSClient:
             
         except Exception as e:
             logger.error(f"查询云主机规格族列表失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def query_flavor_available_regions(self, 
+                                      flavor_name_list: Optional[List[str]] = None,
+                                      flavor_family_list: Optional[List[str]] = None,
+                                      flavor_cpu_list: Optional[List[int]] = None,
+                                      flavor_ram_list: Optional[List[int]] = None,
+                                      local_disk_size_list: Optional[List[str]] = None,
+                                      gpu_config_list: Optional[List[str]] = None,
+                                      page_no: int = 1,
+                                      page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询云主机规格可售地域总览
+        
+        Args:
+            flavor_name_list: 云主机规格名称列表
+            flavor_family_list: 云主机规格族列表
+            flavor_cpu_list: 云主机规格vcpu个数列表
+            flavor_ram_list: 云主机规格内存大小列表
+            local_disk_size_list: 本地盘容量配置列表
+            gpu_config_list: GPU配置列表
+            page_no: 页码
+            page_size: 每页记录数（最大50）
+            
+        Returns:
+            规格可售地域信息
+        """
+        logger.info(f"查询云主机规格可售地域总览")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/flavor/available-region'
+            
+            # 构造查询参数
+            query_params = {
+                'pageNo': str(page_no),
+                'pageSize': str(page_size)
+            }
+            
+            if flavor_name_list:
+                query_params['flavorNameList'] = ','.join(flavor_name_list)
+            if flavor_family_list:
+                query_params['flavorFamilyList'] = ','.join(flavor_family_list)
+            if flavor_cpu_list:
+                query_params['flavorCPUList'] = ','.join(str(cpu) for cpu in flavor_cpu_list)
+            if flavor_ram_list:
+                query_params['flavorRAMList'] = ','.join(str(ram) for ram in flavor_ram_list)
+            if local_disk_size_list:
+                query_params['localDiskSizeList'] = ','.join(local_disk_size_list)
+            if gpu_config_list:
+                query_params['gpuConfigList'] = ','.join(gpu_config_list)
+            
+            # 使用EOP签名认证
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机规格可售地域总览失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def query_flavor_query_options(self) -> Dict[str, Any]:
+        """
+        查询云主机规格可售地域总览查询条件范围
+        
+        Returns:
+            查询条件范围信息
+        """
+        logger.info(f"查询云主机规格可售地域总览查询条件范围")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/flavor/query-options'
+            
+            # 使用EOP签名认证
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params={},
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.get(
+                url,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机规格可售地域总览查询条件范围失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def query_cold_resize_flavors(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """
+        查询云主机支持的冷变配规格信息
+        
+        Args:
+            region_id: 资源池ID
+            instance_id: 云主机ID
+            
+        Returns:
+            冷变配规格列表
+        """
+        logger.info(f"查询云主机支持的冷变配规格信息: regionId={region_id}, instanceId={instance_id}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/flavor/update-spec-list'
+            
+            # 构造请求体
+            body_data = {
+                'regionID': region_id,
+                'instanceID': instance_id
+            }
+            body = json.dumps(body_data)
+            
+            # 使用EOP签名认证
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params={},
+                body=body,
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机支持的冷变配规格信息失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def query_hot_resize_flavors(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """
+        查询云主机支持的热变配规格信息
+        
+        Args:
+            region_id: 资源池ID
+            instance_id: 云主机ID
+            
+        Returns:
+            热变配规格列表
+        """
+        logger.info(f"查询云主机支持的热变配规格信息: regionId={region_id}, instanceId={instance_id}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/flavor/live-resize-list'
+            
+            # 构造请求体
+            body_data = {
+                'regionID': region_id,
+                'instanceID': instance_id
+            }
+            body = json.dumps(body_data)
+            
+            # 使用EOP签名认证
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params={},
+                body=body,
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机支持的热变配规格信息失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机规格族列表失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def get_vnc_details(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """
+        查询云主机的WEB管理终端地址
+        
+        Args:
+            region_id: 资源池ID
+            instance_id: 云主机ID
+            
+        Returns:
+            VNC访问地址信息
+        """
+        logger.info(f"查询云主机的WEB管理终端地址: regionId={region_id}, instanceId={instance_id}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/vnc/details'
+            
+            query_params = {
+                'regionID': region_id,
+                'instanceID': instance_id
+            }
+            
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机的WEB管理终端地址失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def get_instance_statistics(self, region_id: str, project_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        查询用户云主机统计信息
+        
+        Args:
+            region_id: 资源池ID
+            project_id: 企业项目ID（可选）
+            
+        Returns:
+            云主机统计信息
+        """
+        logger.info(f"查询用户云主机统计信息: regionId={region_id}, projectId={project_id or '全部'}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/statistics-instance'
+            
+            query_params = {
+                'regionID': region_id
+            }
+            if project_id:
+                query_params['projectID'] = project_id
+            
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询用户云主机统计信息失败: {e}")
             import traceback
             logger.debug(traceback.format_exc())
             return {
