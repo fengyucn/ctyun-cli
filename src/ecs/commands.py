@@ -2359,3 +2359,101 @@ def get_instance_statistics(ctx, region_id: str, project_id: Optional[str], outp
         click.echo(f"运行出错: {e}", err=True)
         import traceback
         traceback.print_exc()
+
+
+@ecs.command('describe-instances')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page', default=1, type=int, help='页码，默认1')
+@click.option('--page-size', default=10, type=int, help='每页数量，默认10，最大50')
+@click.option('--az-name', help='可用区名称')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--state', help='云主机状态')
+@click.option('--keyword', help='关键字模糊查询')
+@click.option('--instance-name', help='云主机名称')
+@click.option('--instance-id-list', help='云主机ID列表')
+@click.option('--security-group-id', help='安全组ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def describe_instances(ctx, region_id, page, page_size, az_name, project_id,
+                       state, keyword, instance_name, instance_id_list,
+                       security_group_id, output):
+    """查询云主机详细信息（精简高效版）"""
+    try:
+        from ecs.client import ECSClient
+        from tabulate import tabulate
+        
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+        
+        result = ecs_client.describe_instances(
+            region_id=region_id, page_no=page, page_size=page_size,
+            az_name=az_name, project_id=project_id, state=state,
+            keyword=keyword, instance_name=instance_name,
+            instance_id_list=instance_id_list,
+            security_group_id=security_group_id
+        )
+        
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+        
+        return_obj = result.get('returnObj', {})
+        instances = return_obj.get('results', [])
+        
+        if output and output in ['json', 'yaml']:
+            format_output(instances, output)
+        else:
+            if instances:
+                table_data = []
+                headers = ['实例ID', '显示名称', '状态', '可用区', '私网IP', 'CPU/内存', '镜像']
+                
+                for inst in instances:
+                    addresses = inst.get('addresses', [])
+                    private_ip = ''
+                    if addresses:
+                        addr_list = addresses[0].get('addressList', [])
+                        for addr in addr_list:
+                            if addr.get('type') == 'fixed':
+                                private_ip = addr.get('addr', '')
+                                break
+                    
+                    flavor = inst.get('flavor', {})
+                    cpu = flavor.get('flavorCPU', 0)
+                    ram_mb = flavor.get('flavorRAM', 0)
+                    ram_gb = ram_mb / 1024 if ram_mb else 0
+                    cpu_ram = f"{cpu}C{ram_gb:.0f}G"
+                    
+                    image = inst.get('image', {})
+                    image_name = image.get('imageName', '')
+                    if len(image_name) > 20:
+                        image_name = image_name[:17] + '...'
+                    
+                    table_data.append([
+                        inst.get('instanceID', ''),
+                        inst.get('displayName', ''),
+                        inst.get('instanceStatus', ''),
+                        inst.get('azName', ''),
+                        private_ip,
+                        cpu_ram,
+                        image_name
+                    ])
+                
+                total_count = return_obj.get('totalCount', 0)
+                current_count = return_obj.get('currentCount', len(instances))
+                total_page = return_obj.get('totalPage', 1)
+                
+                click.echo(f"云主机详细信息 (总计: {total_count} 台, 当前页: {current_count} 台, 第{page}/{total_page}页)\n")
+                table = tabulate(table_data, headers=headers, tablefmt='grid')
+                click.echo(table)
+                
+                if page < total_page:
+                    click.echo(f"\n提示: 使用 --page 参数查看其他页")
+            else:
+                click.echo("未找到云主机实例")
+                
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+

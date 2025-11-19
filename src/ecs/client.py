@@ -2730,3 +2730,110 @@ class ECSClient:
                 'message': str(e),
                 'returnObj': None
             }
+
+    def describe_instances(self, region_id: str, page_no: int = 1, page_size: int = 10,
+                          az_name: Optional[str] = None,
+                          project_id: Optional[str] = None,
+                          state: Optional[str] = None,
+                          keyword: Optional[str] = None,
+                          instance_name: Optional[str] = None,
+                          instance_id_list: Optional[str] = None,
+                          security_group_id: Optional[str] = None,
+                          label_list: Optional[list] = None) -> Dict[str, Any]:
+        """
+        查询一台或多台云主机详细信息
+        
+        该接口相较于list-instances提供更精简的云主机信息，拥有更高的查找效率
+        
+        Args:
+            region_id: 资源池ID
+            page_no: 页码，默认1
+            page_size: 每页记录数，默认10，最大50
+            az_name: 可用区名称
+            project_id: 企业项目ID
+            state: 云主机状态（active/shutoff/expired/unsubscribed/freezing/shelve）
+            keyword: 关键字模糊查询（instanceName/displayName/instanceID/privateIP）
+            instance_name: 云主机名称（精确匹配）
+            instance_id_list: 云主机ID列表，多台使用英文逗号分割
+            security_group_id: 安全组ID（模糊匹配）
+            label_list: 标签信息列表 [{"labelKey": "key", "labelValue": "value"}]
+            
+        Returns:
+            云主机详细信息
+        """
+        logger.info(f"查询云主机详细信息: regionId={region_id}, pageNo={page_no}, pageSize={page_size}")
+        
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/describe-instances'
+            
+            body_data = {
+                'regionID': region_id,
+                'pageNo': page_no,
+                'pageSize': page_size
+            }
+            
+            if az_name:
+                body_data['azName'] = az_name
+            if project_id:
+                body_data['projectID'] = project_id
+            if state:
+                body_data['state'] = state
+            if keyword:
+                body_data['keyword'] = keyword
+            if instance_name:
+                body_data['instanceName'] = instance_name
+            if instance_id_list:
+                body_data['instanceIDList'] = instance_id_list
+            if security_group_id:
+                body_data['securityGroupID'] = security_group_id
+            if label_list:
+                body_data['labelList'] = label_list
+            
+            body = json.dumps(body_data)
+            
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params=None,
+                body=body,
+                extra_headers={}
+            )
+            
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+            logger.debug(f"请求头: {headers}")
+            
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+            
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+            
+            result = response.json()
+            
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"查询云主机详细信息失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }

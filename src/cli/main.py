@@ -1597,6 +1597,12 @@ cli.add_command(billing)
 from src.monitor.commands import monitor
 cli.add_command(monitor)
 
+from src.iam.commands import iam
+cli.add_command(iam)
+
+from src.ebs.commands import ebs
+cli.add_command(ebs)
+
 
 if __name__ == '__main__':
     cli()
