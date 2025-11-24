@@ -1603,6 +1603,9 @@ cli.add_command(iam)
 from src.ebs.commands import ebs
 cli.add_command(ebs)
 
+from src.redis.commands import redis_group
+cli.add_command(redis_group)
+
 
 if __name__ == '__main__':
     cli()
