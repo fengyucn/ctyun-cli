@@ -11,8 +11,8 @@ def read_long_description():
 
 setup(
     name="ctyun-cli",
-    version="1.2.1",
-    description="天翼云CLI工具 - 基于终端的云资源管理平台（支持ECS 27个查询API + 监控28个API）",
+    version="1.3.1",
+    description="天翼云CLI工具 - 基于终端的云资源管理平台（支持ECS、监控、Redis分布式缓存服务）",
     long_description=read_long_description(),
     long_description_content_type="text/markdown",
     author="Ctyun CLI Team",
@@ -54,7 +54,7 @@ setup(
         "Topic :: System :: Systems Administration",
         "Topic :: Utilities",
     ],
-    keywords="ctyun cloud cli management monitoring ecs query snapshot keypair volume backup affinity-group flavor resize vnc statistics",
+    keywords="ctyun cloud cli management monitoring ecs redis distributed-cache query snapshot keypair volume backup affinity-group flavor resize vnc statistics",
     project_urls={
         "Documentation": "https://github.com/fengyucn/ctyun-cli",
         "Source": "https://github.com/fengyucn/ctyun-cli",
