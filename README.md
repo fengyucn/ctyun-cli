@@ -1,20 +1,25 @@
-# 天翼云 CLI 工具
+# 天翼云 CLI 工具 🚀
 
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![API Count](https://img.shields.io/badge/APIs-156+-brightgreen.svg)](#api统计)
+[![Commands](https://img.shields.io/badge/Commands-136+-orange.svg)](#功能概览)
 
-一款不太强大不太完整的天翼云命令行工具，帮助您在终端中轻松管理云资源。支持云服务器、监控告警、安全防护、费用查询等核心功能。
+**天翼云CLI工具** 是一款功能强大的企业级命令行工具，帮助您在终端中轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存服务、费用查询等核心功能。
+
+**📊 规模统计：15,000+行代码，156+个API，136+个命令**
 
 简体中文 | [English](README_EN.md)
 
 ## ✨ 为什么选择天翼云 CLI？
 
-- 🚀 **高效便捷** - 控制台太丑、API太烂，CLI没有，只好自己写个CLI，一行命令完成云资源查询和管理，告别繁琐的控制台操作
-- 🔐 **安全可靠** - 采用企业级 EOP 签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 涵盖 70+ 个 API，管理云服务器、监控告警、安全防护、费用账单
+- 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
+- 🔐 **安全可靠** - 采用企业级EOP签名认证，支持环境变量配置保护密钥安全
+- 📊 **功能全面** - 覆盖156+个API，支持7大核心服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
+- 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
 
 ## 📦 快速安装
 
@@ -63,126 +68,139 @@ ctyun-cli ecs list
 ctyun-cli billing balance
 ```
 
-## 🎯 核心功能
+## 📊 API统计
 
-### 🖥️ 云服务器管理（ECS）
+### 🎯 功能概览
 
-管理您的云服务器实例，包括查询、监控、快照、备份等完整功能。
+| 服务模块 | 命令数量 | API数量 | 功能描述 |
+|---------|---------|---------|----------|
+| **ECS (云服务器)** | 50 | 42 | 实例管理、快照备份、密钥对、云主机组等 |
+| **Monitor (监控服务)** | 54 | 54 | 监控数据、告警管理、Top-N统计、事件管理 |
+| **Redis (分布式缓存)** | 12 | 16 | 实例管理、性能监控、网络配置等 |
+| **Billing (计费查询)** | 12 | 20 | 账单查询、费用分析、消费统计 |
+| **Security (安全卫士)** | 5 | 21 | 安全扫描、漏洞管理、风险评估 |
+| **IAM (身份访问管理)** | 2 | 2 | 项目管理、权限控制 |
+| **EBS (弹性块存储)** | 1 | 1 | 块存储管理 |
+| **总计** | **136** | **156** | **覆盖天翼云核心服务** |
 
+### 📈 模块详情
+
+#### 🖥️ ECS模块 - 云服务器管理 (50命令/42API)
+**核心功能：**
+- 实例生命周期管理
+- 快照和备份策略
+- 密钥对和安全组
+- 云主机组管理
+- 自动续订配置
+- DNS记录管理
+
+**常用命令：**
 ```bash
-# 查看所有云服务器实例
-ctyun-cli ecs list
-
-# 查询资源池信息
-ctyun-cli ecs regions
-
-# 查询云服务器自动续订配置
-ctyun-cli ecs get-auto-renew-config --region-id cn-north-1 --instance-id i-xxxxx
-
-# 查询快照列表
-ctyun-cli ecs list-snapshots --region-id cn-north-1
-
-# 查询云硬盘统计信息
-ctyun-cli ecs get-volume-statistics --region-id cn-north-1
-
-# 查询密钥对列表
-ctyun-cli ecs list-keypairs --region-id cn-north-1
-
-# 查询备份策略
-ctyun-cli ecs list-backup-policies --region-id cn-north-1
-
-# 查询云主机组列表
-ctyun-cli ecs list-affinity-groups --region-id cn-north-1
+ctyun-cli ecs list                              # 查看实例列表
+ctyun-cli ecs get-instance-detail             # 获取实例详情
+ctyun-cli ecs list-snapshots                   # 查询快照列表
+ctyun-cli ecs list-keypairs                    # 查询密钥对
+ctyun-cli ecs get-auto-renew-config           # 查询自动续订配置
 ```
 
-**支持的功能清单：**
-- ✅ 实例查询与状态管理
-- ✅ 资源池与可用区查询
-- ✅ 快照管理（列表、详情）
-- ✅ 云硬盘管理与统计
-- ✅ 密钥对管理
-- ✅ 备份策略与状态查询
-- ✅ DNS 记录查询
-- ✅ 云主机组管理
-- ✅ 异步任务查询
-- ✅ 自动续订配置
+#### 📊 Monitor模块 - 监控告警服务 (54命令/54API)
+**核心功能：**
+- 监控指标查询 (8个API)
+- Top-N统计排行 (6个API)
+- 告警规则管理 (7个API)
+- 通知管理 (4个API)
+- 巡检功能 (5个API)
+- 事件历史查询 (24个API)
 
-### 📊 监控与告警
-
-实时监控云资源运行状态，设置告警规则，及时发现问题。
-
+**常用命令：**
 ```bash
-# 查询监控数据（CPU使用率）
-ctyun-cli monitor query-data --region-id cn-north-1 --metric CPUUtilization
-
-# 查询告警历史
-ctyun-cli monitor query-alert-history --region-id cn-north-1
-
-# 查询告警规则
-ctyun-cli monitor query-alarm-rules --region-id cn-north-1 --service ctecs
-
-# 查询 CPU 使用率 Top 10
-ctyun-cli monitor query-cpu-top --region-id cn-north-1 --top-n 10
-
-# 查询内存使用率 Top 10
-ctyun-cli monitor query-mem-top --region-id cn-north-1 --top-n 10
-
-# 查询巡检任务总览
-ctyun-cli monitor query-inspection-task-overview --region-id cn-north-1
+ctyun-cli monitor query-metric-data            # 查询监控数据
+ctyun-cli monitor query-cpu-top               # CPU使用率Top-N
+ctyun-cli monitor query-mem-top               # 内存使用率Top-N
+ctyun-cli monitor query-alarm-rules           # 查询告警规则
+ctyun-cli monitor query-inspection-tasks      # 查询巡检任务
 ```
 
-**监控功能模块：**
-- 📈 **指标查询**（8个API）- 监控数据、指标列表、告警历史、事件历史
-- 🔝 **Top-N 查询**（6个API）- CPU、内存、维度、资源、指标、事件排行
-- 🚨 **告警管理**（7个API）- 告警规则、联系人、联系人组、黑名单
-- 📋 **通知管理**（4个API）- 通知模板、模板变量、通知记录
-- 🔍 **巡检功能**（5个API）- 巡检任务、巡检项、巡检历史
+#### 🗄️ Redis模块 - 分布式缓存服务 (12命令/16API)
+**核心功能：**
+- Redis实例管理
+- 性能监控和诊断
+- 网络配置管理
+- 备份和恢复
 
-详细使用说明请参考 → [监控服务完整文档](MONITOR_USAGE.md)
-
-### 🛡️ 安全防护
-
-查看安全防护状态，管理漏洞扫描和安全策略。
-
+**常用命令：**
 ```bash
-# 查看安全客户端列表
-ctyun-cli security agents
-
-# 查询安全扫描结果
-ctyun-cli security scan-result
-
-# 查询特定客户端的漏洞列表
-ctyun-cli security vuln-list <agent_guid>
+ctyun-cli redis list-instances                 # 查看Redis实例
+ctyun-cli redis get-instance-metrics         # 获取实例指标
+ctyun-cli redis create-backup                # 创建备份
+ctyun-cli redis list-network-configs         # 查看网络配置
 ```
 
-### 💰 费用管理
+#### 💰 Billing模块 - 计费管理 (12命令/20API)
+**核心功能：**
+- 账户余额查询
+- 月度账单统计
+- 消费明细分析
+- 预算管理
 
-随时掌握云资源费用情况，查询账单和消费明细。
-
+**常用命令：**
 ```bash
-# 查询账户余额
-ctyun-cli billing balance
-
-# 查询月度账单
-ctyun-cli billing bills --month 202411
-
-# 查询消费明细
-ctyun-cli billing details --start-date 2024-11-01 --end-date 2024-11-30
+ctyun-cli billing balance                      # 查询账户余额
+ctyun-cli billing bills                        # 查询月度账单
+ctyun-cli billing details                      # 查询消费明细
+ctyun-cli billing consumption-statistics     # 消费统计分析
 ```
 
-## 🔧 高级配置
+#### 🛡️ Security模块 - 安全卫士 (5命令/21API)
+**核心功能：**
+- 安全客户端管理
+- 漏洞扫描和评估
+- 安全策略配置
+- 风险分析报告
 
-### 配置文件位置
+**常用命令：**
+```bash
+ctyun-cli security agents                      # 查看安全客户端
+ctyun-cli security scan-result                # 查询扫描结果
+ctyun-cli security vuln-list                  # 查看漏洞列表
+ctyun-cli security security-risks             # 查看安全风险
+```
 
-配置文件默认保存在 `~/.ctyun/config`，采用 INI 格式：
+#### 👤 IAM模块 - 身份访问管理 (2命令/2API)
+**核心功能：**
+- 项目管理
+- 用户权限控制
 
-```ini
-[default]
-access_key = YOUR_ACCESS_KEY
-secret_key = YOUR_SECRET_KEY
-region = cn-north-1
-endpoint = https://api.ctyun.cn
-output_format = table
+**常用命令：**
+```bash
+ctyun-cli iam list-projects                    # 查看项目列表
+ctyun-cli iam get-project-detail             # 获取项目详情
+```
+
+#### 💾 EBS模块 - 弹性块存储 (1命令/1API)
+**核心功能：**
+- 云硬盘管理
+
+**常用命令：**
+```bash
+ctyun-cli ebs list-disks                       # 查看云硬盘列表
+```
+
+## 🔧 高级功能
+
+### 多种输出格式
+
+支持三种输出格式，满足不同场景需求：
+
+```bash
+# 表格格式（默认，适合阅读）
+ctyun-cli ecs list --output table
+
+# JSON格式（适合程序处理）
+ctyun-cli ecs list --output json
+
+# YAML格式（适合配置管理）
+ctyun-cli ecs list --output yaml
 ```
 
 ### 多环境配置
@@ -200,21 +218,6 @@ ctyun-cli configure --profile testing
 ctyun-cli --profile production ecs list
 ```
 
-### 输出格式
-
-支持三种输出格式，满足不同场景需求：
-
-```bash
-# 表格格式（默认，适合阅读）
-ctyun-cli ecs list --output table
-
-# JSON 格式（适合程序处理）
-ctyun-cli ecs list --output json
-
-# YAML 格式（适合配置管理）
-ctyun-cli ecs list --output yaml
-```
-
 ### 调试模式
 
 遇到问题时，启用调试模式查看详细信息：
@@ -223,26 +226,43 @@ ctyun-cli ecs list --output yaml
 ctyun-cli --debug security scan-result
 ```
 
+### 管道操作
+
+支持与其他命令组合使用：
+
+```bash
+# 将结果保存到文件
+ctyun-cli ecs list --output json > instances.json
+
+# 统计实例数量
+ctyun-cli ecs list --output json | jq '. | length'
+
+# 过滤特定状态的实例
+ctyun-cli ecs list --output json | jq '.[] | select(.status == "running")'
+```
+
 ## 📚 完整文档
 
-- [使用指南](docs/usage.md) - 详细的使用说明和最佳实践
-- [监控服务文档](MONITOR_USAGE.md) - 28个监控API完整使用指南
-- [项目概述](docs/overview.md) - 架构设计和技术说明
-- [安全指南](docs/security-guide.md) - 安全配置和最佳实践
+- **[使用指南](docs/usage.md)** - 详细的使用说明和最佳实践
+- **[监控服务完整文档](MONITOR_USAGE.md)** - 54个监控API完整使用指南
+- **[Redis服务文档](REDIS_CLI_USAGE.md)** - Redis分布式缓存服务使用指南
+- **[IAM服务文档](IAM_USAGE.md)** - 身份访问管理服务使用指南
+- **[项目概述](docs/overview.md)** - 架构设计和技术说明
+- **[安全指南](docs/security-guide.md)** - 安全配置和最佳实践
 
 ## 🤝 技术支持
 
 如果您在使用过程中遇到问题或有任何建议，欢迎：
 
 - 📧 发送邮件至技术支持团队
-- 💬 提交 Issue 反馈问题
+- 💬 提交 Issue 反馈问题：https://github.com/fengyucn/ctyun-cli/issues
 - 📖 查看完整文档获取帮助
 
 ## 📋 系统要求
 
 - Python 3.8 或更高版本
 - 稳定的网络连接
-- 天翼云账号和 Access Key
+- 天翼云账号和有效的 Access Key
 
 ## 🔐 安全提示
 
@@ -253,18 +273,24 @@ ctyun-cli --debug security scan-result
 
 ## 📝 版本信息
 
-**当前版本：** 1.1.0
+**当前版本：** 1.3.3
 
-**更新内容：**
-- ✨ 新增 19 个 ECS 查询类 API
-- ✨ 完整的监控服务支持（28个API）
-- 🔧 优化认证机制，支持 EOP 签名
-- 🐛 修复若干已知问题
+**更新历史：**
+- ✨ 新增 Redis 分布式缓存服务支持 (12命令/16API)
+- ✨ 完整的监控服务支持 (54个API)
+- ✨ 新增 IAM 和 EBS 服务模块
+- ✨ 优化认证机制，支持 EOP 签名
+- 🔧 完善项目文档和使用指南
+- 🐛 修复若干已知问题和性能优化
 
 ## 📜 开源协议
 
 本项目采用 MIT 协议开源，欢迎使用和贡献。
 
+**作者：Y.FENG | 邮箱：popfrog@gmail.com**
+
 ---
 
-**开始使用天翼云 CLI，让云资源管理更简单！** 🚀
+**🚀 让天翼云资源管理更简单！立即安装体验！**
+
+**安装命令：** `pip install ctyun-cli`

@@ -1,10 +1,14 @@
-# CTYun CLI Tool
+# CTYun CLI Tool 🚀
 
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![API Count](https://img.shields.io/badge/APIs-156+-brightgreen.svg)](#api-statistics)
+[![Commands](https://img.shields.io/badge/Commands-136+-orange.svg)](#feature-overview)
 
-A powerful command-line tool for China Telecom Cloud (CTYun), enabling easy cloud resource management from your terminal. Supports ECS, monitoring & alerting, security protection, billing queries, and more.
+**CTYun CLI Tool** is a powerful enterprise-grade command-line tool for China Telecom Cloud (CTYun), enabling easy cloud resource management from your terminal. Supports ECS, monitoring & alerting, security protection, Redis distributed cache service, billing queries, and more.
+
+**📊 Scale Statistics: 15,000+ lines of code, 156+ APIs, 136+ commands**
 
 [简体中文](README.md) | English
 
@@ -12,9 +16,10 @@ A powerful command-line tool for China Telecom Cloud (CTYun), enabling easy clou
 
 - 🚀 **Efficient & Convenient** - Manage cloud resources with a single command, say goodbye to tedious console operations
 - 🔐 **Secure & Reliable** - Enterprise-grade EOP signature authentication with environment variable support for credential protection
-- 📊 **Feature-Rich** - 70+ APIs covering ECS, monitoring, security, and billing management
+- 📊 **Feature-Rich** - Covering 156+ APIs across 7 core service modules
 - 🎯 **Easy to Use** - Clear command structure with rich examples, get started in 5 minutes
 - 🔧 **Flexible Configuration** - Support for config files, environment variables, and multiple profiles
+- 📈 **Real-time Monitoring** - Complete monitoring service support including metrics queries, alert management, and Top-N statistics
 
 ## 📦 Quick Installation
 
@@ -53,141 +58,154 @@ ctyun-cli configure
 # View all available commands
 ctyun-cli --help
 
-# Check current configuration
+# Show current configuration
 ctyun-cli show-config
 
-# List ECS instances
+# List cloud server instances
 ctyun-cli ecs list
 
-# Query account balance
+# Check account balance
 ctyun-cli billing balance
 ```
 
-## 🎯 Core Features
+## 📊 API Statistics
 
-### 🖥️ ECS Management
+### 🎯 Feature Overview
 
-Manage your cloud server instances with complete functionality including queries, monitoring, snapshots, and backups.
+| Service Module | Commands | APIs | Description |
+|----------------|----------|------|-------------|
+| **ECS (Elastic Cloud Server)** | 50 | 42 | Instance management, snapshots, keypairs, affinity groups |
+| **Monitor (Monitoring Service)** | 54 | 54 | Monitoring metrics, alert management, Top-N statistics, events |
+| **Redis (Distributed Cache)** | 12 | 16 | Instance management, performance monitoring, network config |
+| **Billing (Billing Query)** | 12 | 20 | Account balance, monthly bills, consumption analysis |
+| **Security (Security Guard)** | 5 | 21 | Security scanning, vulnerability management, risk assessment |
+| **IAM (Identity Access Management)** | 2 | 2 | Project management, permission control |
+| **EBS (Elastic Block Storage)** | 1 | 1 | Block storage management |
+| **Total** | **136** | **156** | **Covering CTYun Core Services** |
 
+### 📈 Module Details
+
+#### 🖥️ ECS Module - Cloud Server Management (50 Commands/42 APIs)
+**Core Features:**
+- Instance lifecycle management
+- Snapshot and backup policies
+- Keypairs and security groups
+- Affinity group management
+- Auto-renewal configuration
+- DNS record management
+
+**Common Commands:**
 ```bash
-# List all ECS instances
-ctyun-cli ecs list
-
-# Query region information
-ctyun-cli ecs regions
-
-# Query auto-renewal configuration
-ctyun-cli ecs get-auto-renew-config --region-id cn-north-1 --instance-id i-xxxxx
-
-# List snapshots
-ctyun-cli ecs list-snapshots --region-id cn-north-1
-
-# Query volume statistics
-ctyun-cli ecs get-volume-statistics --region-id cn-north-1
-
-# List keypairs
-ctyun-cli ecs list-keypairs --region-id cn-north-1
-
-# List backup policies
-ctyun-cli ecs list-backup-policies --region-id cn-north-1
-
-# List affinity groups
-ctyun-cli ecs list-affinity-groups --region-id cn-north-1
+ctyun-cli ecs list                              # List instances
+ctyun-cli ecs get-instance-detail             # Get instance details
+ctyun-cli ecs list-snapshots                   # List snapshots
+ctyun-cli ecs list-keypairs                    # List keypairs
+ctyun-cli ecs get-auto-renew-config           # Get auto-renewal config
 ```
 
-**Supported Features:**
-- ✅ Instance query & status management
-- ✅ Region & availability zone queries
-- ✅ Snapshot management (list, details)
-- ✅ Volume management & statistics
-- ✅ Keypair management
-- ✅ Backup policy & status queries
-- ✅ DNS record queries
-- ✅ Affinity group management
-- ✅ Async task queries
-- ✅ Auto-renewal configuration
+#### 📊 Monitor Module - Monitoring & Alerting Service (54 Commands/54 APIs)
+**Core Features:**
+- Monitoring metrics queries (8 APIs)
+- Top-N statistics ranking (6 APIs)
+- Alert rule management (7 APIs)
+- Notification management (4 APIs)
+- Inspection features (5 APIs)
+- Event history queries (24 APIs)
 
-### 📊 Monitoring & Alerting
-
-Real-time monitoring of cloud resource status, set alert rules, and detect issues promptly.
-
+**Common Commands:**
 ```bash
-# Query monitoring data (CPU utilization)
-ctyun-cli monitor query-data --region-id cn-north-1 --metric CPUUtilization
-
-# Query alert history
-ctyun-cli monitor query-alert-history --region-id cn-north-1
-
-# Query alarm rules
-ctyun-cli monitor query-alarm-rules --region-id cn-north-1 --service ctecs
-
-# Query Top 10 CPU usage
-ctyun-cli monitor query-cpu-top --region-id cn-north-1 --top-n 10
-
-# Query Top 10 memory usage
-ctyun-cli monitor query-mem-top --region-id cn-north-1 --top-n 10
-
-# Query inspection task overview
-ctyun-cli monitor query-inspection-task-overview --region-id cn-north-1
+ctyun-cli monitor query-metric-data            # Query monitoring data
+ctyun-cli monitor query-cpu-top               # CPU usage Top-N
+ctyun-cli monitor query-mem-top               # Memory usage Top-N
+ctyun-cli monitor query-alarm-rules           # Query alert rules
+ctyun-cli monitor query-inspection-tasks      # Query inspection tasks
 ```
 
-**Monitoring Modules:**
-- 📈 **Metric Queries** (8 APIs) - Monitoring data, metric lists, alert history, event history
-- 🔝 **Top-N Queries** (6 APIs) - Top rankings for CPU, memory, dimensions, resources, metrics, events
-- 🚨 **Alert Management** (7 APIs) - Alarm rules, contacts, contact groups, blacklist
-- 📋 **Notification Management** (4 APIs) - Notification templates, template variables, notification records
-- 🔍 **Inspection** (5 APIs) - Inspection tasks, items, and history
+#### 🗄️ Redis Module - Distributed Cache Service (12 Commands/16 APIs)
+**Core Features:**
+- Redis instance management
+- Performance monitoring and diagnostics
+- Network configuration management
+- Backup and recovery
 
-For detailed usage → [Complete Monitoring Documentation](MONITOR_USAGE.md)
-
-### 🛡️ Security Protection
-
-View security protection status, manage vulnerability scanning and security policies.
-
+**Common Commands:**
 ```bash
-# List security agents
-ctyun-cli security agents
-
-# Query scan results
-ctyun-cli security scan-result
-
-# Query vulnerability list for specific agent
-ctyun-cli security vuln-list <agent_guid>
+ctyun-cli redis list-instances                 # List Redis instances
+ctyun-cli redis get-instance-metrics         # Get instance metrics
+ctyun-cli redis create-backup                # Create backup
+ctyun-cli redis list-network-configs         # List network configurations
 ```
 
-### 💰 Billing Management
+#### 💰 Billing Module - Billing Management (12 Commands/20 APIs)
+**Core Features:**
+- Account balance queries
+- Monthly bill statistics
+- Consumption detail analysis
+- Budget management
 
-Stay on top of cloud resource costs with billing and consumption details.
-
+**Common Commands:**
 ```bash
-# Query account balance
-ctyun-cli billing balance
-
-# Query monthly bills
-ctyun-cli billing bills --month 202411
-
-# Query consumption details
-ctyun-cli billing details --start-date 2024-11-01 --end-date 2024-11-30
+ctyun-cli billing balance                      # Check account balance
+ctyun-cli billing bills                        # View monthly bills
+ctyun-cli billing details                      # View consumption details
+ctyun-cli billing consumption-statistics     # Consumption statistics analysis
 ```
 
-## 🔧 Advanced Configuration
+#### 🛡️ Security Module - Security Guard (5 Commands/21 APIs)
+**Core Features:**
+- Security client management
+- Vulnerability scanning and assessment
+- Security policy configuration
+- Risk analysis reports
 
-### Configuration File Location
+**Common Commands:**
+```bash
+ctyun-cli security agents                      # List security clients
+ctyun-cli security scan-result                # View scan results
+ctyun-cli security vuln-list                  # List vulnerabilities
+ctyun-cli security security-risks             # View security risks
+```
 
-The configuration file is stored at `~/.ctyun/config` in INI format:
+#### 👤 IAM Module - Identity Access Management (2 Commands/2 APIs)
+**Core Features:**
+- Project management
+- User permission control
 
-```ini
-[default]
-access_key = YOUR_ACCESS_KEY
-secret_key = YOUR_SECRET_KEY
-region = cn-north-1
-endpoint = https://api.ctyun.cn
-output_format = table
+**Common Commands:**
+```bash
+ctyun-cli iam list-projects                    # List projects
+ctyun-cli iam get-project-detail             # Get project details
+```
+
+#### 💾 EBS Module - Elastic Block Storage (1 Command/1 API)
+**Core Features:**
+- Block storage management
+
+**Common Commands:**
+```bash
+ctyun-cli ebs list-disks                       # List block storage volumes
+```
+
+## 🔧 Advanced Features
+
+### Multiple Output Formats
+
+Support for three output formats for different scenarios:
+
+```bash
+# Table format (default, human-readable)
+ctyun-cli ecs list --output table
+
+# JSON format (program-friendly)
+ctyun-cli ecs list --output json
+
+# YAML format (configuration management)
+ctyun-cli ecs list --output yaml
 ```
 
 ### Multi-Environment Configuration
 
-Support for multiple profiles to easily switch between different accounts:
+Support for multiple profiles for easy switching between different accounts:
 
 ```bash
 # Configure production environment
@@ -200,71 +218,79 @@ ctyun-cli configure --profile testing
 ctyun-cli --profile production ecs list
 ```
 
-### Output Formats
-
-Three output formats to meet different scenarios:
-
-```bash
-# Table format (default, human-readable)
-ctyun-cli ecs list --output table
-
-# JSON format (suitable for programmatic processing)
-ctyun-cli ecs list --output json
-
-# YAML format (suitable for configuration management)
-ctyun-cli ecs list --output yaml
-```
-
 ### Debug Mode
 
-Enable debug mode for detailed information when troubleshooting:
+Enable debug mode for detailed troubleshooting information:
 
 ```bash
 ctyun-cli --debug security scan-result
 ```
 
-## 📚 Complete Documentation
+### Pipeline Operations
 
-- [Usage Guide](docs/usage.md) - Detailed instructions and best practices
-- [Monitoring Service Documentation](MONITOR_USAGE.md) - Complete guide for 28 monitoring APIs
-- [Project Overview](docs/overview.md) - Architecture design and technical details
-- [Security Guide](docs/security-guide.md) - Security configuration and best practices
+Support for combining with other commands:
 
-## 🤝 Technical Support
+```bash
+# Save results to file
+ctyun-cli ecs list --output json > instances.json
+
+# Count instances
+ctyun-cli ecs list --output json | jq '. | length'
+
+# Filter specific status instances
+ctyun-cli ecs list --output json | jq '.[] | select(.status == "running")'
+```
+
+## 📚 Documentation
+
+- **[Usage Guide](docs/usage.md)** - Detailed usage instructions and best practices
+- **[Monitoring Service Documentation](MONITOR_USAGE.md)** - Complete guide for 54 monitoring APIs
+- **[Redis Service Documentation](REDIS_CLI_USAGE.md)** - Redis distributed cache service usage guide
+- **[IAM Service Documentation](IAM_USAGE.md)** - Identity access management service guide
+- **[Project Overview](docs/overview.md)** - Architecture design and technical specifications
+- **[Security Guide](docs/security-guide.md)** - Security configuration and best practices
+
+## 🤝 Support
 
 If you encounter issues or have suggestions:
 
-- 📧 Contact our technical support team
-- 💬 Submit an Issue for feedback
+- 📧 Email the technical support team
+- 💬 Submit an Issue: https://github.com/fengyucn/ctyun-cli/issues
 - 📖 Check the complete documentation for help
 
 ## 📋 System Requirements
 
 - Python 3.8 or higher
-- Stable network connection
-- CTYun account with Access Key
+- Stable internet connection
+- CTYun account and valid Access Key
 
 ## 🔐 Security Tips
 
-- ⚠️ Never hardcode Access Key and Secret Key in your code
-- ✅ Use environment variables for credential configuration (recommended)
+- ⚠️ Avoid hardcoding Access Keys and Secret Keys in your code
+- ✅ Use environment variables for credential configuration
 - ✅ Rotate your access keys regularly
 - ✅ Create different access keys for different purposes
 
 ## 📝 Version Information
 
-**Current Version:** 1.1.0
+**Current Version:** 1.3.3
 
-**Updates:**
-- ✨ Added 19 ECS query APIs
-- ✨ Complete monitoring service support (28 APIs)
-- 🔧 Optimized authentication mechanism with EOP signature support
-- 🐛 Fixed several known issues
+**Update History:**
+- ✨ Added Redis distributed cache service support (12 commands/16 APIs)
+- ✨ Complete monitoring service support (54 APIs)
+- ✨ Added IAM and EBS service modules
+- ✨ Optimized authentication mechanism with EOP signature support
+- 🔧 Improved project documentation and usage guides
+- 🐛 Fixed known issues and performance optimizations
 
-## 📜 License
+## 📜 Open Source License
 
-This project is licensed under the MIT License. Contributions are welcome.
+This project is licensed under the MIT License and welcomes usage and contributions.
+
+**Author: Y.FENG | Email: popfrog@gmail.com**
 
 ---
 
-**Get started with CTYun CLI and make cloud resource management easier!** 🚀
+**🚀 Making CTYun resource management simpler! Install and try it now!**
+
+**Installation Command:** `pip install ctyun-cli`
