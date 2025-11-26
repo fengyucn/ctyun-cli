@@ -8,7 +8,7 @@ import json
 import sys
 from typing import Optional
 
-from .client import RedisClient
+from redis import RedisClient
 
 
 def validate_credentials(func):
@@ -58,7 +58,7 @@ def get_zones(ctx, region_id: str, output_format: str, timeout: int):
         ctyun redis zones --region-id 200000001852 --format json
         ctyun redis zones -r 200000001852 -f summary -t 60
     """
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
     redis_client = RedisClient(client)
@@ -99,7 +99,7 @@ def get_zones_multi(ctx, regions: Optional[str], output_format: str, timeout: in
         ctyun redis zones-multi -R 200000001852 -f json
     """
     # 获取凭证（validate_credentials装饰器已验证）
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -281,7 +281,7 @@ def list_instances(ctx, region_id: str, name: str, page: int, size: int, output_
         ctyun redis list --page 2 --size 10       # 第2页，每页10条
         ctyun redis list -f json                   # JSON格式输出
     """
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
     redis_client = RedisClient(client)
@@ -399,7 +399,7 @@ def describe_instance(ctx, instance_id: str, output_format: str, timeout: int):
         ctyun redis describe -i xxx -f table -t 60
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
     redis_client = RedisClient(client)
@@ -440,7 +440,7 @@ def describe_config(ctx, instance_id: str, param_name: str, output_format: str, 
         ctyun redis config -i xxx -f json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -482,7 +482,7 @@ def describe_monitor_items(ctx, instance_id: str, output_format: str, timeout: i
         ctyun redis monitor-items -i xxx -f json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -532,7 +532,7 @@ def describe_monitor_history(ctx, instance_id: str, metric: str, start_time: str
         ctyun redis monitor-history -i xxx -m memory_fragmentation --format json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -600,7 +600,7 @@ def diagnose_instance(ctx, instance_id: str, node_name: str, wait: bool, wait_ti
         ctyun redis diagnose -i xxx --wait --format json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -674,7 +674,7 @@ def query_diagnosis_report(ctx, instance_id: str, task_id: str, output_format: s
         ctyun redis diagnosis-report -i xxx -t xxx --format json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -718,7 +718,7 @@ def get_clients(ctx, instance_id: str, node_id: str, output_format: str, timeout
         ctyun redis clients -i xxx --format json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -760,7 +760,7 @@ def describe_version(ctx, instance_id: str, output_format: str, timeout: int):
         ctyun redis version -i xxx --format json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 
@@ -801,7 +801,7 @@ def describe_network(ctx, instance_id: str, output_format: str, timeout: int):
         ctyun redis network -i xxx --format json
     """
     # 获取凭证
-    from redis.client import RedisClient
+    from redis import RedisClient
 
     client = ctx.obj['client']
 

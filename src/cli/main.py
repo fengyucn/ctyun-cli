@@ -6,7 +6,7 @@ import click
 import sys
 from typing import Optional
 
-from client import CTYUNClient, CTYUNAPIError
+from core import CTYUNClient, CTYUNAPIError
 from config.settings import config
 from utils.helpers import OutputFormatter, logger
 # 移除循环导入，稍后动态添加

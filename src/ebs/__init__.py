@@ -4,7 +4,7 @@
 
 from typing import Dict, Any, Optional
 import json
-from client import CTYUNClient
+from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
 from utils.helpers import logger
 
@@ -21,7 +21,7 @@ class EBSClient:
         """
         self.client = client
         self.service = 'ebs'
-        self.base_endpoint = 'ctecs-global.ctapi.ctyun.cn'
+        self.base_endpoint = 'ebs-global.ctapi.ctyun.cn'
         self.eop_auth = CTYUNEOPAuth(client.access_key, client.secret_key)
 
     def list_ebs(self, region_id: str, page_no: int = 1, page_size: int = 10,

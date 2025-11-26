@@ -6,8 +6,8 @@ __version__ = "1.0.0"
 __author__ = "Your Name"
 __email__ = "your.email@example.com"
 
-from .client import CTYUNClient, CTYUNAPIError
-from .config.settings import ConfigManager, config
+from core import CTYUNClient, CTYUNAPIError
+from config.settings import ConfigManager, config
 
 __all__ = [
     'CTYUNClient',
@@ -18,5 +18,5 @@ __all__ = [
 
 def main():
     """CLI主入口函数"""
-    from .cli.main import cli
+    from cli.main import cli
     cli()

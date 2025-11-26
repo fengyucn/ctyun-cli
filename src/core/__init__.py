@@ -11,7 +11,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from auth.signature import CTYUNAuth
-from config.settings import config
+from config import config
 from utils.helpers import logger
 
 

@@ -6,9 +6,9 @@
 from typing import Dict, Any, List, Optional, Union
 import json
 from datetime import datetime, timedelta
-from client import CTYUNClient
+from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
-from utils.helpers import logger
+from utils import logger
 
 
 class MonitorClient:

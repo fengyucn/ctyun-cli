@@ -5,9 +5,9 @@
 
 from typing import Dict, Any, List, Optional
 import json
-from client import CTYUNClient
+from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
-from utils.helpers import logger
+from utils import logger
 
 
 class BillingClient:
@@ -45,7 +45,7 @@ class BillingClient:
                 query_params=None,
                 body=body,
                 extra_headers={
-                    'regionid': '100054c0416811e9a6690242ac110002',
+                    'regionid': '200000001852',
                     'urlType': 'CTAPI'
                 }
             )
@@ -543,7 +543,7 @@ class BillingClient:
                 query_params=None,
                 body=body,
                 extra_headers={
-                    'regionid': '100054c0416811e9a6690242ac110002',
+                    'regionid': '200000001852',
                     'urlType': 'CTAPI'
                 }
             )
@@ -601,7 +601,7 @@ class BillingClient:
                 query_params=None,
                 body=body,
                 extra_headers={
-                    'regionid': '100054c0416811e9a6690242ac110002',
+                    'regionid': '200000001852',
                     'urlType': 'CTAPI'
                 }
             )

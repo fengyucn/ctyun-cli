@@ -1,6 +1,6 @@
 """云服务器(ECS)管理模块"""
 
-from .client import ECSClient
-from .commands import ecs
+from ecs.client import ECSClient
+from ecs.commands import ecs
 
 __all__ = ['ECSClient', 'ecs']
