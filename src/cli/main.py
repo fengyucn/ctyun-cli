@@ -6,9 +6,9 @@ import click
 import sys
 from typing import Optional
 
-from src.client import CTYUNClient, CTYUNAPIError
-from src.config.settings import config
-from src.utils.helpers import OutputFormatter, logger
+from client import CTYUNClient, CTYUNAPIError
+from config.settings import config
+from utils.helpers import OutputFormatter, logger
 # 移除循环导入，稍后动态添加
 
 
@@ -1591,19 +1591,19 @@ def format_output(data, output_format='table'):
             click.echo(str(data))
 
 
-from src.billing.commands import billing
+from billing.commands import billing
 cli.add_command(billing)
 
-from src.monitor.commands import monitor
+from monitor.commands import monitor
 cli.add_command(monitor)
 
-from src.iam.commands import iam
+from iam.commands import iam
 cli.add_command(iam)
 
-from src.ebs.commands import ebs
+from ebs.commands import ebs
 cli.add_command(ebs)
 
-from src.redis.commands import redis_group
+from redis.commands import redis_group
 cli.add_command(redis_group)
 
 

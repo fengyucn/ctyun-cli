@@ -5,9 +5,9 @@
 import click
 from functools import wraps
 from typing import Optional
-from src.client import CTYUNAPIError
-from src.utils.helpers import OutputFormatter, ValidationUtils, logger
-from src.billing.client import BillingClient
+from client import CTYUNAPIError
+from utils.helpers import OutputFormatter, ValidationUtils, logger
+from billing.client import BillingClient
 
 
 def handle_error(func):

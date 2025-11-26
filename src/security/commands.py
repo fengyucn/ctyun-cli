@@ -4,9 +4,9 @@
 
 import click
 from typing import Optional
-from src.client import CTYUNAPIError
-from src.utils.helpers import OutputFormatter, ValidationUtils, logger
-from src.security.client import SecurityClient
+from client import CTYUNAPIError
+from utils.helpers import OutputFormatter, ValidationUtils, logger
+from security.client import SecurityClient
 
 
 def handle_error(func):

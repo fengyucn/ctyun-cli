@@ -10,9 +10,9 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from src.auth.signature import CTYUNAuth
-from src.config.settings import config
-from src.utils.helpers import logger
+from auth.signature import CTYUNAuth
+from config.settings import config
+from utils.helpers import logger
 
 
 class CTYUNClient:

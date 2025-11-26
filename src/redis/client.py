@@ -5,9 +5,9 @@ Redis分布式缓存服务API客户端
 
 import json
 from typing import Dict, List, Optional, Any
-from src.client import CTYUNClient
-from src.auth.eop_signature import CTYUNEOPAuth
-from src.utils.helpers import logger
+from client import CTYUNClient
+from auth.eop_signature import CTYUNEOPAuth
+from utils.helpers import logger
 
 
 class RedisClient:

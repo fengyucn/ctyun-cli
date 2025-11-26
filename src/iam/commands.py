@@ -4,8 +4,8 @@
 
 import click
 from typing import Optional
-from src.iam.client import IAMClient
-from src.utils.helpers import OutputFormatter
+from iam.client import IAMClient
+from utils.helpers import OutputFormatter
 
 
 def handle_error(func):

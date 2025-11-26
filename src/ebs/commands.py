@@ -4,8 +4,8 @@
 
 import click
 from typing import Optional
-from src.ebs.client import EBSClient
-from src.utils.helpers import OutputFormatter
+from ebs.client import EBSClient
+from utils.helpers import OutputFormatter
 
 
 def handle_error(func):

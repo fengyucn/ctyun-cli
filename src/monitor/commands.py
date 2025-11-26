@@ -5,9 +5,9 @@
 import click
 from typing import Optional, List
 from datetime import datetime, timedelta
-from src.client import CTYUNAPIError
-from src.utils.helpers import OutputFormatter, logger
-from src.monitor.client import MonitorClient
+from client import CTYUNAPIError
+from utils.helpers import OutputFormatter, logger
+from monitor.client import MonitorClient
 
 
 def handle_error(func):

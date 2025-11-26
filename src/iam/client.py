@@ -5,9 +5,9 @@
 
 from typing import Dict, Any, Optional
 import json
-from src.client import CTYUNClient
-from src.auth.eop_signature import CTYUNEOPAuth
-from src.utils.helpers import logger
+from client import CTYUNClient
+from auth.eop_signature import CTYUNEOPAuth
+from utils.helpers import logger
 
 
 class IAMClient:

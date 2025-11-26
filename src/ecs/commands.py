@@ -5,8 +5,8 @@
 import click
 from typing import List, Optional
 # 直接定义装饰器，避免循环导入
-from src.ecs.client import ECSClient
-from src.utils.helpers import ValidationUtils, OutputFormatter
+from ecs.client import ECSClient
+from utils.helpers import ValidationUtils, OutputFormatter
 
 
 def handle_error(func):
