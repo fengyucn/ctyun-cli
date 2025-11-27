@@ -843,6 +843,383 @@ class RedisClient:
                 "exception": str(e)
             }
 
+    def create_instance(self, instance_name: str, edition: str, version: str, capacity: int,
+                       shard_count: int, copies_count: int, region_id: str, availability_zone: str,
+                       vpc_id: str, subnet_id: str, password: str, product_type: str = "PayPerUse",
+                       charge_mode: str = "PayPerUse", period: int = None, period_unit: str = "Month",
+                       auto_renew: bool = False, enterprise_project_id: str = "0",
+                       description: str = None) -> Optional[Dict[str, Any]]:
+        """
+        创建Redis实例
+
+        Args:
+            instance_name (str): 实例名称，长度不超过60个字符
+            edition (str): 实例版本类型，可选值：Basic(基础版), Enhance(增强版), Classic(经典版)
+            version (str): Redis版本号
+            capacity (int): 实例容量，单位GB
+            shard_count (int): 分片数量
+            copies_count (int): 副本数量
+            region_id (str): 区域ID
+            availability_zone (str): 可用区
+            vpc_id (str): VPC网络ID
+            subnet_id (str): 子网ID
+            password (str): 访问密码，长度8-32位字符
+            product_type (str): 产品类型，默认PayPerUse（按需付费）
+            charge_mode (str): 计费模式
+            period (int): 购买时长（包年包月时需要）
+            period_unit (str): 购买时长单位，默认Month
+            auto_renew (bool): 是否自动续费，默认false
+            enterprise_project_id (str): 企业项目ID，默认0
+            description (str): 实例描述
+
+        Returns:
+            Optional[Dict[str, Any]]: 创建结果
+        """
+        logger.info(f"创建Redis实例: {instance_name}")
+
+        try:
+            # 构建请求URL
+            url = f'{self.service_endpoint}{self.api_path}/createInstance'
+
+            # 构建请求体
+            request_body = {
+                "instanceName": instance_name,
+                "edition": edition,
+                "version": version,
+                "capacity": capacity,
+                "shardCount": shard_count,
+                "copiesCount": copies_count,
+                "regionId": region_id,
+                "availabilityZone": availability_zone,
+                "vpcId": vpc_id,
+                "subnetId": subnet_id,
+                "password": password,
+                "productType": product_type,
+                "chargeMode": charge_mode,
+                "autoRenew": auto_renew,
+                "enterpriseProjectId": enterprise_project_id
+            }
+
+            # 可选参数
+            if period:
+                request_body["period"] = period
+                request_body["periodUnit"] = period_unit
+
+            if description:
+                request_body["description"] = description
+
+            extra_headers = {
+                'regionId': region_id,
+                'Content-Type': 'application/json'
+            }
+
+            # 生成签名请求头
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params={},
+                body=json.dumps(request_body),
+                extra_headers=extra_headers
+            )
+
+            # 发送请求
+            response = self.client.session.post(
+                url,
+                json=request_body,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            result = response.json()
+
+            # 检查API响应状态
+            if result.get("statusCode") == 800:
+                logger.info(f"Redis实例创建成功: {instance_name}")
+                return result
+            else:
+                error_msg = result.get("message", "未知错误")
+                error_code = result.get("statusCode", "N/A")
+                logger.error(f"Redis实例创建失败 (错误码: {error_code}): {error_msg}")
+                return {
+                    "error": True,
+                    "error_code": error_code,
+                    "message": error_msg,
+                    "response": result
+                }
+
+        except Exception as e:
+            logger.error(f"创建Redis实例异常: {str(e)}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def create_instance_v2(self, **kwargs) -> Optional[Dict[str, Any]]:
+        """
+        创建Redis实例 - 支持完整的API v270参数
+
+        Args:
+            **kwargs: 支持以下25+个参数
+                计费相关:
+                    chargeType (str): 计费模式 PrePaid/PostPaid
+                    period (int): 购买时长月数
+                    autoPay (bool): 是否自动付费
+                    size (int): 购买数量
+                    autoRenew (bool): 是否自动续订
+                    autoRenewPeriod (str): 自动续费时长
+
+                实例配置:
+                    version (str): 版本类型 BASIC/PLUS/Classic
+                    edition (str): 实例类型 (必需)
+                    engineVersion (str): Redis引擎版本 (必需)
+                    zoneName (str): 主可用区名称 (必需)
+                    secondaryZoneName (str): 备可用区名称
+                    hostType (str): 主机类型
+                    shardMemSize (str): 分片规格GB
+                    shardCount (int): 分片数
+                    capacity (str): 存储容量GB (仅Classic版本)
+                    copiesCount (int): 副本数
+                    dataDiskType (str): 磁盘类型 SSD/SAS
+
+                网络配置:
+                    vpcId (str): 虚拟私有云ID (必需)
+                    subnetId (str): 所在子网ID (必需)
+                    secgroups (str): 安全组ID (必需)
+                    cacheServerPort (int): 实例端口
+
+                实例信息:
+                    instanceName (str): 实例名称 (必需)
+                    password (str): 实例密码 (必需)
+
+                企业项目:
+                    projectID (str): 企业项目ID
+
+        Returns:
+            Optional[Dict[str, Any]]: 创建结果
+        """
+        logger.info(f"创建Redis实例 v2: {kwargs.get('instanceName', 'unknown')}")
+
+        try:
+            # 构建请求URL - 使用API文档中的正确端点
+            url = f'{self.service_endpoint}{self.api_path}/createInstance'
+
+            # 从kwargs中提取所有参数，只传递非None值
+            request_body = {}
+
+            # 计费相关参数
+            charge_type = kwargs.get('chargeType', 'PostPaid')
+            request_body['chargeType'] = charge_type
+
+            if kwargs.get('period'):
+                request_body['period'] = kwargs['period']
+
+            if kwargs.get('autoPay') is not None:
+                request_body['autoPay'] = kwargs['autoPay']
+
+            if kwargs.get('size') and kwargs['size'] != 1:
+                request_body['size'] = kwargs['size']
+
+            if kwargs.get('autoRenew') is not None:
+                request_body['autoRenew'] = kwargs['autoRenew']
+
+            if kwargs.get('autoRenewPeriod'):
+                request_body['autoRenewPeriod'] = kwargs['autoRenewPeriod']
+
+            # 实例配置参数
+            if kwargs.get('version'):
+                request_body['version'] = kwargs['version']
+
+            if kwargs.get('edition'):
+                request_body['edition'] = kwargs['edition']
+
+            if kwargs.get('engineVersion'):
+                request_body['engineVersion'] = kwargs['engineVersion']
+
+            if kwargs.get('zoneName'):
+                request_body['zoneName'] = kwargs['zoneName']
+
+            if kwargs.get('secondaryZoneName'):
+                request_body['secondaryZoneName'] = kwargs['secondaryZoneName']
+
+            if kwargs.get('hostType'):
+                request_body['hostType'] = kwargs['hostType']
+
+            if kwargs.get('shardMemSize'):
+                request_body['shardMemSize'] = kwargs['shardMemSize']
+
+            if kwargs.get('shardCount'):
+                request_body['shardCount'] = kwargs['shardCount']
+
+            if kwargs.get('capacity'):
+                request_body['capacity'] = kwargs['capacity']
+
+            if kwargs.get('copiesCount'):
+                request_body['copiesCount'] = kwargs['copiesCount']
+
+            if kwargs.get('dataDiskType'):
+                request_body['dataDiskType'] = kwargs['dataDiskType']
+
+            # 网络配置参数
+            if kwargs.get('vpcId'):
+                request_body['vpcId'] = kwargs['vpcId']
+
+            if kwargs.get('subnetId'):
+                request_body['subnetId'] = kwargs['subnetId']
+
+            if kwargs.get('secgroups'):
+                request_body['secgroups'] = kwargs['secgroups']
+
+            if kwargs.get('cacheServerPort') and kwargs['cacheServerPort'] != 6379:
+                request_body['cacheServerPort'] = kwargs['cacheServerPort']
+
+            # 实例信息参数
+            if kwargs.get('instanceName'):
+                request_body['instanceName'] = kwargs['instanceName']
+
+            if kwargs.get('password'):
+                request_body['password'] = kwargs['password']
+
+            # 企业项目参数
+            if kwargs.get('projectID') and kwargs['projectID'] != '0':
+                request_body['projectID'] = kwargs['projectID']
+
+            logger.info(f"请求参数: {json.dumps(request_body, ensure_ascii=False)}")
+
+            extra_headers = {
+                'Content-Type': 'application/json'
+            }
+
+            # 生成签名请求头
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params={},
+                body=json.dumps(request_body),
+                extra_headers=extra_headers
+            )
+
+            # 发送请求
+            response = self.client.session.post(
+                url,
+                json=request_body,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            result = response.json()
+
+            # 检查API响应状态
+            if result.get("statusCode") == 800:
+                logger.info(f"Redis实例创建成功: {kwargs.get('instanceName')}")
+                return result
+            else:
+                error_msg = result.get("message", "未知错误")
+                error_code = result.get("statusCode", "N/A")
+                logger.error(f"Redis实例创建失败 (错误码: {error_code}): {error_msg}")
+                return {
+                    "error": True,
+                    "error_code": error_code,
+                    "message": error_msg,
+                    "response": result
+                }
+
+        except Exception as e:
+            logger.error(f"创建Redis实例异常: {str(e)}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def describe_available_resources(self, region_id: str, edition: str, version: str) -> Optional[Dict[str, Any]]:
+        """
+        查询资源池可创建规格
+
+        Args:
+            region_id (str): 区域ID
+            edition (str): 实例版本类型（Basic/Enhance/Classic）
+            version (str): Redis版本号
+
+        Returns:
+            Optional[Dict[str, Any]]: 可用规格信息
+        """
+        logger.info(f"查询Redis可用规格: regionId={region_id}, edition={edition}, version={version}")
+
+        try:
+            # 构建请求URL
+            url = f'{self.service_endpoint}{self.api_path}/describeAvailableResource'
+
+            # 查询参数
+            query_params = {
+                'regionId': region_id,
+                'edition': edition,
+                'version': version
+            }
+
+            extra_headers = {
+                'regionId': region_id
+            }
+
+            # 生成签名请求头
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            # 发送请求
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            result = response.json()
+
+            # 检查API响应状态
+            if result.get("statusCode") == 800:
+                logger.info(f"查询Redis可用规格成功")
+                return result
+            else:
+                error_msg = result.get("message", "未知错误")
+                error_code = result.get("statusCode", "N/A")
+                logger.error(f"查询可用规格失败 (错误码: {error_code}): {error_msg}")
+                return {
+                    "error": True,
+                    "error_code": error_code,
+                    "message": error_msg,
+                    "response": result
+                }
+
+        except Exception as e:
+            logger.error(f"查询可用规格异常: {str(e)}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
         """创建标准错误响应"""
         return {

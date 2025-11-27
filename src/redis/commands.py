@@ -784,6 +784,462 @@ def describe_version(ctx, instance_id: str, output_format: str, timeout: int):
         sys.exit(1)
 
 
+@redis_group.command('create-instance')
+@click.option('--instance-name', '-n', required=True, help='实例名称 (必需，长度4~40个字符，大小写字母开头，只能包含字母、数字、分隔符(-)，字母或数字结尾)')
+@click.option('--password', '-p', required=True, help='访问密码 (必需，长度8-26字符，必须包含大写字母、小写字母、数字、特殊字符(@%^*_+!$-=.)中的三种类型)')
+
+# 计费相关参数
+@click.option('--charge-type', type=click.Choice(['PrePaid', 'PostPaid']), default='PostPaid', help='计费模式 (默认: PostPaid按需计费，PrePaid包年包月)')
+@click.option('--period', type=int, help='购买时长月数，包年包月时必需，取值：1~6,12,24,36')
+@click.option('--auto-pay/--no-auto-pay', default=False, help='是否自动付费 (仅包周期实例有效，默认: 否)')
+@click.option('--size', type=int, default=1, help='购买数量 (默认: 1，取值范围：1~100)')
+@click.option('--auto-renew/--no-auto-renew', default=False, help='是否启用自动续订 (默认: 否)')
+@click.option('--auto-renew-period', type=int, help='自动续期购买时长月数，启用自动续费时必需，取值：1~6,12,24,36')
+
+# 实例配置参数
+@click.option('--version', '-v', type=click.Choice(['BASIC', 'PLUS', 'Classic']), default='BASIC', help='版本类型 (默认: BASIC基础版，PLUS增强版，Classic经典版白名单)')
+@click.option('--edition', '-e', required=True, help='实例类型 (必需，如StandardSingle单机版，ClusterSingle集群单机版等，详见产品规格)')
+@click.option('--engine-version', required=True, type=click.Choice(['5.0', '6.0', '7.0', '2.8', '4.0']), help='Redis引擎版本号 (必需，BASIC支持5.0/6.0/7.0，PLUS支持6.0/7.0，Classic支持2.8/4.0/5.0)')
+@click.option('--zone-name', '-z', required=True, help='主可用区名称 (必需，如cn-huabei2-tj-1a-public-ctcloud)')
+@click.option('--secondary-zone-name', help='备可用区名称 (双/多副本建议填写)')
+@click.option('--host-type', type=click.Choice(['S', 'C', 'M', 'HS', 'HC', 'KS', 'KC']), help='主机类型 (S通用型，C计算增强型，M内存型，HS海光通用，HC海光计算，KS鲲鹏通用，KC鲲鹏计算)')
+@click.option('--shard-mem-size', type=int, help='分片规格GB，BASIC版本支持1,2,4,8,16,32,64；PLUS版本支持8,16,32,64')
+@click.option('--shard-count', type=int, help='分片数，Cluster类型必需，取值3~256')
+@click.option('--capacity', type=int, help='存储容量GB，仅Classic版本需要填写')
+@click.option('--copies-count', type=int, default=2, help='副本数，默认2，取值2~10')
+@click.option('--data-disk-type', type=click.Choice(['SSD', 'SAS']), default='SSD', help='磁盘类型 (默认: SSD超高IO，可选SAS高IO)')
+
+# 网络配置参数
+@click.option('--vpc-id', required=True, help='虚拟私有云ID (必需)')
+@click.option('--subnet-id', required=True, help='所在子网ID (必需)')
+@click.option('--secgroups', required=True, help='安全组ID (必需，多个用逗号分隔)')
+@click.option('--cache-server-port', type=int, default=6379, help='实例端口 (默认: 6379)')
+
+# 企业项目参数
+@click.option('--project-id', default='0', help='企业项目ID (默认: 0)')
+
+# 输出和控制参数
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['table', 'json', 'summary']),
+              default='summary', help='输出格式 (table/json/summary)')
+@click.option('--timeout', '-t', default=60, help='请求超时时间(秒，默认60)')
+@click.option('--check-resources', is_flag=True, help='创建前检查可用规格')
+@click.option('--dry-run', is_flag=True, help='预览模式，只验证参数不实际创建')
+@click.pass_context
+@validate_credentials
+def create_instance(ctx, instance_name: str, password: str, charge_type: str, period: int,
+                   auto_pay: bool, size: int, auto_renew: bool, auto_renew_period: int,
+                   version: str, edition: str, engine_version: str, zone_name: str,
+                   secondary_zone_name: str, host_type: str, shard_mem_size: int,
+                   shard_count: int, capacity: int, copies_count: int, data_disk_type: str,
+                   vpc_id: str, subnet_id: str, secgroups: str, cache_server_port: int,
+                   project_id: str, output_format: str, timeout: int, check_resources: bool, dry_run: bool):
+    """
+    创建Redis分布式缓存实例 - 支持完整的25+API参数
+
+    基础示例:
+        # 创建基础版Redis实例 (按需付费)
+        ctyun redis create-instance \\
+            --instance-name my-redis \\
+            --edition StandardSingle \\
+            --engine-version 6.0 \\
+            --shard-mem-size 4 \\
+            --zone-name cn-huabei2-tj-1a-public-ctcloud \\
+            --vpc-id vpc-grqvu4741a \\
+            --subnet-id subnet-gr36jdeyt0 \\
+            --secgroups sg-ufrtt04xq1 \\
+            --password Test@123456
+
+        # 创建增强版实例 (包年包月)
+        ctyun redis create-instance \\
+            -n prod-redis -e ClusterSingle -v 7.0 \\
+            --shard-mem-size 16 --shard-count 3 \\
+            -z cn-huabei2-tj-1a-public-ctcloud \\
+            --vpc-id vpc-grqvu4741a --subnet-id subnet-gr36jdeyt0 \\
+            --secgroups sg-ufrtt04xq1 \\
+            -p Test@123456 --charge-type PrePaid --period 3 --auto-pay
+
+        # 创建双副本高可用实例
+        ctyun redis create-instance \\
+            --instance-name ha-redis \\
+            --edition StandardDual \\
+            --version PLUS --engine-version 6.0 \\
+            --shard-mem-size 8 --copies-count 2 \\
+            --zone-name cn-huabei2-tj-1a-public-ctcloud \\
+            --secondary-zone-name cn-huabei2-tj-2a-public-ctcloud \\
+            --vpc-id vpc-grqvu4741a --subnet-id subnet-gr36jdeyt0 \\
+            --secgroups sg-ufrtt04xq1 \\
+            --password Test@123456 --host-type S --data-disk-type SSD
+
+    参数说明:
+        计费相关:
+            --charge-type: PrePaid包年包月 / PostPaid按需计费 (默认)
+            --period: 包年包月时长(1~6,12,24,36月)
+            --auto-pay: 是否自动付费 (仅包周期有效)
+            --size: 购买数量 (1~100)
+            --auto-renew: 是否自动续订
+            --auto-renew-period: 自动续费时长 (1~6,12,24,36月)
+
+        实例配置:
+            --version: BASIC基础版 / PLUS增强版 / Classic经典版(白名单)
+            --edition: 实例类型 (StandardSingle, StandardDual, ClusterSingle等)
+            --engine-version: Redis版本 (BASIC:5.0/6.0/7.0, PLUS:6.0/7.0, Classic:2.8/4.0/5.0)
+            --zone-name: 主可用区名称 (必需)
+            --secondary-zone-name: 备可用区名称 (高可用建议)
+            --host-type: 主机类型 (S通用/C计算/M内存/HS海光/HC海光计算/KS鲲鹏通用/KC鲲鹏计算)
+            --shard-mem-size: 分片规格GB (BASIC:1,2,4,8,16,32,64; PLUS:8,16,32,64)
+            --shard-count: 分片数 (Cluster类型必需，3~256)
+            --capacity: 存储容量GB (仅Classic版本需要)
+            --copies-count: 副本数 (默认2，取值2~10)
+            --data-disk-type: SSD超高IO / SAS高IO (默认SSD)
+
+        网络配置:
+            --vpc-id: 虚拟私有云ID (必需)
+            --subnet-id: 子网ID (必需)
+            --secgroups: 安全组ID (必需，多个用逗号分隔)
+            --cache-server-port: 实例端口 (默认6379)
+
+        企业项目:
+            --project-id: 企业项目ID (默认0)
+
+    注意事项:
+        1. 经典版(Classic)属于白名单功能，默认不开放，建议优先使用基础版和增强版
+        2. 实例名称长度4~40字符，大小写字母开头，只能包含字母、数字、分隔符(-)，字母或数字结尾
+        3. 密码长度8-26字符，必须包含大写字母、小写字母、数字、特殊字符(@%^*_+!$-=.)中的三种类型
+        4. 包年包月模式必须指定charge-type为PrePaid和period参数
+        5. 启用自动续费时必须指定auto-renew-period参数
+        6. 使用--check-resources参数可以在创建前检查资源可用性
+        7. 使用--dry-run参数可以验证参数正确性而不实际创建实例
+    """
+    import re
+    from redis import RedisClient
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    redis_client.set_timeout(timeout)
+
+    # ========== 参数验证 ==========
+    click.echo("🔍 开始参数验证...")
+
+    # 验证实例名称
+    if not (4 <= len(instance_name) <= 40):
+        click.echo("❌ 错误: 实例名称长度必须为4~40个字符", err=True)
+        sys.exit(1)
+
+    if not re.match(r'^[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]$', instance_name):
+        click.echo("❌ 错误: 实例名称格式不正确，必须大小写字母开头，只能包含字母、数字、分隔符(-)，字母或数字结尾", err=True)
+        sys.exit(1)
+
+    # 验证密码复杂度
+    def validate_password_complexity(pwd):
+        has_upper = bool(re.search(r'[A-Z]', pwd))
+        has_lower = bool(re.search(r'[a-z]', pwd))
+        has_digit = bool(re.search(r'\d', pwd))
+        has_special = bool(re.search(r'[@%^*_+!$=\-.]', pwd))
+
+        return sum([has_upper, has_lower, has_digit, has_special]) >= 3
+
+    if not (8 <= len(password) <= 26):
+        click.echo("❌ 错误: 密码长度必须为8-26个字符", err=True)
+        sys.exit(1)
+
+    if not validate_password_complexity(password):
+        click.echo("❌ 错误: 密码必须包含大写字母、小写字母、数字、特殊字符(@%^*_+!$-=.)中的三种类型", err=True)
+        sys.exit(1)
+
+    # 验证版本和引擎版本兼容性
+    if version == 'BASIC' and engine_version not in ['5.0', '6.0', '7.0']:
+        click.echo("❌ 错误: BASIC版本仅支持Redis版本 5.0, 6.0, 7.0", err=True)
+        sys.exit(1)
+
+    if version == 'PLUS' and engine_version not in ['6.0', '7.0']:
+        click.echo("❌ 错误: PLUS版本仅支持Redis版本 6.0, 7.0", err=True)
+        sys.exit(1)
+
+    if version == 'Classic' and engine_version not in ['2.8', '4.0', '5.0']:
+        click.echo("❌ 错误: Classic版本仅支持Redis版本 2.8, 4.0, 5.0", err=True)
+        sys.exit(1)
+
+    # 验证分片规格
+    if version == 'BASIC':
+        if shard_mem_size and shard_mem_size not in [1, 2, 4, 8, 16, 32, 64]:
+            click.echo("❌ 错误: BASIC版本分片规格仅支持 1,2,4,8,16,32,64 GB", err=True)
+            sys.exit(1)
+    elif version == 'PLUS':
+        if shard_mem_size and shard_mem_size not in [8, 16, 32, 64]:
+            click.echo("❌ 错误: PLUS版本分片规格仅支持 8,16,32,64 GB", err=True)
+            sys.exit(1)
+
+    # 验证包年包月参数
+    if charge_type == 'PrePaid' and not period:
+        click.echo("❌ 错误: 包年包月模式必须指定购买时长(--period)", err=True)
+        sys.exit(1)
+
+    if period and not (1 <= period <= 36 or period in [12, 24, 36]):
+        click.echo("❌ 错误: 购买时长取值为 1~6,12,24,36 月", err=True)
+        sys.exit(1)
+
+    # 验证自动续费参数
+    if auto_renew and not auto_renew_period:
+        click.echo("❌ 错误: 启用自动续费必须指定自动续费时长(--auto-renew-period)", err=True)
+        sys.exit(1)
+
+    if auto_renew_period and not (1 <= auto_renew_period <= 36 or auto_renew_period in [12, 24, 36]):
+        click.echo("❌ 错误: 自动续费时长取值为 1~6,12,24,36 月", err=True)
+        sys.exit(1)
+
+    # 验证分片数
+    if shard_count and not (3 <= shard_count <= 256):
+        click.echo("❌ 错误: 分片数取值范围为3~256", err=True)
+        sys.exit(1)
+
+    # 验证副本数
+    if copies_count and not (2 <= copies_count <= 10):
+        click.echo("❌ 错误: 副本数取值范围为2~10", err=True)
+        sys.exit(1)
+
+    # 验证购买数量
+    if size and not (1 <= size <= 100):
+        click.echo("❌ 错误: 购买数量取值范围为1~100", err=True)
+        sys.exit(1)
+
+    # 验证端口范围
+    if cache_server_port and not (1024 <= cache_server_port <= 65535):
+        click.echo("❌ 错误: 端口取值范围为1024~65535", err=True)
+        sys.exit(1)
+
+    # 验证Classic版本必须参数
+    if version == 'Classic' and not capacity:
+        click.echo("❌ 错误: Classic版本必须指定存储容量(--capacity)", err=True)
+        sys.exit(1)
+
+    click.echo("✅ 参数验证通过!")
+
+    # ========== 预览模式 ==========
+    if dry_run:
+        click.echo("\n🔍 预览模式 - 参数配置如下:")
+        click.echo("="*60)
+        click.echo(f"实例名称: {instance_name}")
+        click.echo(f"版本类型: {version} - {engine_version}")
+        click.echo(f"实例类型: {edition}")
+        click.echo(f"主可用区: {zone_name}")
+        if secondary_zone_name:
+            click.echo(f"备可用区: {secondary_zone_name}")
+        click.echo(f"主机类型: {host_type or '默认'}")
+
+        if version != 'Classic':
+            click.echo(f"分片规格: {shard_mem_size}GB" if shard_mem_size else "未指定")
+            if shard_count:
+                click.echo(f"分片数量: {shard_count}")
+        else:
+            click.echo(f"存储容量: {capacity}GB")
+
+        click.echo(f"副本数量: {copies_count}")
+        click.echo(f"磁盘类型: {data_disk_type}")
+        click.echo(f"计费模式: {charge_type}")
+        if charge_type == 'PrePaid':
+            click.echo(f"购买时长: {period}个月")
+            click.echo(f"自动付费: {'是' if auto_pay else '否'}")
+        click.echo(f"购买数量: {size}")
+        if auto_renew:
+            click.echo(f"自动续费: 是 ({auto_renew_period}个月)")
+
+        click.echo(f"\n网络配置:")
+        click.echo(f"  VPC ID: {vpc_id}")
+        click.echo(f"  子网ID: {subnet_id}")
+        click.echo(f"  安全组: {secgroups}")
+        click.echo(f"  端口: {cache_server_port}")
+        click.echo(f"企业项目ID: {project_id}")
+        click.echo("="*60)
+        click.echo("🔍 预览模式完成，未实际创建实例")
+        return
+
+    # ========== 创建前检查可用规格 ==========
+    if check_resources:
+        click.echo(f"🔍 检查可用规格: {version}-{engine_version}")
+        try:
+            resource_result = redis_client.describe_available_resources("200000001852", edition, engine_version)
+
+            if resource_result and resource_result.get("statusCode") == 800:
+                click.echo("✅ 可用规格检查通过")
+            else:
+                click.echo("❌ 可用规格检查失败")
+                if resource_result:
+                    click.echo(f"错误: {resource_result.get('message', '未知错误')}")
+                if not click.confirm("是否继续创建实例？"):
+                    click.echo("用户取消创建")
+                    sys.exit(0)
+        except Exception as e:
+            click.echo(f"⚠️ 规格检查异常: {str(e)}")
+            if not click.confirm("规格检查失败，是否继续创建？"):
+                click.echo("用户取消创建")
+                sys.exit(0)
+
+    # ========== 构建API请求参数 ==========
+    request_params = {
+        # 计费相关
+        'chargeType': charge_type,
+        'size': size,
+
+        # 实例配置
+        'version': version,
+        'edition': edition,
+        'engineVersion': engine_version,
+        'zoneName': zone_name,
+        'copiesCount': copies_count,
+        'dataDiskType': data_disk_type,
+
+        # 网络配置
+        'vpcId': vpc_id,
+        'subnetId': subnet_id,
+        'secgroups': secgroups,
+        'cacheServerPort': cache_server_port,
+
+        # 实例信息
+        'instanceName': instance_name,
+        'password': password,
+
+        # 企业项目
+        'projectID': project_id,
+    }
+
+    # 可选参数
+    if charge_type == 'PrePaid':
+        if period:
+            request_params['period'] = period
+        request_params['autoPay'] = auto_pay
+        if auto_renew:
+            request_params['autoRenew'] = auto_renew
+            request_params['autoRenewPeriod'] = str(auto_renew_period)
+
+    if secondary_zone_name:
+        request_params['secondaryZoneName'] = secondary_zone_name
+
+    if host_type:
+        request_params['hostType'] = host_type
+
+    if version != 'Classic' and shard_mem_size:
+        request_params['shardMemSize'] = str(shard_mem_size)
+
+    if shard_count:
+        request_params['shardCount'] = shard_count
+
+    if version == 'Classic' and capacity:
+        request_params['capacity'] = str(capacity)
+
+    # ========== 显示创建信息 ==========
+    click.echo(f"\n🚀 开始创建Redis实例: {instance_name}")
+    click.echo(f"   版本: {version} - Redis {engine_version}")
+    click.echo(f"   类型: {edition}")
+    if version != 'Classic':
+        click.echo(f"   规格: {shard_mem_size}GB" if shard_mem_size else "默认规格")
+        if shard_count:
+            click.echo(f"   分片: {shard_count}个")
+    else:
+        click.echo(f"   容量: {capacity}GB")
+    click.echo(f"   副本: {copies_count}个")
+    click.echo(f"   可用区: {zone_name}")
+    if secondary_zone_name:
+        click.echo(f"   备可用区: {secondary_zone_name}")
+    click.echo(f"   主机类型: {host_type or '默认'}")
+    click.echo(f"   磁盘类型: {data_disk_type}")
+    click.echo(f"   计费: {charge_type}")
+    if charge_type == 'PrePaid':
+        click.echo(f"   时长: {period}个月, 自动付费: {'是' if auto_pay else '否'}")
+    click.echo(f"   数量: {size}个")
+    if auto_renew:
+        click.echo(f"   自动续费: {auto_renew_period}个月")
+    click.echo(f"   网络: VPC={vpc_id}, 子网={subnet_id}")
+    click.echo(f"   安全组: {secgroups}")
+    click.echo(f"   端口: {cache_server_port}")
+    click.echo(f"   项目: {project_id}")
+
+    # ========== 发送API请求 ==========
+    try:
+        result = redis_client.create_instance_v2(**request_params)
+
+        if output_format == 'json':
+            _display_json(result)
+        elif output_format == 'table':
+            _display_create_instance_table(result, instance_name)
+        else:
+            _display_create_instance_summary(result, instance_name)
+
+        # 如果创建成功，显示后续操作提示
+        if result and result.get("statusCode") == 800:
+            return_obj = result.get("returnObj", {})
+            instance_id = return_obj.get("newOrderId")  # 注意：新API返回的是订单ID
+            order_no = return_obj.get("newOrderNo")
+            total_price = return_obj.get("totalPrice", 0)
+
+            click.echo(f"\n💡 Redis实例创建订单提交成功!")
+            click.echo(f"📋 订单ID: {instance_id}")
+            click.echo(f"📋 订单号: {order_no}")
+            if total_price > 0:
+                click.echo(f"💰 总价: ¥{total_price}")
+            click.echo(f"🕐 实例创建是异步过程，通常需要几分钟时间完成")
+            click.echo(f"\n🔗 后续操作:")
+            click.echo(f"   查看实例列表: ctyun redis list")
+            click.echo(f"   查看订单详情: 请登录天翼云控制台查看订单状态")
+            click.echo(f"   查看实例状态: ctyun redis list --name {instance_name}")
+        else:
+            click.echo(f"❌ 创建失败: {result.get('message', '未知错误')}", err=True)
+            if result.get('error'):
+                click.echo(f"错误码: {result.get('error')}", err=True)
+
+    except Exception as e:
+        click.echo(f"❌ 创建Redis实例失败: {str(e)}", err=True)
+        import traceback
+        click.echo("详细错误信息:")
+        click.echo(traceback.format_exc())
+        sys.exit(1)
+
+
+@redis_group.command('check-resources')
+@click.option('--region-id', '-r', default="200000001852", help='区域ID (默认: 200000001852)')
+@click.option('--edition', '-e', required=True,
+              type=click.Choice(['Basic', 'Enhance', 'Classic']),
+              help='实例版本类型 (必需): Basic(基础版), Enhance(增强版), Classic(经典版)')
+@click.option('--version', '-v', required=True, help='Redis版本号 (必需，如: 5.0)')
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['table', 'json', 'summary']),
+              default='summary', help='输出格式 (table/json/summary)')
+@click.option('--timeout', '-t', default=30, help='请求超时时间(秒)')
+@click.pass_context
+@validate_credentials
+def check_available_resources(ctx, region_id: str, edition: str, version: str,
+                             output_format: str, timeout: int):
+    """
+    查询Redis实例可创建规格
+
+    示例:
+        ctyun redis check-resources --edition Basic --version 5.0
+        ctyun redis check-resources -e Enhance -v 6.0 --format json
+        ctyun redis check-resources -e Classic -v 5.0 -f table
+    """
+    from redis import RedisClient
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    redis_client.set_timeout(timeout)
+
+    click.echo(f"🔍 查询Redis可创建规格: {edition}-{version}")
+
+    try:
+        result = redis_client.describe_available_resources(region_id, edition, version)
+
+        if output_format == 'json':
+            _display_json(result)
+        elif output_format == 'table':
+            _display_resources_table(result, region_id, edition, version)
+        else:
+            _display_resources_summary(result, region_id, edition, version)
+
+    except Exception as e:
+        click.echo(f"❌ 查询可用规格失败: {str(e)}", err=True)
+        sys.exit(1)
+
+
 @redis_group.command('network')
 @click.option('--instance-id', '-i', required=True, help='Redis实例ID (必需)')
 @click.option('--format', '-f', 'output_format',
@@ -851,7 +1307,7 @@ def _display_instance_overview_table(result: dict, instance_id: str):
         basic_info = [
             ("实例ID", return_obj.get("prodInstId", "N/A")),
             ("实例名称", return_obj.get("instanceName", "N/A")),
-            ("实例类型", return_obj("instanceType", "N/A")),
+            ("实例类型", return_obj.get("instanceType", "N/A")),
             ("实例状态", return_obj.get("instanceStatus", "N/A")),
             ("创建时间", return_obj.get("createTime", "N/A")),
         ]
@@ -865,7 +1321,7 @@ def _display_instance_overview_table(result: dict, instance_id: str):
         config_info = [
             ("容量(GB)", return_obj.get("capacityMB", 0) // 1024),
             ("分片数", return_obj.get("shardCount", "N/A")),
-            ("副本数", return_obj("copiesCount", "N/A")),
+            ("副本数", return_obj.get("copiesCount", "N/A")),
             ("Redis版本", return_obj.get("engineVersion", "N/A")),
             ("端口", return_obj.get("port", "N/A")),
         ]
@@ -1340,6 +1796,196 @@ def _display_network_summary(result: dict, instance_id: str):
         click.echo(f"🔗 内网IP: {return_obj.get('innerIp', 'N/A')}")
         click.echo(f"🌐 外网IP: {return_obj.get('publicIp', 'N/A')}")
         click.echo(f"🔌 端口号: {return_obj.get('port', 'N/A')}")
+
+    else:
+        click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
+
+
+def _display_create_instance_table(result: dict, instance_name: str):
+    """以表格形式显示创建实例结果"""
+    click.echo(f"\n🚀 Redis实例创建结果 ({instance_name})")
+    click.echo("="*80)
+
+    if not result:
+        click.echo("❌ 创建失败: 无响应数据")
+        return
+
+    if result.get("error"):
+        click.echo(f"❌ 创建失败: {result.get('message', '未知错误')}")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+        click.echo(f"✅ 创建成功!\n")
+
+        # 基本信息
+        click.echo("📋 创建结果:")
+        click.echo("-" * 50)
+        basic_info = [
+            ("实例ID", return_obj.get("instanceId", "N/A")),
+            ("实例名称", return_obj.get("instanceName", "N/A")),
+            ("订单ID", return_obj.get("orderId", "N/A")),
+            ("创建时间", return_obj.get("createTime", "N/A")),
+        ]
+
+        for key, value in basic_info:
+            click.echo(f"{key:<12}: {value}")
+
+        # 计费信息
+        charge_info = return_obj.get("chargeInfo", {})
+        if charge_info:
+            click.echo(f"\n💰 计费信息:")
+            click.echo("-" * 50)
+            charge_fields = [
+                ("计费模式", charge_info.get("chargeMode", "N/A")),
+                ("创建时间", charge_info.get("createTime", "N/A")),
+            ]
+
+            for key, value in charge_fields:
+                click.echo(f"{key:<12}: {value}")
+
+    else:
+        error_msg = result.get("message", "未知错误")
+        error_code = result.get("statusCode", "N/A")
+        click.echo(f"❌ 创建失败 (错误码: {error_code}): {error_msg}")
+
+
+def _display_create_instance_summary(result: dict, instance_name: str):
+    """显示创建实例摘要"""
+    click.echo(f"\n🚀 Redis实例创建摘要 ({instance_name})")
+    click.echo("="*60)
+
+    if not result or result.get("error"):
+        click.echo(f"❌ 创建状态: 失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+        click.echo(f"✅ 创建状态: 成功")
+        click.echo(f"🏷️  实例ID: {return_obj.get('instanceId', 'N/A')}")
+        click.echo(f"📋 订单ID: {return_obj.get('orderId', 'N/A')}")
+
+        charge_info = return_obj.get("chargeInfo", {})
+        if charge_info:
+            click.echo(f"💰 计费模式: {charge_info.get('chargeMode', 'N/A')}")
+        click.echo(f"🕐 创建时间: {return_obj.get('createTime', 'N/A')}")
+    else:
+        click.echo(f"❌ 创建状态: 失败 - {result.get('message', '未知错误')}")
+
+
+def _display_resources_table(result: dict, region_id: str, edition: str, version: str):
+    """以表格形式显示可用规格"""
+    click.echo(f"\n📊 Redis可创建规格查询结果 (区域: {region_id}, 版本: {edition}-{version})")
+    click.echo("="*100)
+
+    if not result:
+        click.echo("❌ 查询失败: 无响应数据")
+        return
+
+    if result.get("error"):
+        click.echo(f"❌ 查询失败: {result.get('message', '未知错误')}")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+        click.echo(f"✅ 查询成功!\n")
+
+        # 主机类型
+        host_types = return_obj.get("hostTypes", [])
+        if host_types:
+            click.echo("🖥️ 主机类型:")
+            click.echo("-" * 80)
+            click.echo(f"{'主机类型':<20} {'CPU核数':<8} {'内存GB':<8} {'磁盘类型':<12} {'可用':<6}")
+            click.echo("-" * 80)
+
+            for host_type in host_types:
+                name = host_type.get("hostTypeName", "N/A")[:18]
+                cpu = host_type.get("cpu", "N/A")
+                memory = host_type.get("memory", "N/A")
+                disk_type = host_type.get("diskType", "N/A")
+                available = "是" if host_type.get("available") else "否"
+
+                click.echo(f"{name:<20} {cpu:<8} {memory:<8} {disk_type:<12} {available:<6}")
+
+        # 容量规格
+        capacity_specs = return_obj.get("capacitySpecs", [])
+        if capacity_specs:
+            click.echo(f"\n💾 容量规格:")
+            click.echo("-" * 70)
+            click.echo(f"{'容量GB':<8} {'最小分片':<10} {'最大分片':<10} {'最小副本':<10} {'最大副本':<10} {'可用':<6}")
+            click.echo("-" * 70)
+
+            for spec in capacity_specs:
+                capacity = spec.get("capacity", "N/A")
+                min_shard = spec.get("minShardCount", "N/A")
+                max_shard = spec.get("maxShardCount", "N/A")
+                min_copies = spec.get("minCopiesCount", "N/A")
+                max_copies = spec.get("maxCopiesCount", "N/A")
+                available = "是" if spec.get("available") else "否"
+
+                click.echo(f"{capacity:<8} {min_shard:<10} {max_shard:<10} {min_copies:<10} {max_copies:<10} {available:<6}")
+
+        # 价格信息
+        pricing_info = return_obj.get("pricingInfo", {})
+        if pricing_info:
+            pay_per_use = pricing_info.get("payPerUse", {})
+            if pay_per_use:
+                click.echo(f"\n💰 按需付费价格:")
+                click.echo("-" * 50)
+                prices = pay_per_use.get("prices", {})
+                for capacity, price in prices.items():
+                    click.echo(f"  {capacity}: ¥{price}/小时")
+
+    else:
+        error_msg = result.get("message", "未知错误")
+        error_code = result.get("statusCode", "N/A")
+        click.echo(f"❌ 查询失败 (错误码: {error_code}): {error_msg}")
+
+
+def _display_resources_summary(result: dict, region_id: str, edition: str, version: str):
+    """显示可用规格摘要"""
+    click.echo(f"\n📊 Redis可创建规格摘要 (区域: {region_id}, 版本: {edition}-{version})")
+    click.echo("="*70)
+
+    if not result or result.get("error"):
+        click.echo(f"❌ 查询状态: 失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+        click.echo(f"✅ 查询状态: 成功")
+
+        # 主机类型统计
+        host_types = return_obj.get("hostTypes", [])
+        available_hosts = [ht for ht in host_types if ht.get("available")]
+        click.echo(f"🖥️ 主机类型: {len(available_hosts)}/{len(host_types)} 种可用")
+
+        # 容量规格统计
+        capacity_specs = return_obj.get("capacitySpecs", [])
+        available_capacities = [cs for cs in capacity_specs if cs.get("available")]
+        capacities = [cs.get("capacity") for cs in available_capacities]
+
+        if capacities:
+            min_cap = min(capacities)
+            max_cap = max(capacities)
+            click.echo(f"💾 容量范围: {min_cap}GB - {max_cap}GB")
+            click.echo(f"📊 可选容量: {', '.join(map(str, sorted(capacities)))}GB")
+
+        # 分片和副本配置
+        if available_capacities:
+            max_shards = max(cs.get("maxShardCount", 1) for cs in available_capacities)
+            max_copies = max(cs.get("maxCopiesCount", 1) for cs in available_capacities)
+            click.echo(f"🔧 最大分片数: {max_shards}")
+            click.echo(f"🔢 最大副本数: {max_copies}")
+
+        # 价格信息
+        pricing_info = return_obj.get("pricingInfo", {})
+        if pricing_info.get("payPerUse"):
+            prices = pricing_info["payPerUse"].get("prices", {})
+            if prices:
+                min_price = min(float(p) for p in prices.values())
+                max_price = max(float(p) for p in prices.values())
+                click.echo(f"💰 按需价格: ¥{min_price}/小时 - ¥{max_price}/小时")
 
     else:
         click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
