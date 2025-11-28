@@ -273,7 +273,7 @@ If you encounter issues or have suggestions:
 
 ## 📝 Version Information
 
-**Current Version:** 1.3.3
+**Current Version:** 1.3.10
 
 **Update History:**
 - ✨ Added Redis distributed cache service support (12 commands/16 APIs)

@@ -130,7 +130,7 @@ ctyun-cli monitor query-inspection-tasks      # 查询巡检任务
 - 备份和恢复操作
 - 资源规格检查
 
-**新增功能亮点 (v1.3.9)：**
+**新增功能亮点 (v1.3.10)：**
 - ✨ **企业级实例创建** - 支持BASIC/PLUS/Classic三种版本类型
 - ✨ **智能参数验证** - 实例名称、密码复杂度、版本兼容性全面验证
 - ✨ **预览模式** - --dry-run模式下验证参数不实际创建
@@ -299,7 +299,13 @@ ctyun-cli ecs list --output json | jq '.[] | select(.status == "running")'
 
 ## 📝 版本信息
 
-**当前版本：** 1.3.9 (Latest)
+**当前版本：** 1.3.10 (Latest)
+
+**重大更新 v1.3.10 - IAM功能增强：**
+
+- 🔥 **新增IAM分页查询资源信息API** - 支持完整资源字段显示
+- ✨ **增强IAM命令行接口** - 包含accountid、projectsetid等完整信息
+- 🔧 **优化资源数据展示** - 10列详细信息，支持智能截断和格式化
 
 **重大更新 v1.3.9 - Redis功能全面升级：**
 - 🔥 **重新开发Redis create-instance命令** - 支持完整25+API参数
