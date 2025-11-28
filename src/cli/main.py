@@ -1606,6 +1606,9 @@ cli.add_command(ebs)
 from redis.commands import redis_group
 cli.add_command(redis_group)
 
+from cce.commands import cce
+cli.add_command(cce)
+
 
 if __name__ == '__main__':
     cli()

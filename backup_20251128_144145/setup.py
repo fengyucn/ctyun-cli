@@ -45,7 +45,7 @@ DEV_REQUIREMENTS = [
 setup(
     # 基本包信息
     name="ctyun-cli",
-    version="1.3.11",
+    version="1.3.10",
     description="天翼云CLI工具 - 基于终端的云资源管理平台",
     long_description=read_file('README.md'),
     long_description_content_type="text/markdown",
