@@ -1609,6 +1609,9 @@ cli.add_command(redis_group)
 from cce.commands import cce
 cli.add_command(cce)
 
+from cda.commands import cda
+cli.add_command(cda)
+
 
 if __name__ == '__main__':
     cli()

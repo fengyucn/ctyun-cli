@@ -2,7 +2,7 @@
 ctyun-cli 包入口点
 """
 
-__version__ = "1.3.11"
+__version__ = "1.4.0"
 
 # 创建一个简单的CLI入口点
 try:

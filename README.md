@@ -3,12 +3,13 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![API Count](https://img.shields.io/badge/APIs-156+-brightgreen.svg)](#api统计)
-[![Commands](https://img.shields.io/badge/Commands-137+-orange.svg)](#功能概览)
+[![API Count](https://img.shields.io/badge/APIs-175+-brightgreen.svg)](#api统计)
+[![Commands](https://img.shields.io/badge/Commands-151+-orange.svg)](#功能概览)
+[![Modules](https://img.shields.io/badge/Modules-8+-blue.svg)](#功能概览)
 
 **天翼云CLI工具** 是一款功能强大的企业级命令行工具，帮助您在终端中轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存服务、费用查询等核心功能。
 
-**📊 规模统计：15,000+行代码，156+个API，137+个命令**
+**📊 规模统计：15,000+行代码，175+个API，151+个命令，8大服务模块**
 
 简体中文 | [English](README_EN.md)
 
@@ -16,7 +17,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 采用企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖156+个API，支持7大核心服务模块
+- 📊 **功能全面** - 覆盖175+个API，支持8大核心服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -81,7 +82,8 @@ ctyun-cli billing balance
 | **Security (安全卫士)** | 5 | 21 | 安全扫描、漏洞管理、风险评估 |
 | **IAM (身份访问管理)** | 2 | 2 | 项目管理、权限控制 |
 | **EBS (弹性块存储)** | 1 | 1 | 块存储管理 |
-| **总计** | **137** | **156** | **覆盖天翼云核心服务** |
+| **CDA (云专线)** | 14 | 19 | 专线网关、物理专线、VPC管理、健康检查、链路探测等 |
+| **总计** | **151** | **175** | **覆盖天翼云核心服务** |
 
 ### 📈 模块详情
 
@@ -210,6 +212,57 @@ ctyun-cli iam get-project-detail             # 获取项目详情
 ctyun-cli ebs list-disks                       # 查看云硬盘列表
 ```
 
+#### 🔌 CDA模块 - 云专线管理 (14命令/19API) ⭐ **NEW! (2025-12-02)**
+**核心功能：**
+- 专线网关生命周期管理
+- 物理专线接入和配置
+- VPC网络管理和路由配置
+- 健康检查和链路探测
+- 跨账号授权管理
+- 专线交换机监控
+
+**今日新增API (2025-12-02)：**
+- 云专线健康检查状态查询
+- 云专线链路探测查询
+- 云专线VPC详情查询
+- 专线交换机查询 (返回358台设备)
+- 专线网关绑定的云间高速查询
+
+**常用命令：**
+```bash
+# 专线网关管理
+ctyun-cli cda gateway list                   # 查看专线网关列表
+ctyun-cli cda gateway count                  # 统计专线网关数量
+ctyun-cli cda gateway physical-lines        # 查看绑定的物理专线
+ctyun-cli cda gateway cloud-express          # 查询绑定的云间高速 ⭐ 新增
+
+# VPC管理
+ctyun-cli cda vpc list                       # 查看VPC列表
+ctyun-cli cda vpc count                      # 统计VPC数量
+ctyun-cli cda vpc info                        # 查询VPC详细信息 ⭐ 新增
+
+# 物理专线管理
+ctyun-cli cda physical-line list            # 查看物理专线列表
+ctyun-cli cda physical-line access-points   # 查询接入点列表
+ctyun-cli cda physical-line count            # 统计物理专线数量
+
+# 健康检查和链路探测
+ctyun-cli cda health-check config           # 查询健康检查配置
+ctyun-cli cda health-check status           # 查询健康检查状态 ⭐ 新增
+ctyun-cli cda health-check link-probe        # 查询链路探测历史 ⭐ 新增
+
+# 路由管理
+ctyun-cli cda static-route list             # 查询静态路由
+ctyun-cli cda bgp-route list                 # 查询BGP路由
+
+# 跨账号授权
+ctyun-cli cda account-auth list             # 查询跨账号授权
+ctyun-cli cda account-auth count             # 统计跨账号授权
+
+# 交换机管理
+ctyun-cli cda switches                       # 查询专线交换机 ⭐ 新增
+```
+
 ## 🔧 高级功能
 
 ### 多种输出格式
@@ -311,6 +364,26 @@ ctyun-cli ecs list --output json | jq '.[] | select(.status == "running")'
 - 🔥 **新增IAM分页查询资源信息API** - 支持完整资源字段显示
 - ✨ **增强IAM命令行接口** - 包含accountid、projectsetid等完整信息
 - 🔧 **优化资源数据展示** - 10列详细信息，支持智能截断和格式化
+
+**🚀 重大更新 v1.4.0 - 云专线CDA模块完整上线：**
+- 🔥 **全新云专线CDA服务模块** - 新增14个命令，覆盖19个API接口
+- ✨ **专线网关全生命周期管理** - 创建、查询、删除、绑定物理专线等
+- ✨ **物理专线接入管理** - 接入点查询、专线数量统计、详细信息获取
+- ✨ **VPC网络智能管理** - VPC列表、详情查询、数量统计、路由配置
+- ✨ **健康检查监控系统** - 配置查询、状态监控、链路探测历史分析
+- ✨ **路由管理功能** - 静态路由和BGP路由查询配置
+- ✨ **跨账号授权管理** - 授权列表查询和统计分析
+- ✨ **专线交换机监控** - 358台设备实时监控和详细信息
+- 🔧 **企业级EOP签名认证** - 完整的天翼云API签名机制
+- 🔧 **多端点自动重试** - 提高API调用成功率和稳定性
+- 📊 **完整CLI输出格式** - 支持表格、JSON、YAML三种展示格式
+
+**今日新增API (2025-12-02)：**
+- ⭐ 云专线健康检查状态查询 - 实时监控专线健康状态
+- ⭐ 云专线链路探测查询 - 历史Ping测数据分析和故障排查
+- ⭐ 云专线VPC详情查询 - 完整VPC配置和专线关联信息
+- ⭐ 专线交换机查询 - 358台交换机设备状态和配置详情
+- ⭐ 专线网关绑定的云间高速查询 - 云间高速连接状态管理
 
 **重大更新 v1.3.9 - Redis功能全面升级：**
 - 🔥 **重新开发Redis create-instance命令** - 支持完整25+API参数

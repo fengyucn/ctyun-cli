@@ -45,7 +45,7 @@ DEV_REQUIREMENTS = [
 setup(
     # 基本包信息
     name="ctyun-cli",
-    version="1.3.11",
+    version="1.4.0",
     description="天翼云CLI工具 - 基于终端的云资源管理平台",
     long_description=read_file('README.md'),
     long_description_content_type="text/markdown",
@@ -118,7 +118,8 @@ setup(
         "ctyun", "cloud", "cli", "management", "monitoring", "ecs",
         "redis", "distributed-cache", "query", "snapshot", "keypair",
         "volume", "backup", "affinity-group", "flavor", "resize",
-        "vnc", "statistics", "api", "devops"
+        "vnc", "statistics", "api", "devops", "cda", "cloud-dedicated-access",
+        "专线", "网关", "vpc", "health-check", "link-probe"
     ],
 
     # 许可证
