@@ -261,15 +261,15 @@ class ValidationUtils:
         import re
         if not re.match(r'^\d{6}$', bill_cycle):
             return False
-        
+
         year = int(bill_cycle[:4])
         month = int(bill_cycle[4:])
-        
+
         if year < 2000 or year > 2100:
             return False
         if month < 1 or month > 12:
             return False
-        
+
         return True
 
     @staticmethod

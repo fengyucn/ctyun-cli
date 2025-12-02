@@ -1189,12 +1189,26 @@ ctyun-cli security vuln-list \
 
 ## 6. 计费查询
 
+账单模块支持三种输出格式，满足不同使用场景：
+
+```bash
+# 表格格式（默认，适合阅读）
+ctyun-cli billing balance
+
+# JSON格式（适合程序处理）
+ctyun-cli billing balance --output json
+
+# YAML格式（适合配置管理）
+ctyun-cli billing balance --output yaml
+```
+
 ### 6.1 查询账户余额
 
 查询账户余额信息。
 
 ```bash
 ctyun-cli billing balance
+ctyun-cli billing balance --output json  # JSON格式
 ```
 
 ---
@@ -1596,11 +1610,52 @@ ctyun-monitor query-cpu-top --number 10
 - `ctyun-cli security scan-result` - 查询扫描结果
 - `ctyun-cli security vuln-list` - 查询漏洞列表
 
-### 计费命令
-- `ctyun-cli billing balance` - 查询余额
-- `ctyun-cli billing bills` - 查询账单
-- `ctyun-cli billing expenses` - 查询消费明细
-- `ctyun-cli billing transactions` - 查询账户流水
+### 完整账单命令列表
+
+所有账单命令都支持 `--output table|json|yaml` 选项来指定输出格式：
+
+#### 基础查询命令
+- `ctyun-cli billing balance` - 查询账户余额
+- `ctyun-cli billing arrears` - 查询欠费信息
+
+#### 账单明细查询（按需）
+- `ctyun-cli billing bill-list <bill_cycle>` - 查询账单明细（按需）
+- `ctyun-cli billing ondemand-product <bill_cycle>` - 查询按需账单明细（按产品汇总）
+- `ctyun-cli billing ondemand-usage <bill_cycle>` - 查询账单明细使用量类型+账期（按需） ⭐
+
+#### 账单明细查询（包周期）
+- `ctyun-cli billing cycle-product <bill_cycle>` - 查询包周期账单明细（按产品汇总）
+- `ctyun-cli billing cycle-bill <bill_cycle>` - 查询包周期订单账单详情
+
+#### 流水账单查询
+- `ctyun-cli billing ondemand-flow <bill_cycle>` - 查询按需流水账单
+- `ctyun-cli billing cycle-flow <bill_cycle>` - 查询包周期流水账单
+
+#### 汇总统计查询
+- `ctyun-cli billing bill-summary <bill_cycle>` - 查询消费类型汇总
+
+#### 账户账单查询
+- `ctyun-cli billing account-bill <bill_cycle> --account-id <id>` - 查询账户账单
+
+#### 消费明细查询
+- `ctyun-cli billing consumption` - 查询消费明细
+
+#### 使用示例
+```bash
+# 查询账单明细使用量类型+账期（按需）- JSON格式
+ctyun-cli billing ondemand-usage 202511 --output json
+
+# 查询包周期账单明细（按产品汇总）- YAML格式
+ctyun-cli billing cycle-product 202511 --output yaml
+
+# 查询按需流水账单，带过滤条件
+ctyun-cli billing ondemand-flow 202511 \
+  --product-code fa1f18ab4dd944749200a4ddb2b92a16 \
+  --page 2 --page-size 5 --output json
+
+# 查询账户余额
+ctyun-cli billing balance
+```
 
 ---
 

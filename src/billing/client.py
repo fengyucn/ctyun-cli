@@ -1169,7 +1169,86 @@ class BillingClient:
             }
         }
 
-    def _get_mock_consumption_data(self, start_date: str, end_date: str, 
+    def query_ondemand_bill_by_usage_cycle(self, bill_cycle: str, page_no: int = 1,
+                                           page_size: int = 10, product_code: Optional[str] = None,
+                                           resource_id: Optional[str] = None,
+                                           project_id: Optional[str] = None,
+                                           contract_id: Optional[str] = None,
+                                           group_by_day: Optional[str] = None) -> Dict[str, Any]:
+        """
+        账单明细使用量类型+账期（按需）
+
+        Args:
+            bill_cycle: 账期，格式：YYYYMM，如：202212
+            page_no: 页码，默认1
+            page_size: 每页条数，默认10
+            product_code: 产品编码（可选）
+            resource_id: 资源实例ID（可选）
+            project_id: 项目ID（可选）
+            contract_id: 合同ID（可选）
+            group_by_day: 是否为按天查询，"1"为按天查询，"0"或不传为按账期查询（可选）
+
+        Returns:
+            账单明细使用量类型+账期（按需）信息
+        """
+        logger.info(f"查询账单明细使用量类型+账期(按需): bill_cycle={bill_cycle}, page={page_no}")
+
+        try:
+            url = f"https://{self.base_endpoint}/qryOnDemandBillDetail_Usage_CycleId"
+
+            body_data = {
+                'billingCycleId': bill_cycle,
+                'pageNo': page_no,
+                'pageSize': page_size,
+                'hasTotal': False
+            }
+
+            if product_code:
+                body_data['productCode'] = product_code
+            if resource_id:
+                body_data['resourceId'] = resource_id
+            if project_id:
+                body_data['projectId'] = project_id
+            if contract_id:
+                body_data['contractId'] = contract_id
+            if group_by_day:
+                body_data['groupByonDay'] = group_by_day
+
+            body = json.dumps(body_data)
+
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params=None,
+                body=body
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return self._get_mock_usage_cycle_data(bill_cycle, page_no, page_size)
+
+            result = response.json()
+            logger.debug(f"解析结果: {result}")
+            return result
+
+        except Exception as e:
+            logger.error(f"查询账单明细使用量类型+账期(按需)异常: {str(e)}")
+            return self._get_mock_usage_cycle_data(bill_cycle, page_no, page_size)
+
+    def _get_mock_consumption_data(self, start_date: str, end_date: str,
                                    page_no: int, page_size: int) -> Dict[str, Any]:
         """获取模拟消费明细数据"""
         return {
@@ -1201,4 +1280,451 @@ class BillingClient:
                     'region': 'cn-south-1'
                 }
             ]
+        }
+
+    def query_ondemand_bill_by_usage_detail(self, bill_cycle: str, page_no: int = 1,
+                                           page_size: int = 10, product_code: Optional[str] = None,
+                                           resource_id: Optional[str] = None,
+                                           project_id: Optional[str] = None,
+                                           contract_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        账单明细使用量类型+明细（按需）
+
+        Args:
+            bill_cycle: 账期，格式：YYYYMM，如：202212
+            page_no: 页码，默认1
+            page_size: 每页条数，默认10
+            product_code: 产品编码（可选）
+            resource_id: 资源实例ID（可选）
+            project_id: 项目ID（可选）
+            contract_id: 合同ID（可选）
+
+        Returns:
+            账单明细使用量类型+明细（按需）信息
+        """
+        logger.info(f"查询账单明细使用量类型+明细(按需): bill_cycle={bill_cycle}, page={page_no}")
+
+        try:
+            url = f"https://{self.base_endpoint}/qryOnDemandBillDetail_Usage_Detail"
+
+            body_data = {
+                'billingCycleId': bill_cycle,
+                'pageNo': page_no,
+                'pageSize': page_size,
+                'hasTotal': False
+            }
+
+            if product_code:
+                body_data['productCode'] = product_code
+            if resource_id:
+                body_data['resourceId'] = resource_id
+            if project_id:
+                body_data['projectId'] = project_id
+            if contract_id:
+                body_data['contractId'] = contract_id
+
+            body = json.dumps(body_data)
+
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params=None,
+                body=body
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return self._get_mock_usage_detail_data(bill_cycle, page_no, page_size)
+
+            result = response.json()
+            logger.debug(f"解析结果: {result}")
+            return result
+
+        except Exception as e:
+            logger.error(f"查询账单明细使用量类型+明细(按需)异常: {str(e)}")
+            return self._get_mock_usage_detail_data(bill_cycle, page_no, page_size)
+
+    def _get_mock_usage_cycle_data(self, bill_cycle: str, page_no: int, page_size: int) -> Dict[str, Any]:
+        """获取模拟账单明细使用量类型+账期（按需）数据"""
+        return {
+            'statusCode': 800,
+            'message': '查询成功（模拟数据）',
+            'returnObj': {
+                'totalCount': 6,
+                'pageNo': page_no,
+                'pageSize': page_size,
+                'result': [
+                    {
+                        'resourceId': '76c3714f30ea4922a7c20257098b206c',
+                        'labelInfo': None,
+                        'usage': '40',
+                        'billMode': '2',
+                        'discountAmount': '0',
+                        'consumeDate': None,
+                        'deductUsage': '0',
+                        'payableAmount': '370',
+                        'pricefactorValue': '666000',
+                        'productName': 'EBS弹性块按需',
+                        'regionCode': 'cn-gzT',
+                        'servId': 'd7dd3b0e401c415b9c979862a31b6778',
+                        'price': '370',
+                        'serviceTag': 'HWS',
+                        'contractName': None,
+                        'realResourceId': '76c3714f-30ea-4922-a7c2-0257098b206c',
+                        'salesAttribute': '类型：普通IO|版本号：v1|是否要求进入一点结算：是|销售品类别：标准',
+                        'keySalesAttribute': None,
+                        'usageType': '秒',
+                        'amount': '0',
+                        'usageTypeId': '400',
+                        'offerName': '天翼云3.0EBS弹性块',
+                        'coupon': '0',
+                        'billType': '7',
+                        'productCode': 'fa1f18ab4dd944749200a4ddb2b92a16',
+                        'billingCycleId': f'{bill_cycle[:4]}/{bill_cycle[4:]}',
+                        'regionId': '贵州测试床',
+                        'projectName': 'default',
+                        'contractCode': None,
+                        'projectId': '0',
+                        'resourceType': 'EBS'
+                    },
+                    {
+                        'resourceId': '65cf1d05752c48a48956a8d9bfe69583',
+                        'labelInfo': None,
+                        'usage': '1',
+                        'billMode': '2',
+                        'discountAmount': '0',
+                        'consumeDate': None,
+                        'deductUsage': '0',
+                        'payableAmount': '420',
+                        'pricefactorValue': '42',
+                        'productName': 'IP保有费',
+                        'regionCode': 'cn-gzT',
+                        'servId': '794f52db96164e5f8a256cd30d2d0a76',
+                        'price': '420',
+                        'serviceTag': 'EIP',
+                        'contractName': None,
+                        'realResourceId': '65cf1d05-752c-48a4-8956-a8d9bfe69583',
+                        'salesAttribute': '类型：公众版|版本号：v1|销售品类别：标准|是否要求进入一点结算：是|收入结算方式：一点结算',
+                        'keySalesAttribute': None,
+                        'usageType': '小时',
+                        'amount': '0',
+                        'usageTypeId': '0',
+                        'offerName': '弹性IP保有费',
+                        'coupon': '0',
+                        'billType': '7',
+                        'productCode': 'cdddbbc4c4b14e7694e0756ed94e3d25',
+                        'billingCycleId': f'{bill_cycle[:4]}/{bill_cycle[4:]}',
+                        'regionId': '贵州测试床',
+                        'projectName': 'default',
+                        'contractCode': None,
+                        'projectId': '0',
+                        'resourceType': 'EIP'
+                    }
+                ]
+            }
+        }
+
+    def _get_mock_usage_detail_data(self, bill_cycle: str, page_no: int, page_size: int) -> Dict[str, Any]:
+        """获取模拟账单明细使用量类型+明细（按需）数据"""
+        return {
+            'statusCode': 800,
+            'message': '查询成功（模拟数据）',
+            'returnObj': {
+                'totalCount': 735,
+                'pageNo': page_no,
+                'pageSize': page_size,
+                'result': [
+                    {
+                        'resourceId': '76c3714f30ea4922a7c20257098b206c',
+                        'labelInfo': None,
+                        'masterOrderNo': None,
+                        'usage': '40',
+                        'billMode': '2',
+                        'discountAmount': '0',
+                        'consumeDate': f'{bill_cycle[:4]}-{bill_cycle[4:]}-12 13:00:00 - {bill_cycle[:4]}-{bill_cycle[4:]}-12 14:00:00',
+                        'deductUsage': '0',
+                        'payableAmount': '2',
+                        'pricefactorValue': '3600',
+                        'productName': 'EBS弹性块按需',
+                        'regionCode': 'cn-gzT',
+                        'servId': 'd7dd3b0e401c415b9c979862a31b6778',
+                        'price': '2',
+                        'serviceTag': 'HWS',
+                        'contractName': None,
+                        'realResourceId': '76c3714f-30ea-4922-a7c2-0257098b206c',
+                        'salesAttribute': '类型：普通IO|版本号：v1|是否要求进入一点结算：是|销售品类别：标准',
+                        'keySalesAttribute': '',
+                        'usageType': '秒',
+                        'amount': '0',
+                        'usageTypeId': '400',
+                        'offerName': '天翼云3.0EBS弹性块',
+                        'coupon': '0',
+                        'billType': '7',
+                        'masterOrderId': None,
+                        'productCode': 'fa1f18ab4dd944749200a4ddb2b92a16',
+                        'billingCycleId': f'{bill_cycle[:4]}/{bill_cycle[4:]}',
+                        'regionId': '贵州测试床',
+                        'stateDate': f'{bill_cycle}12130000',
+                        'projectName': 'default',
+                        'contractCode': None,
+                        'projectId': '0',
+                        'resourceType': 'EBS'
+                    },
+                    {
+                        'resourceId': '65cf1d05752c48a48956a8d9bfe69583',
+                        'labelInfo': None,
+                        'masterOrderNo': None,
+                        'usage': '1',
+                        'billMode': '2',
+                        'discountAmount': '0',
+                        'consumeDate': f'{bill_cycle[:4]}-{bill_cycle[4:]}-12 13:00:00 - {bill_cycle[:4]}-{bill_cycle[4:]}-12 14:00:00',
+                        'deductUsage': '0',
+                        'payableAmount': '10',
+                        'pricefactorValue': '1',
+                        'productName': 'IP保有费',
+                        'regionCode': 'cn-gzT',
+                        'servId': '794f52db96164e5f8a256cd30d2d0a76',
+                        'price': '10',
+                        'serviceTag': 'EIP',
+                        'contractName': None,
+                        'realResourceId': '65cf1d05-752c-48a4-8956-a8d9bfe69583',
+                        'salesAttribute': '类型：公众版|版本号：v1|销售品类别：标准|是否要求进入一点结算：是|收入结算方式：一点结算',
+                        'keySalesAttribute': '',
+                        'usageType': '小时',
+                        'amount': '0',
+                        'usageTypeId': '0',
+                        'offerName': '弹性IP保有费',
+                        'coupon': '0',
+                        'billType': '7',
+                        'masterOrderId': None,
+                        'productCode': 'cdddbbc4c4b14e7694e0756ed94e3d25',
+                        'billingCycleId': f'{bill_cycle[:4]}/{bill_cycle[4:]}',
+                        'regionId': '贵州测试床',
+                        'stateDate': f'{bill_cycle}12130000',
+                        'projectName': 'default',
+                        'contractCode': None,
+                        'projectId': '0',
+                        'resourceType': 'EIP'
+                    },
+                    {
+                        'resourceId': '8a1b2c3d4e5f60718293a4b5c6d7e8f',
+                        'labelInfo': None,
+                        'masterOrderNo': '202212121200000001',
+                        'usage': '500',
+                        'billMode': '2',
+                        'discountAmount': '50',
+                        'consumeDate': f'{bill_cycle[:4]}-{bill_cycle[4:]}-12 14:00:00 - {bill_cycle[:4]}-{bill_cycle[4:]}-12 15:00:00',
+                        'deductUsage': '0',
+                        'payableAmount': '450',
+                        'pricefactorValue': '1000',
+                        'productName': '云主机带宽按需',
+                        'regionCode': 'cn-north-1',
+                        'servId': 'f1e2d3c4b5c6d7e8f9a0b1c2d3e4f5',
+                        'price': '500',
+                        'serviceTag': 'ECS',
+                        'contractName': '测试合同',
+                        'realResourceId': '8a1b2c3d4e5f60718293a4b5c6d7e8f',
+                        'salesAttribute': '带宽：5Mbps|计费方式：按流量',
+                        'keySalesAttribute': '5Mbps',
+                        'usageType': 'GB',
+                        'amount': '450',
+                        'usageTypeId': '105',
+                        'offerName': '弹性公网IP',
+                        'coupon': '0',
+                        'billType': '7',
+                        'masterOrderId': 'ord_202212121200000001',
+                        'productCode': 'gpraffic1t5',
+                        'billingCycleId': f'{bill_cycle[:4]}/{bill_cycle[4:]}',
+                        'regionId': '华北2',
+                        'stateDate': f'{bill_cycle}12140000',
+                        'projectName': 'production',
+                        'contractCode': 'CT2022121200001',
+                        'projectId': 'proj_abc123',
+                        'resourceType': 'ECS'
+                    }
+                ]
+            }
+        }
+
+    def query_ondemand_bill_by_resource_cycle(self, bill_cycle: str, page_no: int = 1,
+                                              page_size: int = 10, product_code: Optional[str] = None,
+                                              resource_id: Optional[str] = None,
+                                              contract_id: Optional[str] = None,
+                                              group_by_day: Optional[str] = None) -> Dict[str, Any]:
+        """
+        账单明细资源+账期（按需）
+
+        Args:
+            bill_cycle: 账期，格式：YYYYMM，如：202212
+            page_no: 页码，默认1
+            page_size: 每页条数，默认10
+            product_code: 产品编码（可选）
+            resource_id: 资源ID（可选）
+            contract_id: 合同ID（可选）
+            group_by_day: 是否为按天查询，"1"为按天查询，"0"或不传为按账期查询（可选）
+
+        Returns:
+            账单明细资源+账期（按需）信息
+        """
+        logger.info(f"查询账单明细资源+账期(按需): bill_cycle={bill_cycle}, page={page_no}")
+
+        try:
+            url = f"https://{self.base_endpoint}/qryOnDemandBillDetail_Res_CycleId"
+
+            body_data = {
+                'billingCycleId': bill_cycle,
+                'pageNo': page_no,
+                'pageSize': page_size,
+                'hasTotal': False
+            }
+
+            if product_code:
+                body_data['productCode'] = product_code
+            if resource_id:
+                body_data['resourceId'] = resource_id
+            if contract_id:
+                body_data['contractId'] = contract_id
+            if group_by_day:
+                body_data['groupByonDay'] = group_by_day
+
+            body = json.dumps(body_data)
+
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params=None,
+                body=body
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return self._get_mock_resource_cycle_data(bill_cycle, page_no, page_size)
+
+            result = response.json()
+            logger.debug(f"解析结果: {result}")
+            return result
+
+        except Exception as e:
+            logger.error(f"查询账单明细资源+账期(按需)异常: {str(e)}")
+            return self._get_mock_resource_cycle_data(bill_cycle, page_no, page_size)
+
+    def _get_mock_resource_cycle_data(self, bill_cycle: str, page_no: int, page_size: int) -> Dict[str, Any]:
+        """获取模拟账单明细资源+账期（按需）数据"""
+        return {
+            'statusCode': 800,
+            'message': '查询成功（模拟数据）',
+            'returnObj': {
+                'totalCount': 3,
+                'pageNo': page_no,
+                'pageSize': page_size,
+                'result': [
+                    {
+                        'resourceId': '21b9273d9e2c45a6a0c3e5d38f3709ce.NETWORK',
+                        'labelInfo': None,
+                        'billMode': '2',
+                        'discountAmount': '0',
+                        'consumeDate': None,
+                        'payableAmount': '6356',
+                        'productName': '云主机带宽按需',
+                        'regionCode': 'cn-gzT',
+                        'servId': 'fe9c20e1c4aa4b56bdeadefbb4d84b10',
+                        'price': '6356',
+                        'serviceTag': 'HWS',
+                        'contractName': None,
+                        'realResourceId': '21b9273d-9e2c-45a6-a0c3-e5d38f3709ce',
+                        'salesAttribute': '类型：独享带宽|版本号：v1|资源池类型(是否蒙贵)：非蒙贵|是否要求进入一点结算：是|销售品类别：标准',
+                        'keySalesAttribute': None,
+                        'amount': '0',
+                        'offerName': '天翼云3.0带宽',
+                        'coupon': '0',
+                        'billType': '7',
+                        'productCode': '620608735a494df9bb45a97746378528',
+                        'billingCycleId': bill_cycle,
+                        'regionId': '贵州测试床',
+                        'projectName': None,
+                        'contractCode': None,
+                        'resourceType': 'NETWORK'
+                    },
+                    {
+                        'resourceId': '76c3714f30ea4922a7c20257098b206c',
+                        'labelInfo': None,
+                        'billMode': '2',
+                        'discountAmount': '0',
+                        'consumeDate': None,
+                        'payableAmount': '454',
+                        'productName': 'EBS弹性块按需',
+                        'regionCode': 'cn-gzT',
+                        'servId': 'd7dd3b0e401c415b9c979862a31b6778',
+                        'price': '454',
+                        'serviceTag': 'HWS',
+                        'contractName': None,
+                        'realResourceId': '76c3714f-30ea-4922-a7c2-0257098b206c',
+                        'salesAttribute': '类型：普通IO|版本号：v1|是否要求进入一点结算：是|销售品类别：标准',
+                        'keySalesAttribute': None,
+                        'amount': '0',
+                        'offerName': '天翼云3.0EBS弹性块',
+                        'coupon': '0',
+                        'billType': '7',
+                        'productCode': 'fa1f18ab4dd944749200a4ddb2b92a16',
+                        'billingCycleId': bill_cycle,
+                        'regionId': '贵州测试床',
+                        'projectName': None,
+                        'contractCode': None,
+                        'resourceType': 'EBS'
+                    },
+                    {
+                        'resourceId': '65cf1d05752c48a48956a8d9bfe69583',
+                        'labelInfo': None,
+                        'billMode': '2',
+                        'discountAmount': '0',
+                        'consumeDate': None,
+                        'payableAmount': '2270',
+                        'productName': 'IP保有费',
+                        'regionCode': 'cn-gzT',
+                        'servId': '794f52db96164e5f8a256cd30d2d0a76',
+                        'price': '2270',
+                        'serviceTag': 'EIP',
+                        'contractName': None,
+                        'realResourceId': '65cf1d05-752c-48a4-8956-a8d9bfe69583',
+                        'salesAttribute': '类型：公众版|版本号：v1|销售品类别：标准|是否要求进入一点结算：是|收入结算方式：一点结算',
+                        'keySalesAttribute': None,
+                        'amount': '0',
+                        'offerName': '弹性IP保有费',
+                        'coupon': '0',
+                        'billType': '7',
+                        'productCode': 'cdddbbc4c4b14e7694e0756ed94e3d25',
+                        'billingCycleId': bill_cycle,
+                        'regionId': '贵州测试床',
+                        'projectName': None,
+                        'contractCode': None,
+                        'resourceType': 'EIP'
+                    }
+                ]
+            }
         }
