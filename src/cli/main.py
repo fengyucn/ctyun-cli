@@ -1612,6 +1612,9 @@ cli.add_command(cce)
 from cda.commands import cda
 cli.add_command(cda)
 
+from vpc.commands import vpc
+cli.add_command(vpc)
+
 
 if __name__ == '__main__':
     cli()
