@@ -349,9 +349,16 @@ ctyun-cli ecs list --output json | jq '.[] | select(.status == "running")'
 
 ## 📝 版本信息
 
-**当前版本：** 1.5.0 (Latest)
+**当前版本：** 1.6.0 (Latest)
 
-**重大更新 v1.5.0 - 账单模块全面升级 (2025-12-02)：**
+**重大更新 v1.6.0 - VPC模块全面升级 (2025-12-03)：**
+- 🚀 **VPC new系列API完整实现** - 支持游标分页的高性能VPC查询
+- ✨ **新增4个核心VPC命令** - `vpc new-list`、`vpc subnet new-list`、`vpc security new-query`、`vpc show`
+- ⚡ **性能大幅提升** - 基于nextToken的游标分页，支持大数据量查询
+- 🔍 **查询功能增强** - 支持模糊查询、多维度筛选、幂等性保证
+- 📋 **API统计更新** - VPC模块支持11+个API接口，覆盖完整的网络管理场景
+
+**历史版本 v1.5.0 - 账单模块全面升级 (2025-12-02)：**
 - 🎉 **10个账单API完整实现** - 实现包周期、按需、消费类型汇总等完整账单查询体系
 - 🆕 **新增按需账单资源+账期命令** - `ondemand-resource-cycle` 支持按资源维度和按天查询
 - 🔧 **优化所有账单命令输出格式** - 统一支持 `--output json/yaml/table` 参数

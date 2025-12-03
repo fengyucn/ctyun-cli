@@ -233,6 +233,44 @@ def format_output(data, output_format='table'):
                         click.echo(rule_table)
                     else:
                         click.echo("没有找到安全组规则")
+                elif 'usedIPs' in return_obj:
+                    # 子网已使用IP格式化
+                    from tabulate import tabulate
+
+                    used_ips = return_obj.get('usedIPs', [])
+                    if used_ips:
+                        headers = ['IPv4地址', 'IPv6地址', '用途', '描述', '扩展IPv4', '扩展IPv6']
+                        table_data = []
+
+                        for ip_info in used_ips:
+                            # 处理扩展IP地址
+                            secondary_ipv4 = ip_info.get('secondaryPrivateIpv4', [])
+                            secondary_ipv6 = ip_info.get('secondaryPrivateIpv6', [])
+
+                            secondary_ipv4_str = ', '.join(secondary_ipv4) if secondary_ipv4 else '-'
+                            secondary_ipv6_str = ', '.join(secondary_ipv6) if secondary_ipv6 else '-'
+
+                            table_data.append([
+                                ip_info.get('ipv4Address', ''),
+                                ip_info.get('ipv6Address', ''),
+                                ip_info.get('use', ''),
+                                ip_info.get('useDesc', ''),
+                                secondary_ipv4_str,
+                                secondary_ipv6_str
+                            ])
+
+                        # 显示分页信息
+                        total_count = return_obj.get('totalCount', len(used_ips))
+                        current_count = return_obj.get('currentCount', len(used_ips))
+                        total_page = return_obj.get('totalPage', 1)
+
+                        click.echo(f"子网已使用IP列表 (总计: {total_count} 个, 当前页: {current_count} 个)")
+                        click.echo()
+
+                        table = tabulate(table_data, headers=headers, tablefmt='grid')
+                        click.echo(table)
+                    else:
+                        click.echo("没有找到已使用的IP")
                 elif isinstance(return_obj, dict):
                     # 其他类型的数据，打印键值对
                     headers = ['字段', '值']
@@ -321,6 +359,63 @@ def describe_vpcs(ctx, region_id: str, vpc_id: Optional[str], vpc_name: Optional
     format_output(result, output_format)
 
 
+@vpc.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='VPC ID，多个ID用半角逗号分隔')
+@click.option('--vpc-name', help='VPC名称')
+@click.option('--project-id', help='企业项目ID，默认为0')
+@click.option('--page-no', type=int, default=1, help='列表的页码，默认值为1，推荐使用该字段')
+@click.option('--page-number', type=int, help='列表的页码，默认值为1，后续会废弃')
+@click.option('--page-size', type=int, default=10, help='分页查询时每页的行数，最大值为200，默认值为10')
+@click.option('--next-token', help='下一页游标')
+@click.option('--max-results', type=int, help='最大分页数')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def new_describe_vpcs(ctx, region_id: str, vpc_id: Optional[str], vpc_name: Optional[str],
+                      project_id: Optional[str], page_no: int, page_number: Optional[int],
+                      page_size: int, next_token: Optional[str], max_results: Optional[int],
+                      output: Optional[str]):
+    """
+    查询VPC列表 (新版API，支持游标分页)
+    """
+    client = get_vpc_client(ctx)
+    result = client.new_describe_vpcs(
+        region_id=region_id,
+        vpc_id=vpc_id,
+        vpc_name=vpc_name,
+        project_id=project_id,
+        page_no=page_no,
+        page_number=page_number,
+        page_size=page_size,
+        next_token=next_token,
+        max_results=max_results
+    )
+    # 优先使用子命令的output参数，否则使用全局output设置
+    output_format = output or ctx.obj['output']
+    format_output(result, output_format)
+
+
+@vpc.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', required=True, help='VPC ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def show_vpc(ctx, region_id: str, vpc_id: str, output: Optional[str]):
+    """
+    查询VPC详情
+    """
+    client = get_vpc_client(ctx)
+    result = client.show_vpc(
+        region_id=region_id,
+        vpc_id=vpc_id
+    )
+    # 优先使用子命令的output参数，否则使用全局output设置
+    output_format = output or ctx.obj['output']
+    format_output(result, output_format)
+
+
 # ==================== 子网管理命令 ====================
 
 @vpc.group()
@@ -357,6 +452,90 @@ def describe_subnets(ctx, region_id: str, vpc_id: Optional[str], subnet_id: Opti
         page_size=page_size,
         next_token=next_token,
         max_results=max_results
+    )
+    # 优先使用子命令的output参数，否则使用全局output设置
+    output_format = output or ctx.obj['output']
+    format_output(result, output_format)
+
+
+@subnet.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='VPC ID')
+@click.option('--subnet-id', help='子网ID，多个ID用半角逗号分隔')
+@click.option('--client-token', help='客户端存根，用于保证订单幂等性，长度 1 - 64')
+@click.option('--page-no', type=int, default=1, help='列表的页码，默认值为1，推荐使用该字段')
+@click.option('--page-number', type=int, help='列表的页码，默认值为1，后续会废弃')
+@click.option('--page-size', type=int, default=10, help='分页查询时每页的行数，最大值为200，默认值为10')
+@click.option('--next-token', help='下一页游标')
+@click.option('--max-results', type=int, help='最大数量')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def new_describe_subnets(ctx, region_id: str, vpc_id: Optional[str], subnet_id: Optional[str],
+                         client_token: Optional[str], page_no: int, page_number: Optional[int],
+                         page_size: int, next_token: Optional[str], max_results: Optional[int],
+                         output: Optional[str]):
+    """
+    查询子网列表 (新版API，支持游标分页)
+    """
+    client = get_vpc_client(ctx)
+    result = client.new_describe_subnets(
+        region_id=region_id,
+        vpc_id=vpc_id,
+        subnet_id=subnet_id,
+        client_token=client_token,
+        page_no=page_no,
+        page_number=page_number,
+        page_size=page_size,
+        next_token=next_token,
+        max_results=max_results
+    )
+    # 优先使用子命令的output参数，否则使用全局output设置
+    output_format = output or ctx.obj['output']
+    format_output(result, output_format)
+
+
+@subnet.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--subnet-id', required=True, help='子网ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def show_subnet(ctx, region_id: str, subnet_id: str, output: Optional[str]):
+    """
+    查询子网详情
+    """
+    client = get_vpc_client(ctx)
+    result = client.show_subnet(
+        region_id=region_id,
+        subnet_id=subnet_id
+    )
+    # 优先使用子命令的output参数，否则使用全局output设置
+    output_format = output or ctx.obj['output']
+    format_output(result, output_format)
+
+
+@subnet.command('used-ips')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--subnet-id', required=True, help='子网ID')
+@click.option('--ip', help='子网内的IP地址')
+@click.option('--page-no', type=int, default=1, help='列表的页码，默认值为1')
+@click.option('--page-size', type=int, default=10, help='分页查询时每页的行数，最大值为50，默认值为10')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_subnet_used_ips(ctx, region_id: str, subnet_id: str, ip: Optional[str],
+                         page_no: int, page_size: int, output: Optional[str]):
+    """
+    查询子网已使用IP列表
+    """
+    client = get_vpc_client(ctx)
+    result = client.list_subnet_used_ips(
+        region_id=region_id,
+        subnet_id=subnet_id,
+        ip=ip,
+        page_no=page_no,
+        page_size=page_size
     )
     # 优先使用子命令的output参数，否则使用全局output设置
     output_format = output or ctx.obj['output']
@@ -405,15 +584,20 @@ def security_group():
 
 @security_group.command('list')
 @click.option('--region-id', required=True, help='区域ID')
-@click.option('--vpc-id', help='VPC ID')
-@click.option('--security-group-id', help='安全组 ID')
-@click.option('--security-group-name', help='安全组名称过滤')
-@click.option('--status', help='安全组状态过滤')
+@click.option('--vpc-id', help='安全组所在的专有网络ID')
+@click.option('--query-content', help='【模糊查询】安全组ID或名称')
+@click.option('--project-id', help='企业项目ID，默认为0')
+@click.option('--instance-id', help='实例ID')
+@click.option('--page-no', type=int, default=1, help='列表的页码，默认值为1')
+@click.option('--page-size', type=int, default=10, help='分页查询时每页的行数，最大值为50，默认值为10')
+@click.option('--next-token', help='下一页游标')
+@click.option('--max-results', type=int, help='最大数量')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
 @click.pass_context
 @handle_error
-def describe_security_groups(ctx, region_id: str, vpc_id: Optional[str], security_group_id: Optional[str],
-                             security_group_name: Optional[str], status: Optional[str], output: Optional[str]):
+def describe_security_groups(ctx, region_id: str, vpc_id: Optional[str], query_content: Optional[str],
+                             project_id: Optional[str], instance_id: Optional[str], page_no: int, page_size: int,
+                             next_token: Optional[str], max_results: Optional[int], output: Optional[str]):
     """
     查询安全组列表
     """
@@ -421,9 +605,51 @@ def describe_security_groups(ctx, region_id: str, vpc_id: Optional[str], securit
     result = client.describe_security_groups(
         region_id=region_id,
         vpc_id=vpc_id,
-        security_group_id=security_group_id,
-        security_group_name=security_group_name,
-        status=status
+        query_content=query_content,
+        project_id=project_id,
+        instance_id=instance_id,
+        page_no=page_no,
+        page_size=page_size,
+        next_token=next_token,
+        max_results=max_results
+    )
+    # 优先使用子命令的output参数，否则使用全局output设置
+    output_format = output or ctx.obj['output']
+    format_output(result, output_format)
+
+
+@security_group.command('new-query')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='安全组所在的专有网络ID')
+@click.option('--query-content', help='【模糊查询】安全组ID或名称')
+@click.option('--instance-id', help='实例ID')
+@click.option('--page-no', type=int, default=1, help='列表的页码，默认值为1，推荐使用该字段')
+@click.option('--page-number', type=int, help='列表的页码，默认值为1，后续会废弃')
+@click.option('--page-size', type=int, default=10, help='分页查询时每页的行数，最大值为50，默认值为10')
+@click.option('--next-token', help='下一页游标')
+@click.option('--max-results', type=int, help='最大数量')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def new_describe_security_groups(ctx, region_id: str, vpc_id: Optional[str],
+                                query_content: Optional[str], instance_id: Optional[str],
+                                page_no: int, page_number: Optional[int], page_size: int,
+                                next_token: Optional[str], max_results: Optional[int],
+                                output: Optional[str]):
+    """
+    查询安全组列表 (新版API，支持游标分页)
+    """
+    client = get_vpc_client(ctx)
+    result = client.new_describe_security_groups(
+        region_id=region_id,
+        vpc_id=vpc_id,
+        query_content=query_content,
+        instance_id=instance_id,
+        page_no=page_no,
+        page_number=page_number,
+        page_size=page_size,
+        next_token=next_token,
+        max_results=max_results
     )
     # 优先使用子命令的output参数，否则使用全局output设置
     output_format = output or ctx.obj['output']
