@@ -212,54 +212,8 @@ def custom_trend(ctx, region_id: str, custom_item_id: str,
         click.echo(f"共 {len(results)} 个数据组")
 
 
-@monitor.command('dcaas-list')
-@click.option('--region-id', required=True, help='资源池ID')
-@click.pass_context
-@handle_error
-def dcaas_list(ctx, region_id: str):
-    """
-    查询云专线设备列表
-    
-    示例：
-        ctyun-cli monitor dcaas-list --region-id bb9fdb42056f11eda1610242ac110002
-    """
-    client = ctx.obj['client']
-    output_format = ctx.obj.get('output', 'table')
-    
-    monitor_client = MonitorClient(client)
-    result = monitor_client.list_dcaas_devices(region_id)
-    
-    if not result.get('success'):
-        click.echo(f"❌ 查询失败: {result.get('message', '未知错误')}", err=True)
-        import sys
-        sys.exit(1)
-    
-    devices = result.get('data', [])
-    
-    if not devices:
-        click.echo("未找到云专线设备")
-        return
-    
-    if output_format in ['json', 'yaml']:
-        format_output(devices, output_format)
-    else:
-        table_data = []
-        headers = ['设备ID', '设备名称', '状态', '区域']
-        
-        for device in devices:
-            table_data.append([
-                device.get('deviceID', ''),
-                device.get('deviceName', ''),
-                device.get('status', ''),
-                device.get('regionID', '')
-            ])
-        
-        table = OutputFormatter.format_table(table_data, headers)
-        click.echo(table)
-        click.echo(f"\n共找到 {len(devices)} 个云专线设备")
 
 
-@monitor.command('dcaas-traffic')
 @click.option('--device-id', required=True, help='云专线设备ID')
 @click.option('--region-id', required=True, help='资源池ID')
 @click.option('--metric', 
