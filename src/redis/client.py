@@ -1001,6 +1001,9 @@ class RedisClient:
                 企业项目:
                     projectID (str): 企业项目ID
 
+                Header参数:
+                    regionId (str): 资源池ID (必需，使用此参数指定要创建实例的资源池)
+
         Returns:
             Optional[Dict[str, Any]]: 创建结果
         """
@@ -1095,6 +1098,10 @@ class RedisClient:
             extra_headers = {
                 'Content-Type': 'application/json'
             }
+
+            # 添加regionId到header（如果提供）
+            if kwargs.get('regionId'):
+                extra_headers['regionId'] = kwargs['regionId']
 
             # 生成签名请求头
             headers = self.eop_auth.sign_request(

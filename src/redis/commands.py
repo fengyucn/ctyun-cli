@@ -817,6 +817,7 @@ def describe_version(ctx, instance_id: str, output_format: str, timeout: int):
 
 # 企业项目参数
 @click.option('--project-id', default='0', help='企业项目ID (默认: 0)')
+@click.option('--region-id', '-r', help='资源池ID (必需，可通过查询可用资源池接口获取)')
 
 # 输出和控制参数
 @click.option('--format', '-f', 'output_format',
@@ -833,13 +834,15 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
                    secondary_zone_name: str, host_type: str, shard_mem_size: int,
                    shard_count: int, capacity: int, copies_count: int, data_disk_type: str,
                    vpc_id: str, subnet_id: str, secgroups: str, cache_server_port: int,
-                   project_id: str, output_format: str, timeout: int, check_resources: bool, dry_run: bool):
+                   project_id: str, region_id: str, output_format: str, timeout: int,
+                   check_resources: bool, dry_run: bool):
     """
     创建Redis分布式缓存实例 - 支持完整的25+API参数
 
     基础示例:
         # 创建基础版Redis实例 (按需付费)
         ctyun redis create-instance \\
+            --region-id 200000001852 \\
             --instance-name my-redis \\
             --edition StandardSingle \\
             --engine-version 6.0 \\
@@ -852,6 +855,7 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
 
         # 创建增强版实例 (包年包月)
         ctyun redis create-instance \\
+            --region-id 200000001852 \\
             -n prod-redis -e ClusterSingle -v 7.0 \\
             --shard-mem-size 16 --shard-count 3 \\
             -z cn-huabei2-tj-1a-public-ctcloud \\
@@ -861,6 +865,7 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
 
         # 创建双副本高可用实例
         ctyun redis create-instance \\
+            --region-id 200000001852 \\
             --instance-name ha-redis \\
             --edition StandardDual \\
             --version PLUS --engine-version 6.0 \\
@@ -893,6 +898,9 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
             --copies-count: 副本数 (默认2，取值2~10)
             --data-disk-type: SSD超高IO / SAS高IO (默认SSD)
 
+        资源池配置:
+            --region-id: 资源池ID (必需，常用: 200000001852 华北2)
+
         网络配置:
             --vpc-id: 虚拟私有云ID (必需)
             --subnet-id: 子网ID (必需)
@@ -903,13 +911,14 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
             --project-id: 企业项目ID (默认0)
 
     注意事项:
-        1. 经典版(Classic)属于白名单功能，默认不开放，建议优先使用基础版和增强版
-        2. 实例名称长度4~40字符，大小写字母开头，只能包含字母、数字、分隔符(-)，字母或数字结尾
-        3. 密码长度8-26字符，必须包含大写字母、小写字母、数字、特殊字符(@%^*_+!$-=.)中的三种类型
-        4. 包年包月模式必须指定charge-type为PrePaid和period参数
-        5. 启用自动续费时必须指定auto-renew-period参数
-        6. 使用--check-resources参数可以在创建前检查资源可用性
-        7. 使用--dry-run参数可以验证参数正确性而不实际创建实例
+        1. --region-id是必需参数，指定资源池ID，常用值: 200000001852 (华北2)
+        2. 经典版(Classic)属于白名单功能，默认不开放，建议优先使用基础版和增强版
+        3. 实例名称长度4~40字符，大小写字母开头，只能包含字母、数字、分隔符(-)，字母或数字结尾
+        4. 密码长度8-26字符，必须包含大写字母、小写字母、数字、特殊字符(@%^*_+!$-=.)中的三种类型
+        5. 包年包月模式必须指定charge-type为PrePaid和period参数
+        6. 启用自动续费时必须指定auto-renew-period参数
+        7. 使用--check-resources参数可以在创建前检查资源可用性
+        8. 使用--dry-run参数可以验证参数正确性而不实际创建实例
     """
     import re
     from redis import RedisClient
@@ -920,6 +929,15 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
 
     # ========== 参数验证 ==========
     click.echo("🔍 开始参数验证...")
+
+    # 验证资源池ID
+    if not region_id:
+        click.echo("❌ 错误: region-id是必需参数", err=True)
+        click.echo("💡 获取region-id方法:", err=True)
+        click.echo("   1. 查看附录文档: 分布式缓存服务Redis资源池", err=True)
+        click.echo("   2. 调用查询可用资源池接口获取resPoolCode字段", err=True)
+        click.echo("   3. 常用region-id: 200000001852 (华北2)", err=True)
+        sys.exit(1)
 
     # 验证实例名称
     if not (4 <= len(instance_name) <= 40):
@@ -1019,6 +1037,7 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
     if dry_run:
         click.echo("\n🔍 预览模式 - 参数配置如下:")
         click.echo("="*60)
+        click.echo(f"资源池ID: {region_id}")
         click.echo(f"实例名称: {instance_name}")
         click.echo(f"版本类型: {version} - {engine_version}")
         click.echo(f"实例类型: {edition}")
@@ -1101,6 +1120,9 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
 
         # 企业项目
         'projectID': project_id,
+
+        # 资源池ID (header参数)
+        'regionId': region_id,
     }
 
     # 可选参数
