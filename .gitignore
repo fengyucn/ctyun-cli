@@ -75,3 +75,13 @@ AKSK
 # Local development
 .env
 .env.local
+
+# Documentation files (keep only essential ones)
+*.md
+!README.md
+!LICENSE
+!MANIFEST.in
+
+# Backup folders
+backup_*/
+backup-*
