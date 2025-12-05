@@ -1,0 +1,15 @@
+# 自定义pre-commit hooks定义
+- id: python-import-check
+  name: Python导入路径检查
+  description: 检查Python文件中是否有不正确的导入路径
+  entry: python scripts/check_imports.py
+  language: system
+  files: ^src/.*\.py$
+
+- id: python-init-check
+  name: Python __init__.py 检查
+  description: 确保所有包目录都有正确的__init__.py文件
+  entry: python scripts/check_init_files.py
+  language: system
+  files: ^src/
+  pass_filenames: false

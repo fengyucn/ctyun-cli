@@ -1,0 +1,112 @@
+# Python项目pre-commit配置
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-json
+      - id: check-toml
+
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        language_version: python3
+        files: ^src/.*\.py$
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=88, --extend-ignore=E203,W503,F401]
+        files: ^src/.*\.py$
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile=black]
+        files: ^src/.*\.py$
+
+  # 自定义Python导入检查 - 防止重复导入错误
+  - repo: local
+    hooks:
+      - id: python-import-check
+        name: Python导入路径检查
+        entry: python -c "
+import re
+import sys
+from pathlib import Path
+
+def check_imports(file_path):
+    errors = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+        lines = content.split('\n')
+
+    for i, line in enumerate(lines, 1):
+        # 检查是否有 'from src.' 导入
+        if re.match(r'^\s*from\s+src\.', line):
+            errors.append(f'第{i}行: 不应使用 \"from src.\" 导入，请使用相对导入')
+
+        # 检查是否有 'import src.' 导入
+        elif re.match(r'^\s*import\s+src\.', line):
+            errors.append(f'第{i}行: 不应使用 \"import src.\" 导入，请使用相对导入')
+
+    if errors:
+        print(f'❌ {file_path}:')
+        for error in errors:
+            print(f'   {error}')
+        return False
+    else:
+        print(f'✅ {file_path}: 导入检查通过')
+        return True
+
+file_path = sys.argv[1] if len(sys.argv) > 1 else ''
+if file_path and file_path.endswith('.py'):
+    check_imports(file_path)
+"
+        language: system
+        files: ^src/.*\.py$
+
+  # 检查__init__.py文件
+  - repo: local
+    hooks:
+      - id: python-init-check
+        name: Python __init__.py 检查
+        entry: python -c "
+import os
+from pathlib import Path
+
+def check_init_files(project_root):
+    src_path = Path(project_root) / 'src'
+    if not src_path.exists():
+        return
+
+    missing_inits = []
+    for item in src_path.rglob('*.py'):
+        if item.name != '__init__.py':
+            # 检查同级目录是否有__init__.py
+            init_file = item.parent / '__init__.py'
+            if not init_file.exists():
+                missing_inits.append(item.parent.relative_to(src_path))
+
+    if missing_inits:
+        print('❌ 缺少 __init__.py 文件的目录:')
+        for missing in missing_inits:
+            print(f'   src/{missing}/__init__.py')
+        return False
+    else:
+        print('✅ __init__.py 文件检查通过')
+        return True
+
+check_init_files('.')
+"
+        language: system
+        files: ^src/
+        pass_filenames: false
