@@ -744,6 +744,36 @@ def list_pods(ctx, region_id: str, cluster_id: str, namespace: str,
         format_output(result, output_format)
 
 
+@cce.command('get-pod')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--pod-name', required=True, help='Pod名称')
+@click.pass_context
+@handle_error
+def get_pod(ctx, region_id: str, cluster_id: str, namespace: str, pod_name: str):
+    """查询指定Pod的详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_pod(region_id, cluster_id, namespace, pod_name)
+
+    if output_format == 'table':
+        pod_info = result.get('returnObj', '')
+        if pod_info:
+            click.echo(f"Pod '{pod_name}' 在命名空间 '{namespace}' 中的详情:")
+            click.echo("=" * 80)
+            if isinstance(pod_info, str):
+                click.echo(pod_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo(f"未找到Pod '{pod_name}' 在命名空间 '{namespace}' 中")
+    else:
+        format_output(result, output_format)
+
+
 @cce.command('list-services')
 @click.option('--region-id', required=True, help='区域ID')
 @click.option('--cluster-id', required=True, help='集群ID')
