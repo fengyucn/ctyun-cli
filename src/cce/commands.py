@@ -148,6 +148,35 @@ def create_cluster(ctx, region_id: str, cluster_name: str, cluster_type: str,
         format_output(result, output_format)
 
 
+@cce.command('list-authorized-namespaces')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.pass_context
+@handle_error
+def list_authorized_namespaces(ctx, region_id: str, cluster_name: str):
+    """查询用户被授权的命名空间列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_authorized_namespaces(region_id, cluster_name)
+
+    if output_format == 'table':
+        namespaces = result.get('returnObj', [])
+        if namespaces:
+            click.echo(f"集群 '{cluster_name}' 中用户被授权的命名空间列表 (共 {len(namespaces)} 个):")
+            # 显示命名空间列表
+            from tabulate import tabulate
+            table_data = []
+            for i, namespace in enumerate(namespaces, 1):
+                table_data.append([i, namespace])
+            click.echo(tabulate(table_data, headers=['序号', '命名空间名称'], tablefmt='grid'))
+        else:
+            click.echo("未找到用户被授权的命名空间")
+    else:
+        format_output(result, output_format)
+
+
 @cce.command('list-clusters')
 @click.option('--region-id', required=True, help='区域ID')
 @click.option('--page-size', default=10, help='每页条数')

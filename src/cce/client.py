@@ -1189,6 +1189,41 @@ class CCEClient:
 
     # ========== 其他功能接口 ==========
 
+    def list_authorized_namespaces(self, region_id: str, cluster_name: str) -> Dict[str, Any]:
+        """
+        查询用户被授权的命名空间列表
+
+        Args:
+            region_id: 区域ID
+            cluster_name: 集群名称
+
+        Returns:
+            用户被授权的命名空间列表的响应结果
+        """
+        logger.info(f"查询用户被授权的命名空间列表: regionId={region_id}, clusterName={cluster_name}")
+
+        url = f'https://{self.base_endpoint}/v1.1/cce/clusters/{cluster_name}/binding/namespaces'
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
     def bind_cluster_tag(self, region_id: str, cluster_id: str, tag_config: Dict[str, Any]) -> Dict[str, Any]:
         """
         绑定集群标签
