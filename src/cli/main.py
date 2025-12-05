@@ -1615,6 +1615,9 @@ cli.add_command(cda)
 from vpc.commands import vpc
 cli.add_command(vpc)
 
+from elb.commands import elb
+cli.add_command(elb)
+
 
 if __name__ == '__main__':
     cli()
