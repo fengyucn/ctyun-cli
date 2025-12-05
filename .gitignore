@@ -85,3 +85,12 @@ AKSK
 # Backup folders
 backup_*/
 backup-*
+
+# Skills-related paths
+skills/__pycache__/
+skills/*.pyc
+skills/*.pyo
+skills/*.pyd
+skills/.release_history.json
+skills/*.tmp
+skills/*.temp
