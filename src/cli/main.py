@@ -226,12 +226,12 @@ def list(ctx, region_id: str, page: int, page_size: int, az_name: Optional[str],
                     image_name = image.get('imageName', '')
                     
                     table_data.append([
-                        instance.get('instanceID', '')[:20],
+                        instance.get('instanceID', ''),  # 保留完整的实例ID，不截断
                         instance.get('displayName', instance.get('instanceName', '')),
                         instance.get('instanceStatus', ''),
                         ip_display,
                         flavor_str,
-                        image_name[:20] if len(image_name) > 20 else image_name,
+                        image_name[:20] + '...' if len(image_name) > 20 else image_name,
                         instance.get('expiredTime', '-') if instance.get('expiredTime') else '按量付费'
                     ])
                 

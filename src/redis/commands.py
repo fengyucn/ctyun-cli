@@ -319,7 +319,7 @@ def list_instances(ctx, region_id: str, name: str, page: int, size: int, output_
 
                     # 数据行 - 适配新API的字段名
                     for i, instance in enumerate(instances, 1):
-                        instance_id = instance.get('prodInstId', 'N/A')[:28]
+                        instance_id = instance.get('prodInstId', 'N/A')  # 保留完整的实例ID
                         instance_name = instance.get('instanceName', 'N/A')[:18]
                         status_ = instance.get('statusName', 'N/A')  # 新API使用statusName
                         version = instance.get('engineVersion', 'N/A')
@@ -355,7 +355,7 @@ def list_instances(ctx, region_id: str, name: str, page: int, size: int, output_
                     click.echo(f"\n📝 实例详情:")
                     for i, instance in enumerate(instances[:5], 1):  # 只显示前5个
                         instance_name = instance.get('instanceName', 'N/A')
-                        instance_id = instance.get('prodInstId', 'N/A')[:20]
+                        instance_id = instance.get('prodInstId', 'N/A')  # 保留完整的实例ID
                         status_ = instance.get('statusName', 'N/A')
                         version = instance.get('engineVersion', 'N/A')
                         capacity = instance.get('capacity', 'N/A')  # 新API使用capacity
