@@ -760,6 +760,66 @@ def list_pods(ctx, region_id: str, cluster_id: str, namespace: str,
         format_output(result, output_format)
 
 
+@cce.command('list-daemonsets')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_daemonsets(ctx, region_id: str, cluster_id: str, namespace: str,
+                   label_selector: Optional[str], field_selector: Optional[str]):
+    """查询指定集群下的DaemonSet列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_daemonsets(region_id, cluster_id, namespace, label_selector, field_selector)
+
+    if output_format == 'table':
+        daemonsets_info = result.get('returnObj', '')
+        if daemonsets_info:
+            click.echo(f"集群 '{cluster_id}' 命名空间 '{namespace}' 中的DaemonSet列表:")
+            if isinstance(daemonsets_info, str):
+                click.echo(daemonsets_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到DaemonSet")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-daemonset')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--daemonset-name', required=True, help='DaemonSet名称')
+@click.pass_context
+@handle_error
+def get_daemonset(ctx, region_id: str, cluster_id: str, namespace: str, daemonset_name: str):
+    """查询指定集群下的DaemonSet详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_daemonset(region_id, cluster_id, namespace, daemonset_name)
+
+    if output_format == 'table':
+        daemonset_info = result.get('returnObj', '')
+        if daemonset_info:
+            click.echo(f"集群 '{cluster_id}' 命名空间 '{namespace}' 中DaemonSet '{daemonset_name}' 的详情:")
+            if isinstance(daemonset_info, str):
+                click.echo(daemonset_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo(f"未找到DaemonSet '{daemonset_name}'")
+    else:
+        format_output(result, output_format)
+
+
 @cce.command('get-pod')
 @click.option('--region-id', required=True, help='区域ID')
 @click.option('--cluster-id', required=True, help='集群ID')

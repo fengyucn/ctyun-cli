@@ -852,6 +852,91 @@ class CCEClient:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
 
+    def list_daemonsets(self, region_id: str, cluster_id: str, namespace_name: str,
+                       label_selector: Optional[str] = None, field_selector: Optional[str] = None) -> Dict[str, Any]:
+        """
+        查询指定集群下的DaemonSet列表
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            namespace_name: 命名空间名称
+            label_selector: Kubernetes标签选择器（可选）
+            field_selector: Kubernetes字段选择器（可选）
+
+        Returns:
+            DaemonSet列表的响应结果
+        """
+        logger.info(f"查询DaemonSet列表: regionId={region_id}, clusterId={cluster_id}, namespace={namespace_name}")
+
+        # 根据文档：GET /v2/cce/clusters/*/apis/apps/v1/namespaces/*/daemonsets
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/apis/apps/v1/namespaces/{namespace_name}/daemonsets'
+
+        query_params = {}
+        if label_selector:
+            query_params['labelSelector'] = label_selector
+        if field_selector:
+            query_params['fieldSelector'] = field_selector
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            query_params=query_params
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def get_daemonset(self, region_id: str, cluster_id: str, namespace_name: str, daemonset_name: str) -> Dict[str, Any]:
+        """
+        查询指定集群下的DaemonSet详情
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            namespace_name: 命名空间名称
+            daemonset_name: DaemonSet名称
+
+        Returns:
+            DaemonSet详情的响应结果
+        """
+        logger.info(f"查询DaemonSet详情: regionId={region_id}, clusterId={cluster_id}, namespace={namespace_name}, daemonset={daemonset_name}")
+
+        # 根据文档：GET /v2/cce/clusters/*/apis/apps/v1/namespaces/*/daemonsets/*
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/apis/apps/v1/namespaces/{namespace_name}/daemonsets/{daemonset_name}'
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
     def get_pod(self, region_id: str, cluster_id: str, namespace_name: str, pod_name: str) -> Dict[str, Any]:
         """
         查询指定Pod的详情
