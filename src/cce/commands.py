@@ -820,6 +820,66 @@ def get_daemonset(ctx, region_id: str, cluster_id: str, namespace: str, daemonse
         format_output(result, output_format)
 
 
+@cce.command('list-replicasets')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_replicasets(ctx, region_id: str, cluster_id: str, namespace: str,
+                     label_selector: Optional[str], field_selector: Optional[str]):
+    """获取指定集群下的ReplicaSet资源列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_replicasets(region_id, cluster_id, namespace, label_selector, field_selector)
+
+    if output_format == 'table':
+        replicasets_info = result.get('returnObj', '')
+        if replicasets_info:
+            click.echo(f"集群 '{cluster_id}' 命名空间 '{namespace}' 中的ReplicaSet列表:")
+            if isinstance(replicasets_info, str):
+                click.echo(replicasets_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到ReplicaSet")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-replicaset')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--replicaset-name', required=True, help='ReplicaSet名称')
+@click.pass_context
+@handle_error
+def get_replicaset(ctx, region_id: str, cluster_id: str, namespace: str, replicaset_name: str):
+    """查询指定集群下的ReplicaSet资源详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_replicaset(region_id, cluster_id, namespace, replicaset_name)
+
+    if output_format == 'table':
+        replicaset_info = result.get('returnObj', '')
+        if replicaset_info:
+            click.echo(f"ReplicaSet '{replicaset_name}' 详情:")
+            if isinstance(replicaset_info, str):
+                click.echo(replicaset_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到ReplicaSet")
+    else:
+        format_output(result, output_format)
+
+
 @cce.command('get-pod')
 @click.option('--region-id', required=True, help='区域ID')
 @click.option('--cluster-id', required=True, help='集群ID')
@@ -1086,6 +1146,44 @@ def list_tasks(ctx, region_id: str, cluster_id: str, page_number: int, page_size
         else:
             # 如果returnObj不是预期的格式，显示整个结果
             format_output(result, output_format)
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-task-events')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--page-number', default=1, help='分页查询页数，默认为1')
+@click.option('--page-size', default=10, help='每页显示数量，默认为10')
+@click.pass_context
+@handle_error
+def list_task_events(ctx, region_id: str, cluster_id: str, task_id: str, page_number: int, page_size: int):
+    """查询指定集群任务事件列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_task_events(region_id, cluster_id, task_id, page_number, page_size)
+
+    if output_format == 'table':
+        return_obj = result.get('returnObj', {})
+        events = return_obj.get('records', [])
+        total = return_obj.get('total', 0)
+        current = return_obj.get('current', page_number)
+
+        if events:
+            click.echo(f"任务事件列表 (任务ID: {task_id}, 共 {total} 个事件，第 {current} 页):")
+            for event in events:
+                click.echo(f"事件ID: {event.get('eventId', 'N/A')}")
+                click.echo(f"  事件类型: {event.get('eventType', 'N/A')}")
+                click.echo(f"  事件源: {event.get('source', 'N/A')}")
+                click.echo(f"  关联对象: {event.get('subject', 'N/A')}")
+                click.echo(f"  事件内容: {event.get('eventMessage', 'N/A')}")
+                click.echo(f"  创建时间: {event.get('createdTime', 'N/A')}")
+                click.echo("-" * 50)
+        else:
+            click.echo(f"未找到任务事件 (任务ID: {task_id})")
     else:
         format_output(result, output_format)
 

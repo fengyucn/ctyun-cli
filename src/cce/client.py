@@ -721,6 +721,51 @@ class CCEClient:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
 
+    def list_task_events(self, region_id: str, cluster_id: str, task_id: str, page_number: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询指定集群任务事件列表
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            task_id: 任务ID
+            page_number: 分页查询页数（可选，默认1）
+            page_size: 每页显示数量（可选，默认10）
+
+        Returns:
+            任务事件列表的响应结果
+        """
+        logger.info(f"查询任务事件列表: regionId={region_id}, clusterId={cluster_id}, taskId={task_id}, pageNumber={page_number}, pageSize={page_size}")
+
+        # 根据文档：GET /v2/cce/events/{clusterId}/{taskId}
+        url = f'https://{self.base_endpoint}/v2/cce/events/{cluster_id}/{task_id}'
+
+        query_params = {
+            'pageNumber': page_number,
+            'pageSize': page_size
+        }
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            query_params=query_params
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
     # ========== Kubernetes资源查询 ==========
 
     def list_deployments(self, region_id: str, cluster_id: str, namespace: str,
@@ -887,6 +932,91 @@ class CCEClient:
         headers['Content-Type'] = 'application/json'
 
         response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def list_replicasets(self, region_id: str, cluster_id: str, namespace_name: str,
+                          label_selector: Optional[str] = None, field_selector: Optional[str] = None) -> Dict[str, Any]:
+        """
+        获取指定集群下的ReplicaSet资源列表
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            namespace_name: 命名空间名称
+            label_selector: Kubernetes标签选择器（可选）
+            field_selector: Kubernetes字段选择器（可选）
+
+        Returns:
+            ReplicaSet列表的响应结果
+        """
+        logger.info(f"查询ReplicaSet列表: regionId={region_id}, clusterId={cluster_id}, namespace={namespace_name}")
+
+        # 根据文档：GET /v2/cce/clusters/*/apis/apps/v1/namespaces/*/replicasets
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/apis/apps/v1/namespaces/{namespace_name}/replicasets'
+
+        query_params = {}
+        if label_selector:
+            query_params['labelSelector'] = label_selector
+        if field_selector:
+            query_params['fieldSelector'] = field_selector
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            query_params=query_params
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def get_replicaset(self, region_id: str, cluster_id: str, namespace_name: str, replicaset_name: str) -> Dict[str, Any]:
+        """
+        查询指定集群下的ReplicaSet资源详情
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            namespace_name: 命名空间名称
+            replicaset_name: ReplicaSet资源名称
+
+        Returns:
+            ReplicaSet详情的响应结果
+        """
+        logger.info(f"查询ReplicaSet详情: regionId={region_id}, clusterId={cluster_id}, namespace={namespace_name}, name={replicaset_name}")
+
+        # 根据文档：GET /v2/cce/clusters/*/apis/apps/v1/namespaces/*/replicasets/*
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/apis/apps/v1/namespaces/{namespace_name}/replicasets/{replicaset_name}'
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
 
         if response.status_code == 200:
             result = response.json()
