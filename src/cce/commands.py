@@ -45,7 +45,23 @@ def format_output(data, output_format='table'):
             sys.exit(1)
     else:
         # table format
-        if isinstance(data, dict):
+        if isinstance(data, list) and data:
+            # 直接处理列表数据
+            headers = list(data[0].keys())
+            from tabulate import tabulate
+            table_data = []
+            for item in data:
+                row = []
+                for key in headers:
+                    value = item.get(key, '')
+                    if value is None:
+                        value = ''
+                    elif isinstance(value, (dict, list)):
+                        value = str(value)[:50] + '...' if len(str(value)) > 50 else str(value)
+                    row.append(value)
+                table_data.append(row)
+            click.echo(tabulate(table_data, headers=headers, tablefmt='grid'))
+        elif isinstance(data, dict):
             # 处理返回的数据
             if 'returnObj' in data:
                 result_data = data['returnObj']
@@ -202,7 +218,7 @@ def list_clusters(ctx, region_id: str, page_size: int, page_no: int,
 
         if clusters:
             click.echo(f"集群列表 (共 {total} 个集群，第 {current} 页):")
-            format_output(result, output_format)
+            format_output(clusters, output_format)
         else:
             click.echo("未找到集群")
     else:

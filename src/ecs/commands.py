@@ -122,20 +122,19 @@ def list(ctx, region_id: str, page: int, page_size: int, az_name: Optional[str],
                     flavor_name = instance.get('flavorName', '')
                     flavor_id = instance.get('flavorID', '')
                     image_name = instance.get('imageName', '')
-                    
-                    flavor_display = f"{flavor_name}\n{flavor_id}" if flavor_name and flavor_id else (flavor_name or flavor_id or '')
+                    flavor_display = flavor_name if flavor_name else flavor_id
                     
                     expire_time = instance.get('expireTime', '')
                     if expire_time == '0':
                         expire_time = '按量付费'
                     
                     table_data.append([
-                        instance_id,
+                        instance_id,  # 保留完整的实例ID，不截断
                         instance.get('displayName', instance.get('instanceName', '')),
                         instance.get('instanceStatusStr', instance.get('instanceStatus', '')),
                         private_ips[0] if private_ips else '',
                         flavor_display,
-                        image_name,
+                        image_name[:20] + '...' if len(image_name) > 20 else image_name,  # 只对镜像名称进行截断
                         expire_time
                     ])
                 
@@ -144,10 +143,12 @@ def list(ctx, region_id: str, page: int, page_size: int, az_name: Optional[str],
                 total_pages = (total_count + page_size - 1) // page_size if page_size > 0 else 0
                 
                 click.echo(f"云主机列表 (总计: {total_count} 台, 当前页: {current_count} 台, 第{page}/{total_pages}页)\n")
+
                 if is_mock:
                     click.echo("⚠️  注意: 当前显示的是模拟数据，实际API调用失败")
-                
-                table = tabulate(table_data, headers=headers, tablefmt='grid')
+
+                # 修复instance-id截断问题：使用simple格式避免grid格式的换行问题
+                table = tabulate(table_data, headers=headers, tablefmt='simple')
                 click.echo(table)
                 
                 if page < total_pages:
@@ -2430,7 +2431,7 @@ def describe_instances(ctx, region_id, page, page_size, az_name, project_id,
                         image_name = image_name[:17] + '...'
                     
                     table_data.append([
-                        inst.get('instanceID', ''),
+                        inst.get('instanceID', ''),  # 保留完整的实例ID，不截断
                         inst.get('displayName', ''),
                         inst.get('instanceStatus', ''),
                         inst.get('azName', ''),
