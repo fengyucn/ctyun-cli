@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![API Count](https://img.shields.io/badge/APIs-240+-brightgreen.svg)](#api统计)
-[![Commands](https://img.shields.io/badge/Commands-199+-orange.svg)](#功能概览)
+[![API Count](https://img.shields.io/badge/APIs-215+-brightgreen.svg)](#api统计)
+[![Commands](https://img.shields.io/badge/Commands-208+-orange.svg)](#功能概览)
 [![Modules](https://img.shields.io/badge/Modules-11+-blue.svg)](#功能概览)
 
 **天翼云CLI工具** 是一款功能强大的企业级命令行工具，帮助您在终端中轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存服务、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -16,7 +16,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 采用企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖240+个API，支持11大核心服务模块
+- 📊 **功能全面** - 覆盖215+个API，支持11大核心服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -32,7 +32,7 @@ pip install ctyun-cli
 验证安装成功：
 
 ```bash
-ctyun-cli --version
+ctyun-cli --version （对了，--version 这个命令跟本就没写哦 ）
 ```
 
 ## ⚡ 5分钟快速上手
@@ -78,24 +78,24 @@ ctyun-cli billing balance
 
 | 服务模块 | 命令数量 | API数量 | 功能描述 |
 |---------|---------|---------|----------|
-| **ECS (云服务器)** | 50 | 42 | 实例管理、快照备份、密钥对、云主机组等 |
-| **Monitor (监控服务)** | 54 | 54 | 监控数据、告警管理、Top-N统计、事件管理 |
-| **Redis (分布式缓存)** | 13 | 16 | 实例管理、性能监控、网络配置、完整创建功能等 |
-| **Billing (计费查询)** | 12 | 20 | 账单查询、费用分析、消费统计 |
-| **Security (安全卫士)** | 5 | 21 | 安全扫描、漏洞管理、风险评估 |
-| **IAM (身份访问管理)** | 2 | 2 | 项目管理、权限控制 |
+| **ECS (云服务器)** | 40 | 37 | 实例管理、快照备份、密钥对、云主机组等 |
+| **Monitor (监控服务)** | 53 | 54 | 监控数据、告警管理、Top-N统计、事件管理 |
+| **Redis (分布式缓存)** | 14 | 19 | 实例管理、性能监控、网络配置、完整创建功能等 |
+| **Billing (计费查询)** | 15 | 14 | 账单查询、费用分析、消费统计 |
+| **Security (安全卫士)** | 5 | 11 | 安全扫描、漏洞管理、风险评估 |
+| **IAM (身份访问管理)** | 3 | 3 | 项目管理、权限控制 |
 | **EBS (弹性块存储)** | 1 | 1 | 块存储管理 |
-| **CDA (云专线)** | 14 | 19 | 专线网关、物理专线、VPC管理、健康检查、链路探测等 |
-| **VPC (私有网络)** | 16 | 27 | VPC网络、子网、路由表、安全组、弹性IP等 |
-| **CCE (容器引擎)** | 27 | 33 | Kubernetes集群、节点池、工作负载、配置管理等 |
-| **ELB (弹性负载均衡)** | 5 | 5 | 负载均衡器、目标组、后端主机管理等 ⭐ **NEW!** |
-| **总计** | **199** | **240** | **覆盖天翼云核心服务** |
+| **CDA (云专线)** | 19 | 19 | 专线网关、物理专线、VPC管理、健康检查、链路探测等 |
+| **VPC (私有网络)** | 15 | 15 | VPC网络、子网、路由表、安全组、弹性IP等 |
+| **CCE (容器引擎)** | 36 | 37 | Kubernetes集群、节点池、工作负载、配置管理等 |
+| **ELB (弹性负载均衡)** | 7 | 5 | 负载均衡器、目标组、后端主机管理等 ⭐ **NEW!** |
+| **总计** | **208** | **215** | **覆盖天翼云核心服务** |
 
-**📊 规模统计：16,000+行代码，240+个API，199+个命令，11大服务模块**
+**📊 规模统计：16,000+行代码，215+个API，208+个命令，11大服务模块**
 
 ### 📈 模块详情
 
-#### 🖥️ ECS模块 - 云服务器管理 (50命令/42API)
+#### 🖥️ ECS模块 - 云服务器管理 (40命令/37API)
 **核心功能：**
 - 实例生命周期管理
 - 快照和备份策略
@@ -113,7 +113,7 @@ ctyun-cli ecs list-keypairs                    # 查询密钥对
 ctyun-cli ecs get-auto-renew-config           # 查询自动续订配置
 ```
 
-#### 📊 Monitor模块 - 监控告警服务 (54命令/54API)
+#### 📊 Monitor模块 - 监控告警服务 (53命令/54API)
 **核心功能：**
 - 监控指标查询 (8个API)
 - Top-N统计排行 (6个API)
@@ -131,7 +131,7 @@ ctyun-cli monitor query-alarm-rules           # 查询告警规则
 ctyun-cli monitor query-inspection-tasks      # 查询巡检任务
 ```
 
-#### 🗄️ Redis模块 - 分布式缓存服务 (13命令/16API)
+#### 🗄️ Redis模块 - 分布式缓存服务 (14命令/19API)
 **核心功能：**
 - 🔥 **完整实例创建** - 支持25+API参数的完整Redis实例创建功能
 - Redis实例管理和查询
@@ -169,7 +169,7 @@ ctyun-cli redis check-resources              # 检查可用规格
 ctyun-cli redis zones                        # 查询可用区信息
 ```
 
-#### 💰 Billing模块 - 计费管理 (12命令/20API)
+#### 💰 Billing模块 - 计费管理 (15命令/14API)
 **核心功能：**
 - 账户余额查询
 - 月度账单统计
@@ -184,7 +184,7 @@ ctyun-cli billing details                      # 查询消费明细
 ctyun-cli billing consumption-statistics     # 消费统计分析
 ```
 
-#### 🛡️ Security模块 - 安全卫士 (5命令/21API)
+#### 🛡️ Security模块 - 安全卫士 (5命令/11API)
 **核心功能：**
 - 安全客户端管理
 - 漏洞扫描和评估
@@ -199,7 +199,7 @@ ctyun-cli security vuln-list                  # 查看漏洞列表
 ctyun-cli security security-risks             # 查看安全风险
 ```
 
-#### 👤 IAM模块 - 身份访问管理 (2命令/2API)
+#### 👤 IAM模块 - 身份访问管理 (3命令/3API)
 **核心功能：**
 - 项目管理
 - 用户权限控制
@@ -219,7 +219,7 @@ ctyun-cli iam get-project-detail             # 获取项目详情
 ctyun-cli ebs list-disks                       # 查看云硬盘列表
 ```
 
-#### 🔌 CDA模块 - 云专线管理 (14命令/19API) ⭐ **NEW! (2025-12-02)**
+#### 🔌 CDA模块 - 云专线管理 (19命令/19API) ⭐ **NEW! (2025-12-02)**
 **核心功能：**
 - 专线网关生命周期管理
 - 物理专线接入和配置
@@ -270,7 +270,7 @@ ctyun-cli cda account-auth count             # 统计跨账号授权
 ctyun-cli cda switches                       # 查询专线交换机 ⭐ 新增
 ```
 
-#### 🌐 VPC模块 - 私有网络管理 (16命令/27API)
+#### 🌐 VPC模块 - 私有网络管理 (15命令/15API)
 **核心功能：**
 - VPC网络创建和管理
 - 子网划分和配置
@@ -290,7 +290,7 @@ ctyun-cli vpc create-security-group           # 创建安全组
 ctyun-cli vpc list-security-groups            # 查看安全组列表
 ```
 
-#### 🐳 CCE模块 - 容器引擎管理 (27命令/33API)
+#### 🐳 CCE模块 - 容器引擎管理 (36命令/37API)
 **核心功能：**
 - Kubernetes集群生命周期管理
 - 节点池管理
@@ -318,7 +318,7 @@ ctyun-cli cce cluster-quota                    # 查看集群配额
 ctyun-cli cce list-authorized-namespaces     # 查看授权命名空间
 ```
 
-#### ⚖️ ELB模块 - 弹性负载均衡管理 (5命令/5API) ⭐ **NEW! (2025-12-05)**
+#### ⚖️ ELB模块 - 弹性负载均衡管理 (7命令/5API) ⭐ **NEW! (2025-12-05)**
 **核心功能：**
 - 负载均衡器管理
 - 目标组配置
@@ -422,7 +422,7 @@ ctyun-cli ecs list --output json | jq '.[] | select(.status == "running")'
 
 如果您在使用过程中遇到问题或有任何建议，欢迎：
 
-- 📧 发送邮件至技术支持团队
+- 📧 发送邮件至技术支持团队（对了，根本没有什么技术团队）
 - 💬 提交 Issue 反馈问题：https://github.com/fengyucn/ctyun-cli/issues
 - 📖 查看完整文档获取帮助
 
