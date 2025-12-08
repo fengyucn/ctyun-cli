@@ -2837,3 +2837,90 @@ class ECSClient:
                 'message': str(e),
                 'returnObj': None
             }
+
+    def query_uuid_by_order(self, region_id: str, master_order_id: str) -> Dict[str, Any]:
+        """
+        根据订单ID查询云主机UUID
+
+        Args:
+            region_id: 区域ID (必填)
+            master_order_id: 订单ID (必填)
+
+        Returns:
+            查询结果，包含订单状态和云主机ID列表
+        """
+        logger.info(f"查询订单UUID: regionId={region_id}, masterOrderID={master_order_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/order/query-uuid'
+
+            query_params = {
+                'regionID': region_id,
+                'masterOrderID': master_order_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body=None
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            result = response.json()
+
+            # 检查返回状态码
+            if result.get('statusCode') != 800:
+                error_code = result.get('errorCode', 'UNKNOWN_ERROR')
+                error_msg = result.get('description', '未知错误')
+                logger.error(f"API错误 [{error_code}]: {error_msg}")
+                raise Exception(f"API错误 [{error_code}]: {error_msg}")
+
+            # 解析返回结果
+            return_obj = result.get('returnObj', {})
+            order_status = return_obj.get('orderStatus', '')
+            instance_ids = return_obj.get('instanceIDList', [])
+
+            # 订单状态映射
+            status_map = {
+                '1': '待支付',
+                '2': '已支付',
+                '3': '完成',
+                '4': '取消',
+                '5': '施工失败',
+                '7': '正在支付中',
+                '8': '待审核',
+                '9': '审核通过',
+                '10': '审核未通过',
+                '11': '撤单完成',
+                '12': '退订中',
+                '13': '退订完成',
+                '14': '开通中',
+                '15': '变更移除',
+                '16': '自动撤单中',
+                '17': '手动撤单中',
+                '18': '终止中',
+                '22': '支付失败',
+                '-2': '待撤单',
+                '-1': '未知',
+                '0': '错误',
+                '140': '已初始化',
+                '999': '逻辑错误'
+            }
+
+            status_text = status_map.get(order_status, f'未知状态({order_status})')
+
+            logger.info(f"订单状态: {status_text}, 返回{len(instance_ids)}个云主机ID")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"查询订单UUID失败: {str(e)}")
+            raise

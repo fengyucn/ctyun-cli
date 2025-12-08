@@ -588,6 +588,104 @@ def flavor_options(ctx, output: Optional[str]):
         traceback.print_exc()
 
 
+@ecs.command()
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--master-order-id', required=True, help='订单ID (masterOrderID)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+def query_uuid(ctx, region_id: str, master_order_id: str, output: Optional[str]):
+    """根据订单ID查询云主机UUID"""
+    try:
+        from ecs.client import ECSClient
+
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+
+        result = ecs_client.query_uuid_by_order(
+            region_id=region_id,
+            master_order_id=master_order_id
+        )
+
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+
+        return_obj = result.get('returnObj', {})
+        order_status = return_obj.get('orderStatus', '')
+        instance_id_list = return_obj.get('instanceIDList', [])
+
+        # 订单状态映射
+        status_map = {
+            '1': '待支付', '2': '已支付', '3': '完成', '4': '取消', '5': '施工失败',
+            '7': '正在支付中', '8': '待审核', '9': '审核通过', '10': '审核未通过',
+            '11': '撤单完成', '12': '退订中', '13': '退订完成', '14': '开通中',
+            '15': '变更移除', '16': '自动撤单中', '17': '手动撤单中', '18': '终止中',
+            '22': '支付失败', '-2': '待撤单', '-1': '未知', '0': '错误',
+            '140': '已初始化', '999': '逻辑错误'
+        }
+
+        status_text = status_map.get(str(order_status), f'未知状态({order_status})')
+
+        # 处理输出格式
+        output_format = output or ctx.obj.get('output', 'table')
+
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            # 表格格式
+            click.echo("=" * 80)
+            click.echo(f"订单查询结果")
+            click.echo("=" * 80)
+
+            # 显示订单基本信息
+            basic_info = [
+                ('订单ID', master_order_id),
+                ('订单状态', f"{status_text} ({order_status})"),
+                ('返回云主机数量', str(len(instance_id_list)))
+            ]
+
+            for key, value in basic_info:
+                click.echo(f"{key:15}: {value}")
+
+            # 显示云主机ID列表
+            if instance_id_list:
+                click.echo("\n云主机ID列表:")
+                click.echo("-" * 80)
+                for i, instance_id in enumerate(instance_id_list, 1):
+                    click.echo(f"{i:3}. {instance_id}")
+
+                if order_status == '3':  # 订单完成
+                    click.echo(f"\n✅ 订单已完成，成功获取 {len(instance_id_list)} 个云主机ID")
+                else:
+                    click.echo(f"\n⏳ 订单状态: {status_text}")
+                    if order_status in ['14']:  # 开通中
+                        click.echo("   订单正在处理中，请稍后重试获取云主机ID")
+                    elif order_status in ['1']:  # 待支付
+                        click.echo("   订单待支付，支付完成后才能获取云主机ID")
+                    elif order_status in ['5', '22', '0', '999']:  # 失败状态
+                        click.echo("   ❌ 订单处理失败，无法获取云主机ID")
+            else:
+                click.echo("\n云主机ID列表: 无")
+                if order_status == '3':  # 订单完成但没有实例
+                    click.echo("⚠️  订单已完成但未返回云主机ID，可能订单不涉及云主机创建")
+                elif order_status == '14':  # 开通中
+                    click.echo("⏳ 订单正在开通中，完成后将返回云主机ID")
+                else:
+                    click.echo(f"ℹ️  当前订单状态: {status_text}")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
 @cli.command()
 def clear_cache():
     """清空所有缓存"""
