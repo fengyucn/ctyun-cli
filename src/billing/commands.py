@@ -595,14 +595,16 @@ def bill_summary(ctx, bill_cycle, contract_id, output):
             format_output(result, output_format)
         # 表格输出：使用简化的用户友好格式
         else:
-            # 格式化金额显示函数
+            # 格式化金额显示函数（API返回的是"分"，需要转换为"元"）
             def format_amount(amount_str):
                 try:
                     amount = float(amount_str)
-                    if abs(amount) >= 10000:  # 大于1万的数字，使用千分位分隔符
-                        return f"{amount:,.2f}"
+                    # 将"分"转换为"元"（除以100）
+                    amount_in_yuan = amount / 100
+                    if abs(amount_in_yuan) >= 10000:  # 大于1万的数字，使用千分位分隔符
+                        return f"{amount_in_yuan:,.2f}"
                     else:
-                        return f"{amount:.2f}"
+                        return f"{amount_in_yuan:.2f}"
                 except (ValueError, TypeError):
                     return str(amount_str)
 
@@ -695,14 +697,16 @@ def ondemand_product(ctx, bill_cycle, page, page_size, product_code, bill_type, 
             else:
                 click.echo(f"\n账期 {bill_cycle} 按需账单（按产品汇总，共 {total_count} 条）：")
 
-                # 格式化金额显示函数
+                # 格式化金额显示函数（API返回的是"分"，需要转换为"元"）
                 def format_amount(amount_str):
                     try:
                         amount = float(amount_str)
-                        if abs(amount) >= 10000:  # 大于1万的数字，使用千分位分隔符
-                            return f"{amount:,.2f}"
+                        # 将"分"转换为"元"（除以100）
+                        amount_in_yuan = amount / 100
+                        if abs(amount_in_yuan) >= 10000:  # 大于1万的数字，使用千分位分隔符
+                            return f"{amount_in_yuan:,.2f}"
                         else:
-                            return f"{amount:.2f}"
+                            return f"{amount_in_yuan:.2f}"
                     except (ValueError, TypeError):
                         return str(amount_str)
 
