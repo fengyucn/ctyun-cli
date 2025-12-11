@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![API Count](https://img.shields.io/badge/APIs-283+-brightgreen.svg)](#api统计)
-[![Commands](https://img.shields.io/badge/Commands-217+-orange.svg)](#功能概览)
+[![API Count](https://img.shields.io/badge/APIs-215+-brightgreen.svg)](#api统计)
+[![Commands](https://img.shields.io/badge/Commands-256+-orange.svg)](#功能概览)
 [![Modules](https://img.shields.io/badge/Modules-11+-blue.svg)](#功能概览)
 
 **天翼云CLI工具** 是一款功能强大的企业级命令行工具，帮助您在终端中轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存服务、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -16,7 +16,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 采用企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖283+个API，支持11大核心服务模块
+- 📊 **功能全面** - 覆盖215+个API，支持11大核心服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计

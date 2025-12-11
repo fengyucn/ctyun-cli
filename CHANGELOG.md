@@ -4,6 +4,57 @@
 
 ---
 
+## v1.7.8 (2025-12-11)
+
+### 🚀 新增功能
+- **CCE ConfigMap管理API**：
+  - 新增`get_config_map_detail` API方法，支持查看ConfigMap详细配置信息
+  - 新增`list_config_maps` API方法，支持查询ConfigMap列表
+  - 支持标签选择器（labelSelector）和字段选择器（fieldSelector）过滤
+- **CCE集群日志查询API**：
+  - 新增`query_cluster_logs` API方法，支持分页查询集群操作日志
+  - 支持多种日志类型识别（插件、集群、节点等）
+- **CLI命令扩展**：
+  - 新增`cce configmap`命令组，包含list和show子命令
+  - 新增`cce logs query`命令，支持集群日志查询和分页
+  - 支持JSON、YAML、表格三种输出格式
+
+### 🔧 技术改进
+- **EOP签名认证**：为新增CCE API方法集成企业级EOP签名认证机制
+- **ConfigMap数据解析**：支持完整的YAML格式ConfigMap数据解析
+- **日志智能处理**：自动识别日志类型，提供统计和分类显示
+- **分页查询优化**：支持灵活的分页参数和数据统计
+- **多格式输出**：新增API支持多种输出格式，满足不同使用场景
+
+### 📊 功能增强
+- **容器引擎模块扩展**：新增ConfigMap和日志管理功能
+- **运维支持增强**：提供完整的集群日志查询和分析能力
+- **配置管理完善**：支持Kubernetes ConfigMap配置的查询和管理
+- **用户体验优化**：提供清晰的命令结构和使用示例
+
+### 📚 使用示例
+```bash
+# 查询ConfigMap列表
+ctyun-cli cce configmap list --region-id <region_id> \\
+  --cluster-id <cluster_id> --namespace default
+
+# 查看ConfigMap详情
+ctyun-cli cce configmap show --region-id <region_id> \\
+  --cluster-id <cluster_id> --namespace default --name <configmap_name>
+
+# 查询集群日志
+ctyun-cli cce logs query --region-id <region_id> \\
+  --cluster-name <cluster_name> --page-size 20
+```
+
+### ✅ 测试验证
+- **API功能测试**：所有新增API均通过EOP签名认证验证
+- **CLI命令测试**：完整的命令结构和使用示例验证
+- **分页功能测试**：验证分页查询和数据统计功能
+- **错误处理验证**：完善了各种错误场景的处理机制
+
+---
+
 ## v1.7.7 (2025-12-11)
 
 ### 🚀 新增功能

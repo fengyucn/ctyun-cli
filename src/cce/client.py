@@ -1549,3 +1549,196 @@ class CCEClient:
         else:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    # ========== ConfigMap配置管理 ==========
+
+    def get_config_map_detail(self, region_id: str, cluster_id: str,
+                             namespace_name: str, configmap_name: str) -> Dict[str, Any]:
+        """
+        查询ConfigMap详情
+
+        Args:
+            region_id: 区域ID (必填)
+            cluster_id: 集群ID (必填)
+            namespace_name: 命名空间名称 (必填)
+            configmap_name: ConfigMap资源名称 (必填)
+
+        Returns:
+            ConfigMap的YAML格式详细信息
+        """
+        logger.info(f"查询ConfigMap详情: clusterId={cluster_id}, namespace={namespace_name}, name={configmap_name}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/apis/apps/v1/namespaces/{namespace_name}/configmaps/{configmap_name}'
+
+            headers = {
+                'regionId': region_id
+            }
+
+            # 使用EOP签名认证
+            signed_headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=None,
+                body=None
+            )
+
+            # 合并签名后的headers
+            headers.update(signed_headers)
+
+            response = self.client.session.get(
+                url,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get('statusCode') != 800:
+                error_msg = data.get('message', '未知错误')
+                error_code = data.get('error', 'UNKNOWN_ERROR')
+                raise Exception(f"CCE API错误 [{error_code}]: {error_msg}")
+
+            logger.info("成功获取ConfigMap详情")
+            return data
+
+        except Exception as e:
+            logger.error(f"查询ConfigMap详情失败: {str(e)}")
+            raise
+
+    def list_config_maps(self, region_id: str, cluster_id: str,
+                        namespace_name: str, label_selector: Optional[str] = None,
+                        field_selector: Optional[str] = None) -> Dict[str, Any]:
+        """
+        查询ConfigMap列表
+
+        Args:
+            region_id: 区域ID (必填)
+            cluster_id: 集群ID (必填)
+            namespace_name: 命名空间名称 (必填)
+            label_selector: 标签选择器，用于过滤资源 (可选)
+            field_selector: 字段选择器，用于过滤资源 (可选)
+
+        Returns:
+            ConfigMap列表的YAML格式数据
+        """
+        logger.info(f"查询ConfigMap列表: clusterId={cluster_id}, namespace={namespace_name}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/apis/apps/v1/namespaces/{namespace_name}/configmaps'
+
+            # 构建查询参数
+            query_params = {}
+            if label_selector:
+                query_params['labelSelector'] = label_selector
+            if field_selector:
+                query_params['fieldSelector'] = field_selector
+
+            headers = {
+                'regionId': region_id
+            }
+
+            # 使用EOP签名认证
+            signed_headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params if query_params else None,
+                body=None
+            )
+
+            # 合并签名后的headers
+            headers.update(signed_headers)
+
+            response = self.client.session.get(
+                url,
+                params=query_params if query_params else None,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get('statusCode') != 800:
+                error_msg = data.get('message', '未知错误')
+                error_code = data.get('error', 'UNKNOWN_ERROR')
+                raise Exception(f"CCE API错误 [{error_code}]: {error_msg}")
+
+            logger.info("成功获取ConfigMap列表")
+            return data
+
+        except Exception as e:
+            logger.error(f"查询ConfigMap列表失败: {str(e)}")
+            raise
+
+    def query_cluster_logs(self, region_id: str, cluster_name: str,
+                          page_now: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询集群日志
+
+        Args:
+            region_id: 区域ID (必填)
+            cluster_name: 集群名称 (必填)
+            page_now: 当前页码，默认为1
+            page_size: 每页条数，默认为10
+
+        Returns:
+            集群日志查询结果，包含分页信息和日志记录
+        """
+        logger.info(f"查询集群日志: clusterName={cluster_name}, pageNow={page_now}, pageSize={page_size}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v1.1/ccse/clusters/{cluster_name}/logs'
+
+            # 构建查询参数
+            query_params = {
+                'pageNow': page_now,
+                'pageSize': page_size
+            }
+
+            headers = {
+                'regionId': region_id
+            }
+
+            # 使用EOP签名认证
+            signed_headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body=None
+            )
+
+            # 合并签名后的headers
+            headers.update(signed_headers)
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get('statusCode') != 800:
+                error_msg = data.get('message', '未知错误')
+                error_code = data.get('error', 'UNKNOWN_ERROR')
+                raise Exception(f"CCE API错误 [{error_code}]: {error_msg}")
+
+            # 提取日志统计信息
+            return_obj = data.get('returnObj', {})
+            if return_obj:
+                total = return_obj.get('total', 0)
+                current = return_obj.get('current', page_now)
+                pages = return_obj.get('pages', 0)
+                records = return_obj.get('records', [])
+
+                logger.info(f"成功获取集群日志: 总计{total}条记录，第{current}页，共{pages}页，本页{len(records)}条")
+
+            return data
+
+        except Exception as e:
+            logger.error(f"查询集群日志失败: {str(e)}")
+            raise

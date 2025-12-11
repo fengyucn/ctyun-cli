@@ -1272,5 +1272,279 @@ def query_async_task(ctx, region_id: str, task_id: str):
         format_output(result, output_format)
 
 
+# ========== ConfigMap配置管理命令 ==========
+
+@cce.group()
+def configmap():
+    """ConfigMap配置管理"""
+    pass
+
+
+@configmap.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--label-selector', help='标签选择器，用于过滤资源')
+@click.option('--field-selector', help='字段选择器，用于过滤资源')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_config_maps(ctx, region_id: str, cluster_id: str, namespace: str,
+                    label_selector: Optional[str], field_selector: Optional[str],
+                    output: Optional[str]):
+    """
+    查询ConfigMap列表
+
+    示例:
+    \b
+    # 查询指定命名空间下的所有ConfigMap
+    cce configmap list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-id 9a0bc858cafd4090a45333f0c308fd5f --namespace default
+
+    # 使用标签过滤
+    cce configmap list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-id 9a0bc858cafd4090a45333f0c308fd5f --namespace default \\
+      --label-selector app=nginx
+
+    # 使用字段过滤
+    cce configmap list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-id 9a0bc858cafd4090a45333f0c308fd5f --namespace default \\
+      --field-selector metadata.namespace=default
+
+    # JSON格式输出
+    cce configmap list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-id 9a0bc858cafd4090a45333f0c308fd5f --namespace default \\
+      --output json
+    """
+    client = ctx.obj['client']
+    output_format = output or ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_config_maps(
+        region_id=region_id,
+        cluster_id=cluster_id,
+        namespace_name=namespace,
+        label_selector=label_selector,
+        field_selector=field_selector
+    )
+
+    # 根据输出格式显示结果
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误: 需要安装PyYAML库", err=True)
+            import sys
+            sys.exit(1)
+    else:
+        # table format - 显示ConfigMap列表摘要信息
+        return_obj = result.get('returnObj', '')
+        if return_obj:
+            click.echo("ConfigMap列表 (YAML格式):")
+            click.echo("=" * 80)
+            # 显示YAML内容，自动换行
+            import textwrap
+            wrapped_text = textwrap.fill(return_obj, width=80)
+            click.echo(wrapped_text)
+        else:
+            click.echo("未找到ConfigMap")
+
+
+@configmap.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--name', required=True, help='ConfigMap名称')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_config_map_detail(ctx, region_id: str, cluster_id: str, namespace: str,
+                         name: str, output: Optional[str]):
+    """
+    查询ConfigMap详情
+
+    示例:
+    \b
+    # 查看ConfigMap详情
+    cce configmap show --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-id 9a0bc858cafd4090a45333f0c308fd5f --namespace default \\
+      --name example-configmap
+
+    # JSON格式输出
+    cce configmap show --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-id 9a0bc858cafd4090a45333f0c308fd5f --namespace default \\
+      --name example-configmap --output json
+
+    # YAML格式输出
+    cce configmap show --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-id 9a0bc858cafd4090a45333f0c308fd5f --namespace default \\
+      --name example-configmap --output yaml
+    """
+    client = ctx.obj['client']
+    output_format = output or ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_config_map_detail(
+        region_id=region_id,
+        cluster_id=cluster_id,
+        namespace_name=namespace,
+        configmap_name=name
+    )
+
+    # 根据输出格式显示结果
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误: 需要安装PyYAML库", err=True)
+            import sys
+            sys.exit(1)
+    else:
+        # table format - 显示ConfigMap详情
+        return_obj = result.get('returnObj', '')
+        if return_obj:
+            click.echo(f"ConfigMap详情: {name}")
+            click.echo("=" * 80)
+            click.echo(f"命名空间: {namespace}")
+            click.echo(f"集群ID: {cluster_id}")
+            click.echo(f"区域ID: {region_id}")
+            click.echo()
+            click.echo("YAML配置内容:")
+            click.echo("-" * 80)
+            # 显示YAML内容，自动换行
+            import textwrap
+            wrapped_text = textwrap.fill(return_obj, width=80)
+            click.echo(wrapped_text)
+        else:
+            click.echo("未找到ConfigMap详情")
+
+
+# ========== 集群日志管理命令 ==========
+
+@cce.group()
+def logs():
+    """集群日志管理"""
+    pass
+
+
+@logs.command('query')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.option('--page-now', type=int, default=1, help='当前页码，默认为1')
+@click.option('--page-size', type=int, default=10, help='每页条数，默认为10')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_cluster_logs(ctx, region_id: str, cluster_name: str,
+                      page_now: int, page_size: int, output: Optional[str]):
+    """
+    查询集群日志
+
+    示例:
+    \b
+    # 查询集群日志（默认第一页，每页10条）
+    cce logs query --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name ccse-demo
+
+    # 查询指定页的日志
+    cce logs query --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name ccse-demo --page-now 2 --page-size 20
+
+    # JSON格式输出
+    cce logs query --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name ccse-demo --output json
+
+    # 查询更多日志条数
+    cce logs query --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name ccse-demo --page-size 50
+    """
+    client = ctx.obj['client']
+    output_format = output or ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.query_cluster_logs(
+        region_id=region_id,
+        cluster_name=cluster_name,
+        page_now=page_now,
+        page_size=page_size
+    )
+
+    # 根据输出格式显示结果
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误: 需要安装PyYAML库", err=True)
+            import sys
+            sys.exit(1)
+    else:
+        # table format - 显示日志列表
+        return_obj = result.get('returnObj', {})
+        if return_obj:
+            records = return_obj.get('records', [])
+            total = return_obj.get('total', 0)
+            current = return_obj.get('current', page_now)
+            pages = return_obj.get('pages', 0)
+            size = return_obj.get('size', page_size)
+
+            # 显示分页信息
+            click.echo(f"集群日志: {cluster_name}")
+            click.echo("=" * 100)
+            click.echo(f"分页信息: 第{current}页，共{pages}页，总计{total}条记录，本页{len(records)}条")
+            click.echo()
+
+            if records:
+                # 表格头
+                click.echo(f"{'序号':<4} {'时间':<20} {'日志内容':<70}")
+                click.echo("-" * 100)
+
+                # 显示日志记录
+                for i, record in enumerate(records, 1):
+                    created_time = record.get('createdTime', '')
+                    message = record.get('message', '')
+
+                    # 截断过长的日志内容
+                    if len(message) > 65:
+                        display_message = message[:62] + "..."
+                    else:
+                        display_message = message
+
+                    click.echo(f"{i:<4} {created_time:<20} {display_message:<70}")
+
+                click.echo("-" * 100)
+                click.echo()
+
+                # 显示日志类型统计
+                log_types = {}
+                for record in records:
+                    message = record.get('message', '')
+                    if '[' in message and ']' in message:
+                        # 提取日志类型，如 [plugins], [cluster] 等
+                        start = message.find('[')
+                        end = message.find(']', start)
+                        if start != -1 and end != -1:
+                            log_type = message[start:end + 1]
+                            log_types[log_type] = log_types.get(log_type, 0) + 1
+
+                if log_types:
+                    click.echo("日志类型统计:")
+                    for log_type, count in sorted(log_types.items()):
+                        click.echo(f"  {log_type}: {count}条")
+
+            else:
+                click.echo("未找到日志记录")
+        else:
+            click.echo("未找到日志数据")
+
+
 if __name__ == '__main__':
     cce()
