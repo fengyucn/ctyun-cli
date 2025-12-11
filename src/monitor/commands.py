@@ -356,15 +356,20 @@ def cpu_top(ctx, region_id: str, number: int):
     
     monitor_client = MonitorClient(client)
     result = monitor_client.query_cpu_top(region_id, number)
-    
+
     if not result.get('success'):
         click.echo(f"❌ 查询失败: {result.get('message', '未知错误')}", err=True)
         import sys
         sys.exit(1)
-    
+
     data = result.get('data', {})
-    cpu_list = data.get('cpuList', [])
-    
+    # 检查 data 是否是列表（直接返回的CPU列表）
+    if isinstance(data, list):
+        cpu_list = data
+    else:
+        # 如果是字典，尝试获取 cpuList
+        cpu_list = data.get('cpuList', [])
+
     if not cpu_list:
         click.echo("未找到云主机CPU数据")
         return
@@ -384,10 +389,15 @@ def cpu_top(ctx, region_id: str, number: int):
             cpu_value = item.get('value', '0')
             
             try:
-                cpu_percent = float(cpu_value) * 100
+                cpu_value_float = float(cpu_value)
+                # 检查值是否已经是百分比格式（大于1则假设已经是百分比）
+                if cpu_value_float > 1:
+                    cpu_percent = cpu_value_float
+                else:
+                    cpu_percent = cpu_value_float * 100
                 cpu_display = f"{cpu_percent:.2f}%"
             except:
-                cpu_display = cpu_value
+                cpu_display = f"{cpu_value}%"
             
             table_data.append([
                 f"#{idx}",
@@ -395,16 +405,27 @@ def cpu_top(ctx, region_id: str, number: int):
                 device_name,
                 cpu_display
             ])
-        
-        table = OutputFormatter.format_table(table_data, headers)
+
+        # 直接使用 tabulate 来格式化表格数据
+        from tabulate import tabulate
+        table = tabulate(table_data, headers=headers, tablefmt='grid')
         click.echo(table)
         
         if cpu_list:
             click.echo(f"\n共找到 {len(cpu_list)} 台云主机")
             try:
-                max_cpu = max([float(item.get('value', 0)) for item in cpu_list]) * 100
-                min_cpu = min([float(item.get('value', 0)) for item in cpu_list]) * 100
-                avg_cpu = sum([float(item.get('value', 0)) for item in cpu_list]) / len(cpu_list) * 100
+                cpu_values = []
+                for item in cpu_list:
+                    val = float(item.get('value', 0))
+                    # 检查值是否已经是百分比格式
+                    if val > 1:
+                        cpu_values.append(val)
+                    else:
+                        cpu_values.append(val * 100)
+
+                max_cpu = max(cpu_values)
+                min_cpu = min(cpu_values)
+                avg_cpu = sum(cpu_values) / len(cpu_values)
                 
                 click.echo(f"CPU使用率统计:")
                 click.echo(f"  最高: {max_cpu:.2f}%")
