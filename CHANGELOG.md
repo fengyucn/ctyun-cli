@@ -4,6 +4,55 @@
 
 ---
 
+## v1.7.7 (2025-12-11)
+
+### 🚀 新增功能
+- **ELB健康检查详情API**：新增`get_health_check` API方法，支持查看健康检查详细配置信息
+- **ELB监控API增强**：
+  - 新增`query_realtime_monitor` API方法，支持实时监控数据查询
+  - 新增`query_history_monitor` API方法，支持历史监控数据查询
+- **CLI命令扩展**：
+  - 新增`elb health-check show`命令，提供完整的健康检查详情查询功能
+  - 新增`elb monitor realtime`命令，支持实时监控数据查询
+  - 新增`elb monitor history`命令，支持历史监控数据查询
+  - 新增`elb monitor`命令组，统一管理ELB监控相关命令
+
+### 🔧 技术改进
+- **EOP签名认证**：为新增API方法集成企业级EOP签名认证机制
+- **健康检查配置解析**：支持完整的健康检查配置信息解析，包括基础配置、HTTP配置、高级功能
+- **监控数据处理**：支持多种监控指标和时间范围查询，灵活的数据聚合周期设置
+- **多格式输出**：新增API支持JSON、YAML、表格三种输出格式
+- **智能配置建议**：为健康检查配置提供智能化的参数建议和警告提示
+
+### 📊 API和命令统计更新
+- **API总数**：从215+个更新至283+个
+- **命令总数**：从208+个更新至217+个
+- **服务模块**：保持11个核心服务模块
+
+### 📚 使用示例
+```bash
+# 查看健康检查详情
+ctyun-cli elb health-check show --region-id 200000001852 --health-check-id hc-xxx
+
+# 查询实时监控数据
+ctyun-cli elb monitor realtime --region-id 200000001852 --device-ids "lb-xxx,lb-yyy"
+
+# 查询历史监控数据
+ctyun-cli elb monitor history --region-id 200000001852 \
+  --device-ids "lb-xxx" \
+  --metric-names "lb_req_rate,lb_lbin" \
+  --start-time "2025-12-01 00:00:00" \
+  --end-time "2025-12-02 00:00:00"
+```
+
+### ✅ 测试验证
+- **API功能测试**：所有新增API均通过HTTP 200状态码验证
+- **真实数据测试**：成功获取真实的环境健康检查和监控数据
+- **错误处理验证**：完善了各种错误场景的处理机制
+- **CLI命令集成**：所有命令均通过帮助文档和参数验证测试
+
+---
+
 ## v1.7.5 (2025-12-08)
 
 ### 🚀 新增功能
