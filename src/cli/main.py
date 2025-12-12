@@ -317,17 +317,18 @@ def statistics(ctx, region_id: str, project_id: Optional[str], output: Optional[
 
 @ecs.command()
 @click.argument('instance_id')
+@click.option('--region-id', required=True, help='资源池ID')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
 @click.pass_context
-def details(ctx, instance_id: str, output: Optional[str]):
+def detail(ctx, instance_id: str, region_id: str, output: Optional[str]):
     """查询云主机详情"""
     try:
         from ecs.client import ECSClient
-        
+
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
-        
-        result = ecs_client.get_instance(instance_id)
+
+        result = ecs_client.get_instance(instance_id, region_id)
         
         if result.get('statusCode') != 800:
             click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
@@ -343,27 +344,195 @@ def details(ctx, instance_id: str, output: Optional[str]):
                 click.echo("=" * 80)
                 click.echo(f"实例ID: {instance.get('instanceID', '')}")
                 click.echo(f"实例名称: {instance.get('displayName', instance.get('instanceName', ''))}")
-                click.echo(f"状态: {instance.get('instanceStatusStr', instance.get('instanceStatus', ''))}")
-                click.echo(f"区域: {instance.get('regionID', '')}")
+                click.echo(f"状态: {instance.get('instanceStatus', '')}")
                 click.echo(f"可用区: {instance.get('azName', '')}")
-                click.echo(f"规格: {instance.get('flavorName', '')}")
-                click.echo(f"镜像: {instance.get('imageName', '')}")
-                click.echo(f"VPC: {instance.get('vpcName', instance.get('vpcID', ''))}")
-                click.echo(f"子网: {instance.get('subnetName', instance.get('subnetID', ''))}")
-                
-                private_ips = instance.get('privateIP', [])
-                if private_ips:
-                    click.echo(f"私网IP: {', '.join(private_ips)}")
-                
-                eip_addresses = instance.get('eipAddress', [])
-                if eip_addresses:
-                    click.echo(f"公网IP: {', '.join(eip_addresses)}")
-                
-                click.echo(f"创建时间: {instance.get('createTime', '')}")
-                click.echo(f"到期时间: {instance.get('expireTime', '')}")
+
+                # 规格信息
+                flavor = instance.get('flavor', {})
+                flavor_name = flavor.get('flavorName', '')
+                click.echo(f"规格: {flavor_name}")
+
+                # 镜像信息
+                image = instance.get('image', {})
+                image_name = image.get('imageName', '')
+                click.echo(f"镜像: {image_name}")
+
+                click.echo(f"VPC: {instance.get('vpcName', '')}")
+                click.echo(f"子网ID列表: {', '.join(instance.get('subnetIDList', []))}")
+
+                # IP地址信息
+                private_ip = instance.get('privateIP', '')
+                if private_ip:
+                    click.echo(f"私网IP: {private_ip}")
+
+                private_ipv6 = instance.get('privateIPv6', '')
+                if private_ipv6:
+                    click.echo(f"私网IPv6: {private_ipv6}")
+
+                # 查找公网IP
+                floating_ip = instance.get('floatingIP', '')
+                if floating_ip:
+                    click.echo(f"公网IP: {floating_ip}")
+
+                # 时间信息
+                created_time = instance.get('createdTime', '')
+                if created_time:
+                    click.echo(f"创建时间: {created_time}")
+
+                expired_time = instance.get('expiredTime', '')
+                if expired_time:
+                    click.echo(f"到期时间: {expired_time}")
             else:
                 click.echo("未找到云主机信息")
                 
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command()
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--instance-id-list', help='实例ID列表，多个ID用逗号分隔')
+@click.option('--instance-name', help='实例名称，支持模糊查询')
+@click.option('--state', help='实例状态')
+@click.option('--keyword', help='关键字，支持实例名称、实例ID、IP地址的模糊查询')
+@click.option('--page-no', type=int, help='页码，从1开始')
+@click.option('--page-size', type=int, help='每页记录数，最大100')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+def multidetail(ctx, region_id: str, instance_id_list: Optional[str], instance_name: Optional[str],
+                state: Optional[str], keyword: Optional[str], page_no: Optional[int],
+                page_size: Optional[int], output: Optional[str]):
+    """查询一台或多台云主机详细信息（API ID: 9268）"""
+    try:
+        from ecs.client import ECSClient
+
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+
+        result = ecs_client.describe_instances(
+            region_id=region_id,
+            instance_id_list=instance_id_list,
+            instance_name=instance_name,
+            state=state,
+            keyword=keyword,
+            page_no=page_no,
+            page_size=page_size
+        )
+
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+
+        return_obj = result.get('returnObj', {})
+        instances = return_obj.get('instanceList', [])
+        is_mock = result.get('_mock', False)
+
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            if instances:
+                from tabulate import tabulate
+
+                click.echo(f"云主机详细信息列表 (区域: {region_id})")
+                if is_mock:
+                    click.echo("⚠️  注意: 当前显示的是模拟数据，实际API调用失败")
+                click.echo("=" * 100)
+
+                # 准备表格数据
+                table_data = []
+                for instance in instances:
+                    # 获取规格信息
+                    flavor = instance.get('flavor', {})
+                    flavor_name = flavor.get('flavorName', '')
+
+                    # 获取镜像信息
+                    image = instance.get('image', {})
+                    image_name = image.get('imageName', '')
+
+                    # 获取IP地址
+                    public_ips = []
+                    private_ips = []
+
+                    # 处理弹性IP
+                    fip = instance.get('fip', [])
+                    if fip:
+                        for ip_info in fip:
+                            public_ips.append(ip_info.get('publicIp', ''))
+
+                    # 处理主网卡IP
+                    primary_nic = instance.get('primaryNic', {})
+                    if primary_nic:
+                        private_ip = primary_nic.get('privateIpAddress', '')
+                        if private_ip:
+                            private_ips.append(private_ip)
+
+                        # 处理辅助IP
+                        auxiliary_private_ips = primary_nic.get('auxiliaryPrivateIpAddress', [])
+                        if auxiliary_private_ips:
+                            private_ips.extend(auxiliary_private_ips)
+
+                    table_data.append([
+                        instance.get('instanceID', ''),
+                        instance.get('instanceName', ''),
+                        instance.get('vmState', ''),
+                        instance.get('availabilityZone', ''),
+                        flavor_name,
+                        image_name,
+                        ', '.join(public_ips) if public_ips else '',
+                        ', '.join(private_ips) if private_ips else ''
+                    ])
+
+                # 显示表格
+                headers = ['实例ID', '实例名称', '状态', '可用区', '规格', '镜像', '公网IP', '私网IP']
+                click.echo(tabulate(table_data, headers=headers, tablefmt='grid'))
+
+                # 显示分页信息
+                page_no = return_obj.get('pageNo', 1)
+                page_size = return_obj.get('pageSize', len(instances))
+                total_count = return_obj.get('totalCount', len(instances))
+
+                click.echo(f"\n分页信息: 第 {page_no} 页, 每页 {page_size} 条, 共 {total_count} 条记录")
+
+                # 如果只需要查看特定实例的详细信息
+                if len(instances) == 1 and (instance_id_list or instance_name):
+                    click.echo("\n详细信息:")
+                    instance = instances[0]
+
+                    click.echo(f"实例ID: {instance.get('instanceID', '')}")
+                    click.echo(f"实例名称: {instance.get('instanceName', '')}")
+                    click.echo(f"状态: {instance.get('vmState', '')}")
+                    click.echo(f"可用区: {instance.get('availabilityZone', '')}")
+
+                    # 规格信息
+                    flavor = instance.get('flavor', {})
+                    click.echo(f"规格: {flavor.get('flavorName', '')}")
+                    click.echo(f"CPU: {flavor.get('cpu', '')}核")
+                    click.echo(f"内存: {flavor.get('ram', '')}GB")
+
+                    # 镜像信息
+                    image = instance.get('image', {})
+                    click.echo(f"镜像: {image.get('imageName', '')}")
+                    click.echo(f"操作系统: {image.get('osType', '')} {image.get('osBit', '')}位")
+
+                    # 网络信息
+                    vpc_id = instance.get('vpcId', '')
+                    click.echo(f"VPC ID: {vpc_id}")
+
+                    # 存储信息
+                    system_disk = instance.get('systemDisk', {})
+                    if system_disk:
+                        click.echo(f"系统盘: {system_disk.get('diskType', '')} {system_disk.get('size', '')}GB")
+
+                    # 创建时间
+                    created_time = instance.get('createdTime', '')
+                    if created_time:
+                        click.echo(f"创建时间: {created_time}")
+
+            else:
+                click.echo("未找到符合条件的云主机")
+
     except Exception as e:
         click.echo(f"运行出错: {e}", err=True)
         import traceback

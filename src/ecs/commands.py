@@ -164,18 +164,28 @@ def list(ctx, region_id: str, page: int, page_size: int, az_name: Optional[str],
 
 @ecs.command()
 @click.argument('instance_id')
+@click.option('--region-id', required=True, help='资源池ID')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
 @click.pass_context
 @handle_error
-def details(ctx, instance_id: str, output: Optional[str]):
-    """查询云主机详情"""
+def details(ctx, instance_id: str, region_id: str, output: Optional[str]):
+    """查询云主机详情
+
+    示例:
+    \b
+    # 查询云主机详情
+    ctyun-cli ecs details --region-id 200000001852 <instance_id>
+
+    # JSON格式输出
+    ctyun-cli ecs details --region-id 200000001852 <instance_id> --output json
+    """
     try:
         from ecs import ECSClient
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
         
-        result = ecs_client.get_instance(instance_id)
+        result = ecs_client.get_instance(instance_id, region_id)
         
         if result.get('statusCode') != 800:
             click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)

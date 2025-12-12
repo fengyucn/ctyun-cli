@@ -343,27 +343,116 @@ class ECSClient:
             '_mock': True
         }
 
-    def get_instance(self, instance_id: str) -> Dict[str, Any]:
+    def get_instance(self, instance_id: str, region_id: str) -> Dict[str, Any]:
         """
-        查询云主机详情
-        
+        查询一台云主机详细信息 (API ID: 8310)
+
         Args:
             instance_id: 云主机ID
-            
+            region_id: 资源池ID
+
         Returns:
             云主机详情
         """
-        logger.info(f"查询云主机详情: {instance_id}")
-        
+        logger.info(f"查询单台云主机详情: {instance_id}, regionId={region_id}")
+
         try:
-            url = f'https://{self.base_endpoint}/v4/ecs/details'
-            
-            # 构造请求体
-            body_data = {
+            # 构造查询参数
+            query_params = {
+                'regionID': region_id,
                 'instanceID': instance_id
             }
+
+            url = f'https://{self.base_endpoint}/v4/ecs/instance-details'
+
+            # 使用EOP签名认证
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body=None,
+                extra_headers={}
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询单台云主机详情失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def describe_instances(self, region_id: str, instance_id_list: Optional[str] = None,
+                          instance_name: Optional[str] = None, state: Optional[str] = None,
+                          keyword: Optional[str] = None, page_no: Optional[int] = None,
+                          page_size: Optional[int] = None) -> Dict[str, Any]:
+        """
+        查询一台或多台云主机详细信息 (API ID: 9268)
+
+        Args:
+            region_id: 资源池ID (必填)
+            instance_id_list: 云主机ID列表，多台使用英文逗号分割
+            instance_name: 云主机名称，精准匹配
+            state: 云主机状态
+            keyword: 关键字，对部分参数进行模糊查询
+            page_no: 页码，取值范围：正整数（≥1），默认值为1
+            page_size: 每页记录数目，取值范围：[1, 50]，默认值为10
+
+        Returns:
+            分页的云主机列表
+        """
+        logger.info(f"查询云主机列表: regionId={region_id}, instanceName={instance_name}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/describe-instances'
+
+            # 构造请求体
+            body_data = {
+                'regionID': region_id
+            }
+
+            # 添加可选参数
+            if instance_id_list:
+                body_data['instanceIDList'] = instance_id_list
+            if instance_name:
+                body_data['instanceName'] = instance_name
+            if state:
+                body_data['state'] = state
+            if keyword:
+                body_data['keyword'] = keyword
+            if page_no:
+                body_data['pageNo'] = page_no
+            if page_size:
+                body_data['pageSize'] = page_size
+
             body = json.dumps(body_data)
-            
+
             # 使用EOP签名认证
             headers = self.eop_auth.sign_request(
                 method='POST',
@@ -372,21 +461,20 @@ class ECSClient:
                 body=body,
                 extra_headers={}
             )
-            
+
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
             logger.debug(f"请求体: {body}")
-            
+            logger.debug(f"请求头: {headers}")
+
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
                 timeout=30
             )
-            
+
             logger.debug(f"响应状态码: {response.status_code}")
-            logger.debug(f"响应内容: {response.text}")
-            
+
             if response.status_code != 200:
                 logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
                 return {
@@ -394,11 +482,11 @@ class ECSClient:
                     'message': f'HTTP {response.status_code}',
                     'returnObj': None
                 }
-            
+
             return response.json()
-            
+
         except Exception as e:
-            logger.error(f"查询云主机详情失败: {e}")
+            logger.error(f"查询云主机列表失败: {e}")
             import traceback
             logger.debug(traceback.format_exc())
             return {
