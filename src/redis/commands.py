@@ -2011,3 +2011,294 @@ def _display_resources_summary(result: dict, region_id: str, edition: str, versi
 
     else:
         click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
+
+
+@redis_group.command('engine-version')
+@click.option('--instance-id', '-i', required=True, help='Redis实例ID (必需)')
+@click.option('--region-id', '-r', default=None, help='区域ID (默认使用配置中的区域)')
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['table', 'json', 'summary']),
+              default='summary', help='输出格式 (table/json/summary)')
+@click.option('--timeout', '-t', default=30, help='请求超时时间(秒)')
+@click.pass_context
+@validate_credentials
+def describe_engine_version(ctx, instance_id: str, region_id: str, output_format: str, timeout: int):
+    """
+    查询Redis实例引擎版本信息
+
+    示例:
+        ctyun redis engine-version --instance-id b5fcacfc2e7069553759558b9a4eb27a
+        ctyun redis engine-version -i xxx --region-id 200000001852
+        ctyun redis engine-version -i xxx -f json
+    """
+    from redis import RedisClient
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    redis_client.set_timeout(timeout)
+
+    click.echo(f"🔍 正在查询Redis实例引擎版本信息: {instance_id}")
+    if region_id:
+        click.echo(f"📍 区域ID: {region_id}")
+
+    try:
+        result = redis_client.describe_engine_version(instance_id, region_id)
+
+        if output_format == 'json':
+            _display_json(result)
+        elif output_format == 'table':
+            _display_engine_version_table(result, instance_id)
+        else:
+            _display_engine_version_summary(result, instance_id)
+
+    except Exception as e:
+        click.echo(f"❌ 查询引擎版本信息失败: {str(e)}", err=True)
+        sys.exit(1)
+
+
+def _display_engine_version_table(result: dict, instance_id: str):
+    """以表格形式显示引擎版本信息"""
+    click.echo(f"\n🔢 Redis实例引擎版本信息 (实例: {instance_id})")
+    click.echo("="*60)
+
+    if not result or result.get("error"):
+        click.echo("❌ 查询失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+
+        click.echo("📊 引擎版本详情:")
+        click.echo("-" * 40)
+        version_info = [
+            ("实例ID", return_obj.get("prodInstId", "N/A")),
+            ("引擎大版本号", return_obj.get("versionNo", "N/A")),
+            ("架构类型说明", return_obj.get("releaseNotes", "N/A")),
+        ]
+
+        for key, value in version_info:
+            click.echo(f"{key:<12}: {value}")
+
+    else:
+        click.echo(f"❌ 查询失败: {result.get('message', '未知错误')}")
+        if result.get("statusCode"):
+            click.echo(f"错误码: {result.get('statusCode')}")
+
+
+def _display_engine_version_summary(result: dict, instance_id: str):
+    """显示引擎版本信息摘要"""
+    click.echo(f"\n🔢 Redis实例引擎版本信息摘要 (实例: {instance_id})")
+    click.echo("="*60)
+
+    if not result or result.get("error"):
+        click.echo(f"❌ 查询状态: 失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+
+        click.echo(f"✅ 查询状态: 成功")
+        click.echo(f"🏷️  实例ID: {return_obj.get('prodInstId', 'N/A')}")
+        click.echo(f"🔢 引擎版本: {return_obj.get('versionNo', 'N/A')}")
+        click.echo(f"🏗️  架构类型: {return_obj.get('releaseNotes', 'N/A')}")
+
+        # 添加版本特征说明
+        version_no = return_obj.get('versionNo', '')
+        if version_no:
+            click.echo(f"📋 版本特征:")
+            if version_no.startswith('6.'):
+                click.echo(f"   • Redis 6.x - 支持多线程IO、ACL权限控制、客户端缓存等新特性")
+            elif version_no.startswith('5.'):
+                click.echo(f"   • Redis 5.x - 支持Stream数据结构、Lua脚本优化等")
+            elif version_no.startswith('4.'):
+                click.echo(f"   • Redis 4.x - 支持PSYNC 2.0、混合持久化等")
+            elif version_no.startswith('2.8'):
+                click.echo(f"   • Redis 2.8.x - 经典稳定版本，广泛用于生产环境")
+
+        # 添加架构类型说明
+        release_notes = return_obj.get('releaseNotes', '')
+        if release_notes:
+            click.echo(f"🏗️ 架构说明:")
+            if 'Cluster' in release_notes:
+                click.echo(f"   • 集群版 - 支持数据分片，高可用，水平扩展")
+            elif '直连' in release_notes:
+                click.echo(f"   • 直连模式 - 客户端直接连接到Redis节点")
+            elif 'Proxy' in release_notes:
+                click.echo(f"   • 代理模式 - 通过代理节点转发请求")
+
+    else:
+        click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
+        if result.get("statusCode"):
+            click.echo(f"错误码: {result.get('statusCode')}")
+
+
+@redis_group.command('instance-version')
+@click.option('--instance-id', '-i', required=True, help='Redis实例ID (必需)')
+@click.option('--region-id', '-r', default=None, help='区域ID (默认使用配置中的区域)')
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['table', 'json', 'summary']),
+              default='summary', help='输出格式 (table/json/summary)')
+@click.option('--timeout', '-t', default=30, help='请求超时时间(秒)')
+@click.pass_context
+@validate_credentials
+def describe_instance_version(ctx, instance_id: str, region_id: str, output_format: str, timeout: int):
+    """
+    查询Redis实例详细版本信息
+
+    示例:
+        ctyun redis instance-version --instance-id b5fcacfc2e7069553759558b9a4eb27a
+        ctyun redis instance-version -i xxx --region-id 200000001852
+        ctyun redis instance-version -i xxx -f json
+    """
+    from redis import RedisClient
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    redis_client.set_timeout(timeout)
+
+    click.echo(f"🔍 正在查询Redis实例详细版本信息: {instance_id}")
+    if region_id:
+        click.echo(f"📍 区域ID: {region_id}")
+
+    try:
+        result = redis_client.describe_instance_version(instance_id, region_id)
+
+        if output_format == 'json':
+            _display_json(result)
+        elif output_format == 'table':
+            _display_instance_version_table(result, instance_id)
+        else:
+            _display_instance_version_summary(result, instance_id)
+
+    except Exception as e:
+        click.echo(f"❌ 查询实例版本信息失败: {str(e)}", err=True)
+        sys.exit(1)
+
+
+def _display_instance_version_table(result: dict, instance_id: str):
+    """以表格形式显示实例详细版本信息"""
+    click.echo(f"\n🔢 Redis实例详细版本信息 (实例: {instance_id})")
+    click.echo("="*80)
+
+    if not result or result.get("error"):
+        click.echo("❌ 查询失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+
+        # 引擎大版本信息
+        engine_major_info = return_obj.get("engineMajorVersionInfo", {})
+        # 引擎小版本信息
+        engine_minor_info = return_obj.get("engineMinorVersionInfo", {})
+        # 代理版本信息
+        proxy_info = return_obj.get("proxyVersionInfo", {})
+
+        click.echo("📊 引擎大版本信息:")
+        click.echo("-" * 40)
+        engine_version_items = engine_major_info.get("engineVersionItems", [])
+        upgradable_major_items = engine_major_info.get("upgradableEngineVersionItems", [])
+
+        major_info = [
+            ("当前大版本", engine_major_info.get("engineMajorVersion", "N/A")),
+            ("可用大版本列表", ", ".join(engine_version_items) if engine_version_items else "N/A"),
+            ("可升级大版本", ", ".join(upgradable_major_items) if upgradable_major_items else "无可升级版本"),
+        ]
+
+        for key, value in major_info:
+            click.echo(f"{key:<16}: {value}")
+
+        click.echo("\n📊 引擎小版本信息:")
+        click.echo("-" * 40)
+        upgradable_minor_items = engine_minor_info.get("upgradableEngineMinorVersionItems", [])
+
+        minor_info = [
+            ("当前小版本", engine_minor_info.get("engineMinorVersion", "N/A")),
+            ("可升级小版本", ", ".join(upgradable_minor_items) if upgradable_minor_items else "无可升级版本"),
+        ]
+
+        for key, value in minor_info:
+            click.echo(f"{key:<16}: {value}")
+
+        click.echo("\n📊 代理版本信息:")
+        click.echo("-" * 40)
+        upgradable_proxy_items = proxy_info.get("upgradableProxyMinorVersions", [])
+
+        proxy_version_info = [
+            ("当前代理版本", proxy_info.get("proxyMinorVersion", "N/A")),
+            ("可升级代理版本", ", ".join(upgradable_proxy_items) if upgradable_proxy_items else "无可升级版本"),
+        ]
+
+        for key, value in proxy_version_info:
+            click.echo(f"{key:<16}: {value}")
+
+    else:
+        click.echo(f"❌ 查询失败: {result.get('message', '未知错误')}")
+        if result.get("statusCode"):
+            click.echo(f"错误码: {result.get('statusCode')}")
+
+
+def _display_instance_version_summary(result: dict, instance_id: str):
+    """显示实例详细版本信息摘要"""
+    click.echo(f"\n🔢 Redis实例详细版本信息摘要 (实例: {instance_id})")
+    click.echo("="*80)
+
+    if not result or result.get("error"):
+        click.echo(f"❌ 查询状态: 失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+
+        # 引擎大版本信息
+        engine_major_info = return_obj.get("engineMajorVersionInfo", {})
+        # 引擎小版本信息
+        engine_minor_info = return_obj.get("engineMinorVersionInfo", {})
+        # 代理版本信息
+        proxy_info = return_obj.get("proxyVersionInfo", {})
+
+        click.echo(f"✅ 查询状态: 成功")
+        click.echo(f"🏷️  实例ID: {instance_id}")
+
+        # 引擎版本摘要
+        major_version = engine_major_info.get("engineMajorVersion", "N/A")
+        minor_version = engine_minor_info.get("engineMinorVersion", "N/A")
+        proxy_version = proxy_info.get("proxyMinorVersion", "N/A")
+
+        click.echo(f"🔢 引擎版本: {major_version} (小版本: {minor_version})")
+        click.echo(f"🔗 代理版本: {proxy_version}")
+
+        # 可升级信息
+        upgradable_major = engine_major_info.get("upgradableEngineVersionItems", [])
+        upgradable_minor = engine_minor_info.get("upgradableEngineMinorVersionItems", [])
+        upgradable_proxy = proxy_info.get("upgradableProxyMinorVersions", [])
+
+        if upgradable_major or upgradable_minor or upgradable_proxy:
+            click.echo(f"🔄 可升级版本:")
+            if upgradable_major:
+                click.echo(f"   • 引擎大版本: {', '.join(upgradable_major)}")
+            if upgradable_minor:
+                click.echo(f"   • 引擎小版本: {', '.join(upgradable_minor)}")
+            if upgradable_proxy:
+                click.echo(f"   • 代理版本: {', '.join(upgradable_proxy)}")
+        else:
+            click.echo(f"✅ 版本状态: 已是最新版本")
+
+        # 版本特性说明
+        if major_version != "N/A":
+            click.echo(f"📋 版本特性:")
+            if major_version.startswith('7.'):
+                click.echo(f"   • Redis 7.x - 最新稳定版本，性能和功能全面优化")
+            elif major_version.startswith('6.'):
+                click.echo(f"   • Redis 6.x - 支持多线程IO、ACL权限控制、客户端缓存等")
+            elif major_version.startswith('5.'):
+                click.echo(f"   • Redis 5.x - 支持Stream数据结构、Lua脚本优化等")
+            elif major_version.startswith('4.'):
+                click.echo(f"   • Redis 4.x - 支持PSYNC 2.0、混合持久化等")
+            elif major_version.startswith('2.8'):
+                click.echo(f"   • Redis 2.8.x - 经典稳定版本，广泛用于生产环境")
+
+    else:
+        click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
+        if result.get("statusCode"):
+            click.echo(f"错误码: {result.get('statusCode')}")

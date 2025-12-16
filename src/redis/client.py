@@ -1227,6 +1227,152 @@ class RedisClient:
                 "exception": str(e)
             }
 
+    def describe_engine_version(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询Redis实例引擎版本信息
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 区域ID，如果为None则使用默认区域
+
+        Returns:
+            Optional[Dict[str, Any]]: 引擎版本信息
+        """
+        target_region_id = region_id or self.region_id
+
+        logger.info(f"查询Redis实例引擎版本信息: prodInstId={prod_inst_id}, regionId={target_region_id}")
+
+        try:
+            # 构建请求URL
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeEngineVersion'
+
+            # 查询参数
+            query_params = {
+                'prodInstId': prod_inst_id
+            }
+
+            # 请求头header参数
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            # 生成签名请求头
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+
+            # 发送请求
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询Redis实例引擎版本失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
+    def describe_instance_version(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询Redis实例详细版本信息
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 区域ID，如果为None则使用默认区域
+
+        Returns:
+            Optional[Dict[str, Any]]: 详细版本信息，包含引擎大版本、小版本和代理版本信息
+        """
+        target_region_id = region_id or self.region_id
+
+        logger.info(f"查询Redis实例详细版本信息: prodInstId={prod_inst_id}, regionId={target_region_id}")
+
+        try:
+            # 构建请求URL
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeInstanceVersion'
+
+            # 查询参数
+            query_params = {
+                'prodInstId': prod_inst_id
+            }
+
+            # 请求头header参数
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            # 生成签名请求头
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+
+            # 发送请求
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询Redis实例详细版本失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
         """创建标准错误响应"""
         return {
