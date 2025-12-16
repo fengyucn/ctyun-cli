@@ -139,3 +139,9 @@ settings_local.py
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+.spec-workflow/
+.trunk/
+.serena/
+.marscode/
+.claude/
