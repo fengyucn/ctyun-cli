@@ -83,15 +83,15 @@ ctyun-cli cce logs query --region-id <region_id> \\
 ### 📚 使用示例
 ```bash
 # 查看健康检查详情
-ctyun-cli elb health-check show --region-id 200000001852 --health-check-id hc-xxx
+ctyun-cli elb health-check show --region-id 200000001852 --health-check-id <health_check_id>
 
 # 查询实时监控数据
-ctyun-cli elb monitor realtime --region-id 200000001852 --device-ids "lb-xxx,lb-yyy"
+ctyun-cli elb monitor realtime --region-id 200000001852 --device-ids "<device_id_1>,<device_id_2>"
 
 # 查询历史监控数据
 ctyun-cli elb monitor history --region-id 200000001852 \
-  --device-ids "lb-xxx" \
-  --metric-names "lb_req_rate,lb_lbin" \
+  --device-ids "<device_id>" \
+  --metric-names "<metric_names>" \
   --start-time "2025-12-01 00:00:00" \
   --end-time "2025-12-02 00:00:00"
 ```

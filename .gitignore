@@ -60,6 +60,7 @@ ENV/
 env/
 .venv
 .venv*/
+.venv/
 
 # IDEs
 .vscode/
@@ -85,8 +86,16 @@ AKSK
 # Documentation files (keep only essential ones)
 *.md
 !README.md
+!README_EN.md
 !LICENSE
 !MANIFEST.in
+!CHANGELOG.md
+!COMMAND_MANUAL.md
+
+# Project management files (internal use only)
+PROJECT_RULES.md
+PROJECT_SUMMARY.md
+VERSION_*.md
 
 # Backup folders
 backup_*/

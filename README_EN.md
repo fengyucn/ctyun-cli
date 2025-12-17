@@ -144,9 +144,9 @@ ctyun-cli redis create-instance \
   --engine-version 6.0 \
   --shard-mem-size 8 \
   --zone-name cn-huabei2-tj-1a-public-ctcloud \
-  --vpc-id vpc-grqvu4741a \
-  --subnet-id subnet-gr36jdeyt0 \
-  --secgroups sg-ufrtt04xq1 \
+  --vpc-id <vpc_id> \
+  --subnet-id <subnet_id> \
+  --secgroups <security_group_id> \
   --password Test@123456 \
   --dry-run
 
