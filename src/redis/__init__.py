@@ -4,6 +4,5 @@ Redis分布式缓存服务模块
 """
 
 from redis.client import RedisClient
-from redis.commands import redis_group
 
-__all__ = ['RedisClient', 'redis_group']
+__all__ = ['RedisClient']
