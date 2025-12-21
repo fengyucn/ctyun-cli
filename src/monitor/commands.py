@@ -463,7 +463,12 @@ def mem_top(ctx, region_id: str, number: int):
         sys.exit(1)
     
     data = result.get('data', {})
-    mem_list = data.get('memList', [])
+    # 检查 data 是否是列表（直接返回的内存列表）
+    if isinstance(data, list):
+        mem_list = data
+    else:
+        # 如果是字典，尝试获取 memList
+        mem_list = data.get('memList', [])
     
     if not mem_list:
         click.echo("未找到云主机内存数据")
@@ -495,10 +500,12 @@ def mem_top(ctx, region_id: str, number: int):
                 device_name,
                 mem_display
             ])
-        
-        table = OutputFormatter.format_table(table_data, headers)
+
+        # 直接使用 tabulate 来格式化表格数据
+        from tabulate import tabulate
+        table = tabulate(table_data, headers=headers, tablefmt='grid')
         click.echo(table)
-        
+
         if mem_list:
             click.echo(f"\n共找到 {len(mem_list)} 台云主机")
             try:
@@ -542,7 +549,12 @@ def disk_top(ctx, region_id: str, number: int):
         sys.exit(1)
     
     data = result.get('data', {})
-    disk_list = data.get('diskList', [])
+    # 检查 data 是否是列表（直接返回的磁盘列表）
+    if isinstance(data, list):
+        disk_list = data
+    else:
+        # 如果是字典，尝试获取 diskList
+        disk_list = data.get('diskList', [])
     
     if not disk_list:
         click.echo("未找到云主机磁盘数据")
@@ -574,10 +586,12 @@ def disk_top(ctx, region_id: str, number: int):
                 device_name,
                 disk_display
             ])
-        
-        table = OutputFormatter.format_table(table_data, headers)
+
+        # 直接使用 tabulate 来格式化表格数据
+        from tabulate import tabulate
+        table = tabulate(table_data, headers=headers, tablefmt='grid')
         click.echo(table)
-        
+
         if disk_list:
             click.echo(f"\n共找到 {len(disk_list)} 台云主机")
             try:
