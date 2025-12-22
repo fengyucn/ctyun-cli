@@ -4,8 +4,7 @@
 
 import click
 from typing import List, Optional
-# 直接定义装饰器，避免循环导入
-from ecs import ECSClient
+from .client import ECSClient
 from utils import ValidationUtils, OutputFormatter
 
 
@@ -86,7 +85,7 @@ def list(ctx, region_id: str, page: int, page_size: int, az_name: Optional[str],
          state: Optional[str], output: Optional[str]):
     """列出云主机实例"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -180,7 +179,7 @@ def details(ctx, instance_id: str, region_id: str, output: Optional[str]):
     ctyun-cli ecs details --region-id 200000001852 <instance_id> --output json
     """
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -236,7 +235,7 @@ def details(ctx, instance_id: str, region_id: str, output: Optional[str]):
 def resources(ctx, region_id: str, output: Optional[str]):
     """查询用户资源"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -617,7 +616,7 @@ def monitoring(ctx, instance_id: str, metric_name: str, start_time: str, end_tim
 def flavor_options(ctx, output: Optional[str]):
     """查询云主机规格可售地域总览查询条件范围"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -672,7 +671,7 @@ def flavor_options(ctx, output: Optional[str]):
 def get_auto_renew_config(ctx, region_id: str, instance_id: str, output: Optional[str]):
     """查询包周期云主机自动续订配置"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -716,7 +715,7 @@ def get_auto_renew_config(ctx, region_id: str, instance_id: str, output: Optiona
 def query_dns_record(ctx, region_id: str, instance_id: str, output: Optional[str]):
     """查询云主机的内网DNS记录"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -772,7 +771,7 @@ def list_snapshots(ctx, region_id: str, page: int, page_size: int,
                    snapshot_name: Optional[str], output: Optional[str]):
     """查询云主机快照列表"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -845,7 +844,7 @@ def list_snapshots(ctx, region_id: str, page: int, page_size: int,
 def get_snapshot_details(ctx, region_id: str, snapshot_id: str, output: Optional[str]):
     """查询云主机快照详情"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -921,7 +920,7 @@ def list_keypairs(ctx, region_id: str, page: int, page_size: int,
                   query_content: Optional[str], output: Optional[str]):
     """查询一个或多个密钥对"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -986,7 +985,7 @@ def list_keypairs(ctx, region_id: str, page: int, page_size: int,
 def query_jobs(ctx, region_id: str, job_ids: str, output: Optional[str]):
     """查询多个异步任务的结果"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1037,7 +1036,7 @@ def query_jobs(ctx, region_id: str, job_ids: str, output: Optional[str]):
 def query_async_result(ctx, region_id: str, job_id: str, output: Optional[str]):
     """查询一个异步任务的结果"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1082,7 +1081,7 @@ def query_async_result(ctx, region_id: str, job_id: str, output: Optional[str]):
 def get_volume_statistics(ctx, region_id: str, project_id: Optional[str], output: Optional[str]):
     """查询用户云硬盘统计信息"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1123,7 +1122,7 @@ def get_volume_statistics(ctx, region_id: str, project_id: Optional[str], output
 def get_fixed_ip_list(ctx, region_id: str, instance_id: str, output: Optional[str]):
     """查询云主机的固定IP"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1172,7 +1171,7 @@ def list_backup_policies(ctx, region_id: str, page: int, page_size: int,
                          project_id: Optional[str], output: Optional[str]):
     """查询云主机备份策略列表"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1251,7 +1250,7 @@ def list_backup_policies(ctx, region_id: str, page: int, page_size: int,
 def get_backup_status(ctx, region_id: str, instance_backup_id: str, output: Optional[str]):
     """查询云主机备份状态"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1299,7 +1298,7 @@ def get_backup_status(ctx, region_id: str, instance_backup_id: str, output: Opti
 def get_volume_info(ctx, disk_id: str, region_id: Optional[str], output: Optional[str]):
     """云硬盘信息查询（基于磁盘ID）"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1425,7 +1424,7 @@ def get_volume_info(ctx, disk_id: str, region_id: Optional[str], output: Optiona
 def list_backup_policy_instances(ctx, region_id: str, policy_id: str, instance_name: Optional[str], page: int, page_size: int, output: Optional[str]):
     """查询云主机备份策略绑定云主机信息"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1516,7 +1515,7 @@ def list_backup_policy_instances(ctx, region_id: str, policy_id: str, instance_n
 def list_volumes(ctx, region_id: str, instance_id: str, page: int, page_size: int, output: Optional[str]):
     """查询云主机的云硬盘列表"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1571,7 +1570,7 @@ def list_volumes(ctx, region_id: str, instance_id: str, page: int, page_size: in
 def get_affinity_group_details(ctx, region_id: str, instance_id: str, output: Optional[str]):
     """查询云主机所在云主机组"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1611,7 +1610,7 @@ def get_affinity_group_details(ctx, region_id: str, instance_id: str, output: Op
 def get_regions_details(ctx, output: Optional[str]):
     """查询账户启用的资源池信息"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1654,7 +1653,7 @@ def get_regions_details(ctx, output: Optional[str]):
 def get_availability_zones_details(ctx, region_id: str, output: Optional[str]):
     """查询账户资源池中可用区信息"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1704,7 +1703,7 @@ def list_instance_status(ctx, region_id: str, page: int, page_size: int,
                          project_id: Optional[str], output: Optional[str]):
     """获取多台云主机的状态信息"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1774,7 +1773,7 @@ def list_instance_status(ctx, region_id: str, page: int, page_size: int,
 def query_uuid(ctx, region_id: str, master_order_id: str, output: Optional[str]):
     """根据masterOrderID查询云主机ID"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
@@ -1839,7 +1838,7 @@ def list_affinity_groups(ctx, region_id: str, page: int, page_size: int,
                          output: Optional[str]):
     """查询云主机组列表或者详情"""
     try:
-        from ecs import ECSClient
+        
         
         client = ctx.obj['client']
         ecs_client = ECSClient(client)
