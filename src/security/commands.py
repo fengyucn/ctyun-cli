@@ -215,6 +215,84 @@ def scan(ctx, agent_guid: str):
     click.echo(f"请稍后使用 'ctyun_cli security vuln-list {agent_guid}' 查看扫描结果")
 
 
+@security.command('tamper-update')
+@click.argument('agent_guid')
+@click.option('--status', 'secure_status',
+              type=click.Choice(['0', '1']),
+              required=True,
+              help='防护状态: 0=关闭防护, 1=开启防护')
+@click.option('--server-name', 'cust_name', help='主机名称')
+@click.option('--server-ip', 'server_ip', help='防护服务器IP')
+@click.option('--os', type=click.Choice(['Linux', 'Windows']), help='操作系统')
+@click.pass_context
+@handle_error
+def tamper_update(ctx, agent_guid: str, secure_status: str,
+                  cust_name: Optional[str], server_ip: Optional[str],
+                  os: Optional[str]):
+    """
+    更新网页防篡改配置（开启/关闭防护状态）
+
+    注意：此功能为收费功能，需要确认已购买网页防篡改配额
+
+    示例：
+        # 开启防护
+        ctyun-cli security tamper-update <agent_guid> --status 1
+
+        # 关闭防护
+        ctyun-cli security tamper-update <agent_guid> --status 0
+
+        # 带服务器信息开启防护
+        ctyun-cli security tamper-update <agent_guid> --status 1 \\
+            --server-name my-server --server-ip 192.168.1.1 --os Linux
+    """
+    client = ctx.obj['client']
+    security_client = SecurityClient(client)
+
+    # 转换状态为整数
+    status_int = int(secure_status)
+    status_text = "开启" if status_int == 1 else "关闭"
+
+    click.echo(f"正在{status_text}网页防篡改防护...")
+    click.echo(f"Agent GUID: {agent_guid}")
+
+    result = security_client.update_tamper_config(
+        agent_guid=agent_guid,
+        secure_status=status_int,
+        cust_name=cust_name,
+        server_ip=server_ip,
+        os=os
+    )
+
+    # 检查返回结果
+    if result.get('statusCode') == '200' and result.get('error') == 'CTCSSCN_000000':
+        OutputFormatter.color_print(f"✓ 网页防篡改防护{status_text}成功", 'green')
+        click.echo(f"状态码: {result.get('statusCode')}")
+        click.echo(f"返回信息: {result.get('message', 'success')}")
+        if result.get('traceId'):
+            click.echo(f"追踪ID: {result.get('traceId')}")
+    else:
+        error_msg = result.get('message', '未知错误')
+        error_code = result.get('error', result.get('statusCode', 'UNKNOWN'))
+
+        # 错误码说明
+        error_desc = {
+            'CTCSSCN_000000': '成功',
+            'CTCSSCN_000001': '失败',
+            'CTCSSCN_000003': '用户未签署协议，安全卫士系统无法正常使用',
+            'CTCSSCN_000004': '鉴权错误',
+            'CTCSSCN_000005': '用户没有付费版配额，功能不可用'
+        }.get(error_code, '')
+
+        OutputFormatter.color_print(f"✗ 网页防篡改防护{status_text}失败", 'red')
+        click.echo(f"错误码: {error_code}")
+        click.echo(f"错误信息: {error_msg}")
+        if error_desc:
+            click.echo(f"说明: {error_desc}")
+
+        import sys
+        sys.exit(1)
+
+
 @security.command()
 def examples():
     """显示使用示例"""
@@ -241,5 +319,12 @@ def examples():
     click.echo("7. 启动漏洞扫描:")
     click.echo("   ctyun_cli security scan <agent_guid>")
     click.echo()
+    click.echo("8. 开启网页防篡改防护:")
+    click.echo("   ctyun_cli security tamper-update <agent_guid> --status 1")
+    click.echo()
+    click.echo("9. 关闭网页防篡改防护:")
+    click.echo("   ctyun_cli security tamper-update <agent_guid> --status 0")
+    click.echo()
     click.echo("注意: <agent_guid> 是服务器安全卫士客户端的唯一标识符")
     click.echo("      可以通过天翼云控制台获取")
+    click.echo("      网页防篡改为收费功能，使用前请确认已购买相关配额")
