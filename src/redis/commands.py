@@ -58,8 +58,6 @@ def get_zones(ctx, region_id: str, output_format: str, timeout: int):
         ctyun redis zones --region-id 200000001852 --format json
         ctyun redis zones -r 200000001852 -f summary -t 60
     """
-    from redis import RedisClient
-
     client = ctx.obj['client']
     redis_client = RedisClient(client)
 
@@ -99,8 +97,6 @@ def get_zones_multi(ctx, regions: Optional[str], output_format: str, timeout: in
         ctyun redis zones-multi -R 200000001852 -f json
     """
     # 获取凭证（validate_credentials装饰器已验证）
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     # 默认查询主要区域
@@ -281,8 +277,6 @@ def list_instances(ctx, region_id: str, name: str, page: int, size: int, output_
         ctyun redis list --page 2 --size 10       # 第2页，每页10条
         ctyun redis list -f json                   # JSON格式输出
     """
-    from redis import RedisClient
-
     client = ctx.obj['client']
     redis_client = RedisClient(client)
 
@@ -399,8 +393,6 @@ def describe_instance(ctx, instance_id: str, output_format: str, timeout: int):
         ctyun redis describe -i xxx -f table -t 60
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
     redis_client = RedisClient(client)
 
@@ -440,8 +432,6 @@ def describe_config(ctx, instance_id: str, param_name: str, output_format: str, 
         ctyun redis config -i xxx -f json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     param_desc = f" (参数: {param_name})" if param_name else ""
@@ -482,8 +472,6 @@ def describe_monitor_items(ctx, instance_id: str, output_format: str, timeout: i
         ctyun redis monitor-items -i xxx -f json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     click.echo(f"📊 正在查询Redis监控指标列表: {instance_id}")
@@ -532,8 +520,6 @@ def describe_monitor_history(ctx, instance_id: str, metric: str, start_time: str
         ctyun redis monitor-history -i xxx -m memory_fragmentation --format json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     # 时间处理
@@ -600,8 +586,6 @@ def diagnose_instance(ctx, instance_id: str, node_name: str, wait: bool, wait_ti
         ctyun redis diagnose -i xxx --wait --format json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     node_desc = f" (节点: {node_name})" if node_name else ""
@@ -674,8 +658,6 @@ def query_diagnosis_report(ctx, instance_id: str, task_id: str, output_format: s
         ctyun redis diagnosis-report -i xxx -t xxx --format json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     click.echo(f"📋 正在查询Redis诊断报告: {instance_id}")
@@ -718,8 +700,6 @@ def get_clients(ctx, instance_id: str, node_id: str, output_format: str, timeout
         ctyun redis clients -i xxx --format json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     node_desc = f" (节点: {node_id})" if node_id else ""
@@ -760,8 +740,6 @@ def describe_version(ctx, instance_id: str, output_format: str, timeout: int):
         ctyun redis version -i xxx --format json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     click.echo(f"🔢 正在查询Redis实例版本信息: {instance_id}")
@@ -921,7 +899,6 @@ def create_instance(ctx, instance_name: str, password: str, charge_type: str, pe
         8. 使用--dry-run参数可以验证参数正确性而不实际创建实例
     """
     import re
-    from redis import RedisClient
 
     client = ctx.obj['client']
     redis_client = RedisClient(client)
@@ -1239,8 +1216,6 @@ def check_available_resources(ctx, region_id: str, edition: str, version: str,
         ctyun redis check-resources -e Enhance -v 6.0 --format json
         ctyun redis check-resources -e Classic -v 5.0 -f table
     """
-    from redis import RedisClient
-
     client = ctx.obj['client']
     redis_client = RedisClient(client)
     redis_client.set_timeout(timeout)
@@ -1279,8 +1254,6 @@ def describe_network(ctx, instance_id: str, output_format: str, timeout: int):
         ctyun redis network -i xxx --format json
     """
     # 获取凭证
-    from redis import RedisClient
-
     client = ctx.obj['client']
 
     click.echo(f"🌐 正在查询Redis实例网络信息: {instance_id}")
@@ -2031,8 +2004,6 @@ def describe_engine_version(ctx, instance_id: str, region_id: str, output_format
         ctyun redis engine-version -i xxx --region-id 200000001852
         ctyun redis engine-version -i xxx -f json
     """
-    from redis import RedisClient
-
     client = ctx.obj['client']
     redis_client = RedisClient(client)
     redis_client.set_timeout(timeout)
@@ -2150,8 +2121,6 @@ def describe_instance_version(ctx, instance_id: str, region_id: str, output_form
         ctyun redis instance-version -i xxx --region-id 200000001852
         ctyun redis instance-version -i xxx -f json
     """
-    from redis import RedisClient
-
     client = ctx.obj['client']
     redis_client = RedisClient(client)
     redis_client.set_timeout(timeout)
