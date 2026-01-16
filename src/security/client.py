@@ -1186,3 +1186,99 @@ class SecurityClient:
             },
             '_mock': True
         }
+
+    def update_tamper_config(self, agent_guid: str, secure_status: int,
+                            cust_name: Optional[str] = None,
+                            server_ip: Optional[str] = None,
+                            os: Optional[str] = None) -> Dict[str, Any]:
+        """
+        更新网页防篡改配置（开启/关闭防护状态）
+
+        Args:
+            agent_guid: agentGuid（必需）
+            secure_status: 服务器防护状态，0:关闭防护，1:开启防护（必需）
+            cust_name: 主机名称（可选）
+            server_ip: 防护服务器IP（可选）
+            os: 操作系统 Linux/Windows（可选）
+
+        Returns:
+            配置修改结果
+        """
+        logger.info(f"修改网页防篡改配置: agentGuid={agent_guid}, secureStatus={secure_status}")
+
+        try:
+            url = f"https://{self.base_endpoint}/v1/tamperProof/config/update"
+
+            # 构造请求体
+            body_data = {
+                'agentGuid': agent_guid,
+                'secureStatus': secure_status
+            }
+
+            # 添加可选参数
+            if cust_name:
+                body_data['custName'] = cust_name
+            if server_ip:
+                body_data['serverIp'] = server_ip
+            if os:
+                body_data['os'] = os
+
+            body = json.dumps(body_data)
+
+            # 使用EOP签名认证
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params=None,
+                body=body,
+                extra_headers={
+                    'regionid': '100054c0416811e9a6690242ac110002',
+                    'urlType': 'CTAPI'
+                }
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求体: {body}")
+
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.error(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': str(response.status_code),
+                    'error': 'HTTP_ERROR',
+                    'message': f'HTTP {response.status_code}: {response.text}',
+                    'returnObj': None
+                }
+
+            result = response.json()
+
+            # 检查返回状态
+            if not isinstance(result, dict):
+                logger.error(f"响应格式错误: {result}")
+                return {
+                    'statusCode': '500',
+                    'error': 'INVALID_RESPONSE',
+                    'message': '响应格式错误',
+                    'returnObj': None
+                }
+
+            return result
+
+        except Exception as e:
+            logger.error(f"修改网页防篡改配置失败: {str(e)}", exc_info=True)
+            return {
+                'statusCode': '500',
+                'error': 'EXCEPTION',
+                'message': str(e),
+                'returnObj': None
+            }
