@@ -96,6 +96,7 @@ AKSK
 PROJECT_RULES.md
 PROJECT_SUMMARY.md
 VERSION_*.md
+update_version.sh
 
 # Backup folders
 backup_*/
