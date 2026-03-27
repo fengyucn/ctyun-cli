@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-200+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-209+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![APIs](https://img.shields.io/badge/APIs-217+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-210+-orange.svg)](docs/MODULES/README.md#命令统计)
 [![Modules](https://img.shields.io/badge/Modules-11+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -87,9 +87,9 @@ ctyun-cli cce list-clusters
 | **VPC (私有网络)** | 15 | 15 | VPC网络、子网、路由表、安全组、弹性IP | [详细文档](docs/MODULES/vpc.md) |
 | **CCE (容器引擎)** | 36 | 37 | Kubernetes集群、节点池、工作负载、配置管理 | [详细文档](docs/MODULES/cce.md) |
 | **ELB (弹性负载均衡)** | 7 | 5 | 负载均衡器、目标组、后端主机管理 | [详细文档](docs/MODULES/elb.md) |
-| **总计** | **209** | **216** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **总计** | **210** | **217** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：39,000+行代码，216+个API，209+个命令，11大服务模块**
+📊 **规模统计：35,000+行代码，217+个API，210+个命令，11大服务模块**
 
 ## 📚 完整文档
 
@@ -135,10 +135,9 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.7.5 (2025-12-08)
-- 🚀 **新增ECS订单查询API**: 根据订单ID查询云主机UUID
-- 📊 **统计数据更新**: 209个CLI命令，216个API接口，11大服务模块
-- 🔧 **技术改进**: EOP签名认证、多格式输出、错误处理优化
+**最新版本**: v1.7.16 (2026-03-27)
+- 🚀 **新增ECS订单询价命令**: `ecs query-price`，支持 VM/EBS/IP/IP_POOL/NAT/BMS/PGELB/CBR_VM/CBR_VBS 九种资源类型询价
+- 🔧 **修复启动崩溃问题**: 修复系统 `redis` 包与项目模块命名冲突导致 `ctyun-cli` 无法启动的问题
 
 查看完整的更新历史请参阅 [CHANGELOG.md](CHANGELOG.md)
 
