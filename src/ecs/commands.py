@@ -1987,3 +1987,156 @@ def query_uuid(ctx, region_id: str, master_order_id: str, output: Optional[str])
         click.echo(f"运行出错: {e}", err=True)
         import traceback
         traceback.print_exc()
+
+@ecs.command('query-price')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--resource-type', required=True,
+              type=click.Choice(['VM', 'EBS', 'IP', 'IP_POOL', 'NAT', 'BMS', 'PGELB', 'CBR_VM', 'CBR_VBS']),
+              help='资源类型')
+@click.option('--count', default=1, show_default=True, type=int, help='订购数量')
+@click.option('--on-demand', is_flag=True, default=False, help='按需计费（不填则为包周期）')
+@click.option('--cycle-type', type=click.Choice(['MONTH', 'YEAR']), default=None,
+              help='订购周期类型，包周期时必填')
+@click.option('--cycle-count', type=int, default=None, help='订购周期大小，包周期时必填')
+@click.option('--flavor-name', default=None, help='云主机规格，VM时必填')
+@click.option('--image-uuid', default=None, help='镜像UUID，VM时必填')
+@click.option('--sys-disk-type', type=click.Choice(['SAS', 'SATA', 'SSD', 'FAST-SSD']),
+              default=None, help='系统盘类型，VM时必填')
+@click.option('--sys-disk-size', type=int, default=None, help='系统盘大小(GB)，VM时必填')
+@click.option('--bandwidth', type=int, default=None, help='带宽(Mbps)，IP必填，VM/BMS可选')
+@click.option('--disks', default=None,
+              help='数据盘JSON，如 \'[{"diskType":"SATA","diskSize":100}]\'（VM可选）')
+@click.option('--disk-type', type=click.Choice(['SAS', 'SATA', 'SSD', 'FAST-SSD']),
+              default=None, help='磁盘类型，EBS时必填')
+@click.option('--disk-size', type=int, default=None, help='磁盘大小(GB)，EBS时必填')
+@click.option('--disk-mode', type=click.Choice(['VBD', 'ISCSI', 'FCSAN']),
+              default=None, help='磁盘模式，EBS时必填')
+@click.option('--nat-type', type=click.Choice(['small', 'medium', 'large', 'xlarge']),
+              default=None, help='NAT规格，NAT时必填')
+@click.option('--ip-pool-bandwidth', type=int, default=None,
+              help='共享带宽大小(Mbps)，IP_POOL时必填')
+@click.option('--device-type', default=None, help='物理机规格，BMS时必填')
+@click.option('--az-name', default=None, help='可用区，BMS时必填')
+@click.option('--order-disks', default=None,
+              help='物理机云硬盘JSON，如 \'[{"diskType":"SATA","diskSize":205}]\'（BMS可选）')
+@click.option('--elb-type',
+              type=click.Choice(['standardI', 'standardII', 'enhancedI', 'enhancedII', 'higherI']),
+              default=None, help='负载均衡类型，PGELB时必填')
+@click.option('--cbr-value', type=int, default=None,
+              help='存储库大小(GB)，CBR_VM/CBR_VBS时必填')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def query_price(ctx, region_id, resource_type, count, on_demand,
+                cycle_type, cycle_count,
+                flavor_name, image_uuid, sys_disk_type, sys_disk_size, bandwidth, disks,
+                disk_type, disk_size, disk_mode,
+                nat_type, ip_pool_bandwidth,
+                device_type, az_name, order_disks,
+                elb_type, cbr_value, output):
+    """订单询价，支持 VM/EBS/IP/IP_POOL/NAT/BMS/PGELB/CBR_VM/CBR_VBS"""
+    import json as _json
+    import sys
+
+    try:
+        from ecs.client import ECSClient
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+
+        disks_parsed = None
+        if disks:
+            try:
+                disks_parsed = _json.loads(disks)
+            except _json.JSONDecodeError as e:
+                click.echo(f"错误: --disks 参数 JSON 格式无效: {e}", err=True)
+                sys.exit(1)
+
+        order_disks_parsed = None
+        if order_disks:
+            try:
+                order_disks_parsed = _json.loads(order_disks)
+            except _json.JSONDecodeError as e:
+                click.echo(f"错误: --order-disks 参数 JSON 格式无效: {e}", err=True)
+                sys.exit(1)
+
+        if not on_demand:
+            if not cycle_type:
+                click.echo("错误: 包周期模式下 --cycle-type 为必填项", err=True)
+                sys.exit(1)
+            if cycle_count is None:
+                click.echo("错误: 包周期模式下 --cycle-count 为必填项", err=True)
+                sys.exit(1)
+
+        result = ecs_client.query_order_price(
+            region_id=region_id,
+            resource_type=resource_type,
+            count=count,
+            on_demand=on_demand,
+            cycle_type=cycle_type,
+            cycle_count=cycle_count,
+            flavor_name=flavor_name,
+            image_uuid=image_uuid,
+            sys_disk_type=sys_disk_type,
+            sys_disk_size=sys_disk_size,
+            disks=disks_parsed,
+            bandwidth=bandwidth,
+            disk_type=disk_type,
+            disk_size=disk_size,
+            disk_mode=disk_mode,
+            nat_type=nat_type,
+            ip_pool_bandwidth=ip_pool_bandwidth,
+            device_type=device_type,
+            az_name=az_name,
+            order_disks=order_disks_parsed,
+            elb_type=elb_type,
+            cbr_value=cbr_value,
+        )
+
+        output_format = output or ctx.obj.get('output', 'table')
+
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            if result.get('statusCode') != 800:
+                click.echo(f"API错误 [{result.get('errorCode', '')}]: {result.get('message', '未知错误')}", err=True)
+                sys.exit(1)
+
+            return_obj = result.get('returnObj', {}) or {}
+            total_price    = return_obj.get('totalPrice', '-')
+            discount_price = return_obj.get('discountPrice', '-')
+            final_price    = return_obj.get('finalPrice', '-')
+            sub_orders     = return_obj.get('subOrderPrices', [])
+
+            billing_mode = '按需' if on_demand else f'包周期 {cycle_count}{cycle_type}'
+
+            click.echo("=" * 60)
+            click.echo(f"订单询价结果  资源类型: {resource_type}  数量: {count}")
+            click.echo("=" * 60)
+            click.echo(f"  {'计费模式':<14}: {billing_mode}")
+            click.echo(f"  {'原价 (CNY)':<14}: {total_price}")
+            click.echo(f"  {'折后价 (CNY)':<14}: {discount_price}")
+            click.echo(f"  {'最终价 (CNY)':<14}: {final_price}")
+
+            if sub_orders:
+                click.echo("\n子订单明细:")
+                click.echo("-" * 60)
+                for sub in sub_orders:
+                    click.echo(f"  服务标签: {sub.get('serviceTag', '-')}  "
+                               f"原价: {sub.get('totalPrice', '-')}  "
+                               f"最终价: {sub.get('finalPrice', '-')} CNY")
+                    for item in sub.get('orderItemPrices', []):
+                        click.echo(f"    [{item.get('resourceType', '-')}] "
+                                   f"原价: {item.get('totalPrice', '-')}  "
+                                   f"最终价: {item.get('finalPrice', '-')} CNY  "
+                                   f"itemId: {item.get('itemId', '-')}")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()

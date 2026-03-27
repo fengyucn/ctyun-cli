@@ -4,6 +4,49 @@
 
 ---
 
+## v1.7.16 (2026-03-27)
+
+### 🚀 新增功能
+- **ECS 订单询价 API**：新增 `query_order_price` 方法，支持购买前询价
+  - URI: `POST /v4/new-order/query-price`
+  - 支持 9 种资源类型：VM / EBS / IP / IP_POOL / NAT / BMS / PGELB / CBR_VM / CBR_VBS
+  - 支持包周期（MONTH/YEAR）和按需两种计费模式
+  - 返回原价、折后价、最终价及子订单明细
+- **CLI 命令 `ecs query-price`**：完整命令行支持，含所有资源类型专属参数
+
+### 🔧 Bug 修复
+- **修复 `ctyun-cli` 命令启动失败问题**：`site-packages` 中的系统 `redis` 包优先级高于项目 `src/redis/`，导致 `ImportError`。在 `src/cli/__init__.py` 中强制将 `src/` 插入 `sys.path[0]` 修复。
+
+### 📚 使用示例
+```bash
+# VM 包周期询价
+ctyun-cli ecs query-price \
+  --region-id <region_id> \
+  --resource-type VM \
+  --flavor-name s7.2xlarge.2 \
+  --image-uuid <image_uuid> \
+  --sys-disk-type SATA --sys-disk-size 50 \
+  --cycle-type MONTH --cycle-count 1
+
+# VM 按需询价
+ctyun-cli ecs query-price \
+  --region-id <region_id> \
+  --resource-type VM \
+  --flavor-name s7.2xlarge.2 \
+  --image-uuid <image_uuid> \
+  --sys-disk-type SATA --sys-disk-size 50 \
+  --on-demand
+
+# EBS 包周期询价
+ctyun-cli ecs query-price \
+  --region-id <region_id> \
+  --resource-type EBS \
+  --disk-type SSD --disk-size 100 --disk-mode VBD \
+  --cycle-type MONTH --cycle-count 6
+```
+
+---
+
 ## v1.7.8 (2025-12-11)
 
 ### 🚀 新增功能

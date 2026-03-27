@@ -3012,3 +3012,188 @@ class ECSClient:
         except Exception as e:
             logger.error(f"查询订单UUID失败: {str(e)}")
             raise
+
+    def query_order_price(
+        self,
+        region_id: str,
+        resource_type: str,
+        count: int,
+        on_demand: bool,
+        cycle_type: Optional[str] = None,
+        cycle_count: Optional[int] = None,
+        # VM 参数
+        flavor_name: Optional[str] = None,
+        image_uuid: Optional[str] = None,
+        sys_disk_type: Optional[str] = None,
+        sys_disk_size: Optional[int] = None,
+        disks: Optional[List[Dict[str, Any]]] = None,
+        bandwidth: Optional[int] = None,
+        # EBS 参数
+        disk_type: Optional[str] = None,
+        disk_size: Optional[int] = None,
+        disk_mode: Optional[str] = None,
+        # NAT 参数
+        nat_type: Optional[str] = None,
+        # IP_POOL 参数
+        ip_pool_bandwidth: Optional[int] = None,
+        # BMS 参数
+        device_type: Optional[str] = None,
+        az_name: Optional[str] = None,
+        order_disks: Optional[List[Dict[str, Any]]] = None,
+        # PGELB 参数
+        elb_type: Optional[str] = None,
+        # CBR_VM / CBR_VBS 参数
+        cbr_value: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        订单询价 - POST /v4/new-order/query-price
+
+        Args:
+            region_id: 资源池ID
+            resource_type: 资源类型 (VM/EBS/IP/IP_POOL/NAT/BMS/PGELB/CBR_VM/CBR_VBS)
+            count: 订购数量
+            on_demand: 是否按需，True 按需 / False 包周期
+            cycle_type: 订购周期类型 MONTH/YEAR，包周期时必填
+            cycle_count: 订购周期大小，包周期时必填
+            flavor_name: 云主机规格 (VM必填)
+            image_uuid: 镜像UUID (VM必填)
+            sys_disk_type: 系统盘类型 (VM必填)
+            sys_disk_size: 系统盘大小 (VM必填)
+            disks: 数据盘列表 (VM可选)
+            bandwidth: 带宽大小 (IP必填，VM/BMS可选)
+            disk_type: 磁盘类型 (EBS必填)
+            disk_size: 磁盘大小 (EBS必填)
+            disk_mode: 磁盘模式 (EBS必填)
+            nat_type: NAT规格 (NAT必填)
+            ip_pool_bandwidth: 共享带宽大小 (IP_POOL必填)
+            device_type: 物理机规格 (BMS必填)
+            az_name: 可用区 (BMS必填)
+            order_disks: 物理机云硬盘列表 (BMS可选)
+            elb_type: 负载均衡类型 (PGELB必填)
+            cbr_value: 存储库大小 (CBR_VM/CBR_VBS必填)
+
+        Returns:
+            询价结果，包含 totalPrice / discountPrice / finalPrice
+        """
+        logger.info(f"订单询价: regionID={region_id}, resourceType={resource_type}, onDemand={on_demand}")
+
+        url = f'https://{self.base_endpoint}/v4/new-order/query-price'
+
+        # 构造请求体
+        body_data: Dict[str, Any] = {
+            'regionID': region_id,
+            'resourceType': resource_type,
+            'count': count,
+            'onDemand': on_demand,
+        }
+
+        # 包周期参数
+        if not on_demand:
+            if cycle_type:
+                body_data['cycleType'] = cycle_type
+            if cycle_count is not None:
+                body_data['cycleCount'] = cycle_count
+
+        # VM 专用参数
+        if resource_type == 'VM':
+            if flavor_name:
+                body_data['flavorName'] = flavor_name
+            if image_uuid:
+                body_data['imageUUID'] = image_uuid
+            if sys_disk_type:
+                body_data['sysDiskType'] = sys_disk_type
+            if sys_disk_size is not None:
+                body_data['sysDiskSize'] = sys_disk_size
+            if disks:
+                body_data['disks'] = disks
+            if bandwidth is not None:
+                body_data['bandwidth'] = bandwidth
+
+        # EBS 专用参数
+        elif resource_type == 'EBS':
+            if disk_type:
+                body_data['diskType'] = disk_type
+            if disk_size is not None:
+                body_data['diskSize'] = disk_size
+            if disk_mode:
+                body_data['diskMode'] = disk_mode
+
+        # IP 专用参数
+        elif resource_type == 'IP':
+            if bandwidth is not None:
+                body_data['bandwidth'] = bandwidth
+
+        # IP_POOL 专用参数
+        elif resource_type == 'IP_POOL':
+            if ip_pool_bandwidth is not None:
+                body_data['ipPoolBandwidth'] = ip_pool_bandwidth
+
+        # NAT 专用参数
+        elif resource_type == 'NAT':
+            if nat_type:
+                body_data['natType'] = nat_type
+
+        # BMS 专用参数
+        elif resource_type == 'BMS':
+            if device_type:
+                body_data['deviceType'] = device_type
+            if az_name:
+                body_data['azName'] = az_name
+            if order_disks:
+                body_data['orderDisks'] = order_disks
+            if bandwidth is not None:
+                body_data['bandwidth'] = bandwidth
+
+        # PGELB 专用参数
+        elif resource_type == 'PGELB':
+            if elb_type:
+                body_data['elbType'] = elb_type
+
+        # CBR_VM / CBR_VBS 专用参数
+        elif resource_type in ('CBR_VM', 'CBR_VBS'):
+            if cbr_value is not None:
+                body_data['cbrValue'] = cbr_value
+
+        body = json.dumps(body_data)
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url,
+            query_params=None,
+            body=body,
+            extra_headers={}
+        )
+
+        logger.debug(f"请求URL: {url}")
+        logger.debug(f"请求体: {body}")
+        logger.debug(f"请求头: {headers}")
+
+        try:
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}: {response.text}',
+                    'returnObj': None
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"订单询价失败: {str(e)}")
+            raise
