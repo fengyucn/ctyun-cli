@@ -1073,7 +1073,7 @@ cli.add_command(iam)
 from ebs.commands import ebs
 cli.add_command(ebs)
 
-from redis.commands import redis_group
+from rdscmd.commands import redis_group
 cli.add_command(redis_group)
 
 from cce.commands import cce

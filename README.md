@@ -135,9 +135,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.7.16 (2026-03-27)
-- 🚀 **新增ECS订单询价命令**: `ecs query-price`，支持 VM/EBS/IP/IP_POOL/NAT/BMS/PGELB/CBR_VM/CBR_VBS 九种资源类型询价
-- 🔧 **修复启动崩溃问题**: 修复系统 `redis` 包与项目模块命名冲突导致 `ctyun-cli` 无法启动的问题
+**最新版本**: v1.8.0 (2026-03-28)
+- 🔧 **彻底解决模块命名冲突**：将 `redis` 模块重命名为 `rdscmd`，从根源解决与 `redis-py` 库的命名冲突问题
+- 🧹 **代码清理**：移除 sys.path hack 临时修复代码，代码更简洁可靠
+- ✅ **零兼容性影响**：用户命令 `ctyun redis xxx` 保持不变
 
 查看完整的更新历史请参阅 [CHANGELOG.md](CHANGELOG.md)
 

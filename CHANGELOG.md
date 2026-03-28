@@ -4,6 +4,21 @@
 
 ---
 
+## v1.8.0 (2026-03-28)
+
+### 🔧 Bug 修复
+- **彻底解决 `redis` 模块命名冲突问题**：将 `src/redis/` 重命名为 `src/rdscmd/`，从根源上解决与 Python 第三方库 `redis-py` 的命名冲突。
+  - 模块重命名：`redis` → `rdscmd`
+  - CLI命令保持不变：`ctyun redis zones`、`ctyun redis list` 等命令无需修改
+  - 删除 `cli/__init__.py` 中的 sys.path hack 临时修复代码
+  - 用户无感知升级，零兼容性问题
+
+### 🧹 代码清理
+- 移除 `src/cli/__init__.py` 中的 sys.path 路径操作代码（约10行）
+- 代码更简洁，无需任何导入路径的 hack 处理
+
+---
+
 ## v1.7.17 (2026-03-27)
 
 ### 🔧 Bug 修复

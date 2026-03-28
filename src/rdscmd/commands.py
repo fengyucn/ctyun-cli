@@ -8,7 +8,7 @@ import json
 import sys
 from typing import Optional
 
-from redis import RedisClient
+from rdscmd import RedisClient
 
 
 def validate_credentials(func):
