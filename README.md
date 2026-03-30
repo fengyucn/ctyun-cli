@@ -135,7 +135,11 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.8.0 (2026-03-28)
+**最新版本**: v1.8.1 (2026-03-30)
+- 🚀 **CCE Namespace 命名空间管理**：新增 5 个 Namespace API，支持完整的 Kubernetes 命名空间生命周期管理
+  - 创建、删除、更新、查询命名空间及命名空间列表
+  - 支持 YAML 格式资源配置和 labelSelector/fieldSelector 过滤
+  - 新增 `cce namespace` 命令组（create/delete/update/show/list）
 - 🔧 **彻底解决模块命名冲突**：将 `redis` 模块重命名为 `rdscmd`，从根源解决与 `redis-py` 库的命名冲突问题
 - 🧹 **代码清理**：移除 sys.path hack 临时修复代码，代码更简洁可靠
 - ✅ **零兼容性影响**：用户命令 `ctyun redis xxx` 保持不变

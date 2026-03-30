@@ -1548,3 +1548,253 @@ def query_cluster_logs(ctx, region_id: str, cluster_name: str,
 
 if __name__ == '__main__':
     cce()
+
+# ========== Namespace 命名空间管理命令 ==========
+
+@cce.group()
+def namespace():
+    """Namespace 命名空间管理"""
+    pass
+
+
+@namespace.command('create')
+@click.option('--region-id', required=True, help='区域 ID')
+@click.option('--cluster-name', required=True, help='集群名称/ID')
+@click.option('--namespace-yaml', required=True, help='Namespace 的 YAML 配置字符串')
+@click.pass_context
+@handle_error
+def create_namespace(ctx, region_id: str, cluster_name: str, namespace_yaml: str):
+    """
+    创建Namespace
+
+    示例:
+    \b
+    # 创建命名空间
+    cce namespace create --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-yaml "apiVersion: v1\\nkind: Namespace\\nmetadata:\\n  name: my-namespace"
+
+    # 使用文件内容创建 (bash)
+    cce namespace create --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-yaml "$(cat namespace.yaml)"
+    """
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.create_namespace(region_id, cluster_name, namespace_yaml)
+
+    if output_format == 'table':
+        return_obj = result.get('returnObj', '')
+        if return_obj:
+            click.echo(f"✓ Namespace 创建成功")
+            click.echo("=" * 80)
+            # 显示YAML内容，自动换行
+            import textwrap
+            wrapped_text = textwrap.fill(return_obj, width=80)
+            click.echo(wrapped_text)
+        else:
+            click.echo("✓ Namespace 创建成功")
+    else:
+        format_output(result, output_format)
+
+
+@namespace.command('delete')
+@click.option('--region-id', required=True, help='区域 ID')
+@click.option('--cluster-name', required=True, help='集群名称/ID')
+@click.option('--namespace-name', required=True, help='命名空间名称')
+@click.confirmation_option(prompt='确定要删除这个命名空间吗？删除操作不可逆!')
+@click.pass_context
+@handle_error
+def delete_namespace(ctx, region_id: str, cluster_name: str, namespace_name: str):
+    """
+    删除Namespace
+
+    注意：删除操作会同时删除该命名空间下的所有资源（Pod、Service 等）
+
+    示例:
+    \b
+    # 删除命名空间
+    cce namespace delete --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-name my-namespace
+    """
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.delete_namespace(region_id, cluster_name, namespace_name)
+
+    if output_format == 'table':
+        return_obj = result.get('returnObj', True)
+        if return_obj:
+            click.echo(f"✓ Namespace '{namespace_name}' 删除成功")
+        else:
+            click.echo(f"✓ Namespace '{namespace_name}' 删除成功")
+    else:
+        format_output(result, output_format)
+
+
+@namespace.command('update')
+@click.option('--region-id', required=True, help='区域 ID')
+@click.option('--cluster-name', required=True, help='集群名称/ID')
+@click.option('--namespace-name', required=True, help='命名空间名称')
+@click.option('--namespace-yaml', required=True, help='Namespace 的 YAML 配置字符串')
+@click.pass_context
+@handle_error
+def update_namespace(ctx, region_id: str, cluster_name: str, namespace_name: str, namespace_yaml: str):
+    """
+    更新Namespace
+
+    注意：更新操作会覆盖整个 Namespace 对象，建议先查询再更新
+
+    示例:
+    \b
+    # 更新命名空间标签
+    cce namespace update --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-name my-namespace \\
+      --namespace-yaml "apiVersion: v1\\nkind: Namespace\\nmetadata:\\n  name: my-namespace\\n  labels:\\n    env: production"
+
+    # 使用文件内容更新 (bash)
+    cce namespace update --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-name my-namespace --namespace-yaml "$(cat updated-namespace.yaml)"
+    """
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.update_namespace(region_id, cluster_name, namespace_name, namespace_yaml)
+
+    if output_format == 'table':
+        return_obj = result.get('returnObj', '')
+        if return_obj:
+            click.echo(f"✓ Namespace '{namespace_name}' 更新成功")
+            click.echo("=" * 80)
+            # 显示 YAML 内容，自动换行
+            import textwrap
+            wrapped_text = textwrap.fill(return_obj, width=80)
+            click.echo(wrapped_text)
+        else:
+            click.echo(f"✓ Namespace '{namespace_name}' 更新成功")
+    else:
+        format_output(result, output_format)
+
+
+@namespace.command('show')
+@click.option('--region-id', required=True, help='区域 ID')
+@click.option('--cluster-name', required=True, help='集群名称/ID')
+@click.option('--namespace-name', required=True, help='命名空间名称')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def get_namespace(ctx, region_id: str, cluster_name: str, namespace_name: str, output: Optional[str]):
+    """
+    查询Namespace 详情
+
+    示例:
+    \b
+    # 查询命名空间详情
+    cce namespace show --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-name default
+
+    # JSON 格式输出
+    cce namespace show --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-name default --output json
+
+    # YAML 格式输出
+    cce namespace show --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --namespace-name default --output yaml
+    """
+    client = ctx.obj['client']
+    output_format = output or ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_namespace(region_id, cluster_name, namespace_name)
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误：需要安装 PyYAML 库", err=True)
+            import sys
+            sys.exit(1)
+    else:
+        # table format - 显示 Namespace 详情
+        return_obj = result.get('returnObj', '')
+        if return_obj:
+            click.echo(f"Namespace 详情：{namespace_name}")
+            click.echo("=" * 80)
+            click.echo(f"集群：{cluster_name}")
+            click.echo(f"区域 ID: {region_id}")
+            click.echo()
+            click.echo("YAML 配置内容:")
+            click.echo("-" * 80)
+            # 显示 YAML 内容，自动换行
+            import textwrap
+            wrapped_text = textwrap.fill(return_obj, width=80)
+            click.echo(wrapped_text)
+        else:
+            click.echo("未找到 Namespace")
+
+
+@namespace.command('list')
+@click.option('--region-id', required=True, help='区域 ID')
+@click.option('--cluster-name', required=True, help='集群名称/ID')
+@click.option('--label-selector', help='Kubernetes labelSelector，可通过 label 过滤资源')
+@click.option('--field-selector', help='Kubernetes fieldSelector，可通过 field 过滤资源')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_namespaces(ctx, region_id: str, cluster_name: str,
+                   label_selector: Optional[str], field_selector: Optional[str],
+                   output: Optional[str]):
+    """
+    查询Namespace列表
+
+    示例:
+    \b
+    # 查询所有命名空间
+    cce namespace list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8
+
+    # 使用标签选择器过滤
+    cce namespace list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --label-selector env=production
+
+    # JSON 格式输出
+    cce namespace list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --output json
+
+    # YAML 格式输出
+    cce namespace list --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --cluster-name cce-xf6nv8 --output yaml
+    """
+    client = ctx.obj['client']
+    output_format = output or ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_namespaces(region_id, cluster_name, label_selector, field_selector)
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误：需要安装 PyYAML 库", err=True)
+            import sys
+            sys.exit(1)
+    else:
+        # table format - 显示 Namespace列表
+        return_obj = result.get('returnObj', '')
+        if return_obj:
+            click.echo(f"集群 '{cluster_name}' 中的 Namespace列表:")
+            click.echo("=" * 80)
+            # 显示 YAML 内容，自动换行
+            import textwrap
+            wrapped_text = textwrap.fill(return_obj, width=80)
+            click.echo(wrapped_text)
+        else:
+            click.echo("未找到 Namespace")

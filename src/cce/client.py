@@ -1742,3 +1742,202 @@ class CCEClient:
         except Exception as e:
             logger.error(f"查询集群日志失败: {str(e)}")
             raise
+    # ========== Namespace 命名空间管理 ==========
+
+    def create_namespace(self, region_id: str, cluster_name: str, 
+                        namespace_yaml: str) -> Dict[str, Any]:
+        """
+        创建Namespace
+
+        Args:
+            region_id: 区域 ID (必填)
+            cluster_name: 集群 ID (必填)
+            namespace_yaml: Namespace 的 YAML 配置字符串
+
+        Returns:
+            创建Namespace 的响应结果
+        """
+        logger.info(f"创建Namespace: regionId={region_id}, clusterName={cluster_name}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_name}/api/v1/namespaces'
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url,
+            body=namespace_yaml,
+            content_type='text/plain'
+        )
+        headers['regionId'] = region_id
+
+        response = self.client.session.post(url, data=namespace_yaml, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def delete_namespace(self, region_id: str, cluster_name: str, 
+                        namespace_name: str) -> Dict[str, Any]:
+        """
+        删除Namespace
+
+        Args:
+            region_id: 区域 ID (必填)
+            cluster_name: 集群 ID (必填)
+            namespace_name: 命名空间名称 (必填)
+
+        Returns:
+            删除Namespace 的响应结果
+        """
+        logger.info(f"删除Namespace: regionId={region_id}, clusterName={cluster_name}, namespaceName={namespace_name}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_name}/api/v1/namespaces/{namespace_name}'
+
+        headers = self.eop_auth.sign_request(
+            method='DELETE',
+            url=url,
+            content_type='application/json'
+        )
+        headers['regionId'] = region_id
+
+        response = self.client.session.delete(url, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def update_namespace(self, region_id: str, cluster_name: str, 
+                        namespace_name: str, namespace_yaml: str) -> Dict[str, Any]:
+        """
+        更新Namespace
+
+        Args:
+            region_id: 区域 ID (必填)
+            cluster_name: 集群 ID (必填)
+            namespace_name: 命名空间名称 (必填)
+            namespace_yaml: Namespace 的 YAML 配置字符串
+
+        Returns:
+            更新Namespace 的响应结果
+        """
+        logger.info(f"更新Namespace: regionId={region_id}, clusterName={cluster_name}, namespaceName={namespace_name}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_name}/api/v1/namespaces/{namespace_name}'
+
+        headers = self.eop_auth.sign_request(
+            method='PUT',
+            url=url,
+            body=namespace_yaml,
+            content_type='text/plain'
+        )
+        headers['regionId'] = region_id
+
+        response = self.client.session.put(url, data=namespace_yaml, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def get_namespace(self, region_id: str, cluster_name: str, 
+                     namespace_name: str) -> Dict[str, Any]:
+        """
+        查询Namespace 详情
+
+        Args:
+            region_id: 区域 ID (必填)
+            cluster_name: 集群 ID (必填)
+            namespace_name: 命名空间名称 (必填)
+
+        Returns:
+            Namespace 详情的响应结果
+        """
+        logger.info(f"查询Namespace 详情：regionId={region_id}, clusterName={cluster_name}, namespaceName={namespace_name}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_name}/api/v1/namespaces/{namespace_name}'
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            content_type='application/json'
+        )
+        headers['regionId'] = region_id
+
+        response = self.client.session.get(url, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def list_namespaces(self, region_id: str, cluster_name: str,
+                       label_selector: Optional[str] = None,
+                       field_selector: Optional[str] = None) -> Dict[str, Any]:
+        """
+        查询Namespace列表
+
+        Args:
+            region_id: 区域 ID (必填)
+            cluster_name: 集群 ID (必填)
+            label_selector: Kubernetes labelSelector，可通过 label 过滤资源 (可选)
+            field_selector: Kubernetes fieldSelector，可通过 field 过滤资源 (可选)
+
+        Returns:
+            Namespace列表的响应结果
+        """
+        logger.info(f"查询Namespace列表：regionId={region_id}, clusterName={cluster_name}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_name}/api/v1/namespaces'
+
+        query_params = {}
+        if label_selector:
+            query_params['labelSelector'] = label_selector
+        if field_selector:
+            query_params['fieldSelector'] = field_selector
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            query_params=query_params if query_params else None,
+            content_type='application/json'
+        )
+        headers['regionId'] = region_id
+
+        response = self.client.session.get(url, params=query_params if query_params else None, 
+                                          headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')

@@ -4,6 +4,50 @@
 
 ---
 
+## v1.8.1 (2026-03-30)
+
+### 🚀 新增功能
+- **CCE Namespace 命名空间管理**：新增 5 个 Namespace API，支持完整的 Kubernetes 命名空间生命周期管理
+  - `create_namespace`：创建命名空间，支持 YAML 格式资源配置
+  - `delete_namespace`：删除命名空间，级联删除该命名空间下所有资源
+  - `update_namespace`：更新命名空间配置，支持标签、注解等元数据修改
+  - `get_namespace`：查询命名空间详情，返回完整 YAML 配置
+  - `list_namespaces`：查询命名空间列表，支持 labelSelector 和 fieldSelector 过滤
+- **CLI 命令扩展**：新增 `cce namespace` 命令组，包含以下子命令
+  - `cce namespace create`：创建命名空间
+  - `cce namespace delete`：删除命名空间（带确认提示）
+  - `cce namespace update`：更新命名空间
+  - `cce namespace show`：查询命名空间详情
+  - `cce namespace list`：查询命名空间列表
+
+### 📚 使用示例
+```bash
+# 创建命名空间
+ctyun-cli cce namespace create \
+  --region-id <region_id> \
+  --cluster-name <cluster_id> \
+  --namespace-yaml "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: my-namespace"
+
+# 查询命名空间列表
+ctyun-cli cce namespace list \
+  --region-id <region_id> \
+  --cluster-name <cluster_id>
+
+# 查询命名空间详情
+ctyun-cli cce namespace show \
+  --region-id <region_id> \
+  --cluster-name <cluster_id> \
+  --namespace-name default
+
+# 删除命名空间
+ctyun-cli cce namespace delete \
+  --region-id <region_id> \
+  --cluster-name <cluster_id> \
+  --namespace-name my-namespace
+```
+
+---
+
 ## v1.8.0 (2026-03-28)
 
 ### 🔧 Bug 修复
