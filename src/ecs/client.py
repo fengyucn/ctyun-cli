@@ -3197,3 +3197,73 @@ class ECSClient:
         except Exception as e:
             logger.error(f"订单询价失败: {str(e)}")
             raise
+
+    def update_ecs_label(
+        self,
+        region_id: str,
+        instance_id: str,
+        action: str,
+        label_list: List[Dict[str, str]],
+    ) -> Dict[str, Any]:
+        """
+        编辑云主机标签 - POST /v4/ecs/label/update
+
+        支持增加(ADD)、修改(UPDATE)、删除(DELETE)标签操作。
+
+        Args:
+            region_id: 资源池ID
+            instance_id: 云主机ID
+            action: 操作类型，ADD(增加) / UPDATE(修改) / DELETE(删除)
+            label_list: 标签列表 [{"labelKey": "key", "labelValue": "value"}]
+
+        Returns:
+            API响应结果
+        """
+        logger.info(f"编辑云主机标签: regionId={region_id}, instanceID={instance_id}, action={action}")
+
+        url = f'https://{self.base_endpoint}/v4/ecs/label/update'
+
+        body_data = {
+            'regionID': region_id,
+            'instanceID': instance_id,
+            'action': action,
+            'labelList': label_list,
+        }
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url,
+            query_params=None,
+            body=json.dumps(body_data),
+            extra_headers={}
+        )
+
+        try:
+            response = self.client.session.post(
+                url,
+                json=body_data,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}: {response.text}',
+                    'returnObj': None
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"编辑云主机标签失败: {str(e)}")
+            raise

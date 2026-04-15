@@ -4,6 +4,28 @@
 
 ---
 
+## v1.8.2 (2026-04-15)
+
+### 🚀 新增功能
+- **ECS 云主机标签管理**：新增编辑云主机标签 API（API ID: 17815），支持增加、修改、删除标签操作
+  - `update_ecs_label`：编辑云主机标签，支持 ADD/UPDATE/DELETE 三种操作
+  - `ecs update-label`：CLI 命令，格式 `--labels key1=value1,key2=value2`
+- **模块化架构优化**：修复 `cli/__init__.py` 预导入导致的 RuntimeWarning
+
+### 📚 使用示例
+```bash
+# 增加标签
+ctyun-cli ecs update-label --region-id xxx --instance-id xxx --action ADD --labels "env=prod,team=devops"
+
+# 修改标签
+ctyun-cli ecs update-label --region-id xxx --instance-id xxx --action UPDATE --labels "env=staging"
+
+# 删除标签
+ctyun-cli ecs update-label --region-id xxx --instance-id xxx --action DELETE --labels "env=prod"
+```
+
+---
+
 ## v1.8.1 (2026-03-30)
 
 ### 🚀 新增功能

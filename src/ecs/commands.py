@@ -3,6 +3,7 @@
 """
 
 import click
+import sys
 from typing import List, Optional
 from .client import ECSClient
 from utils import ValidationUtils, OutputFormatter
@@ -2140,3 +2141,61 @@ def query_price(ctx, region_id, resource_type, count, on_demand,
         click.echo(f"运行出错: {e}", err=True)
         import traceback
         traceback.print_exc()
+
+
+@ecs.command('update-label')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--action', required=True, type=click.Choice(['ADD', 'UPDATE', 'DELETE']),
+              help='操作类型: ADD(增加) / UPDATE(修改) / DELETE(删除)')
+@click.option('--labels', required=True, help='标签列表，格式: key1=value1,key2=value2')
+@click.pass_context
+def update_ecs_label(ctx, region_id: str, instance_id: str, action: str, labels: str):
+    """
+    编辑云主机标签（增加/修改/删除）
+
+    示例:
+    \b
+    # 增加标签
+    ctyun-cli ecs update-label --region-id xxx --instance-id xxx --action ADD --labels "env=prod,team=devops"
+    \b
+    # 修改标签
+    ctyun-cli ecs update-label --region-id xxx --instance-id xxx --action UPDATE --labels "env=staging"
+    \b
+    # 删除标签
+    ctyun-cli ecs update-label --region-id xxx --instance-id xxx --action DELETE --labels "env=prod"
+    """
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    # 解析标签列表
+    label_list = []
+    for item in labels.split(','):
+        item = item.strip()
+        if '=' in item:
+            key, value = item.split('=', 1)
+            label_list.append({'labelKey': key.strip(), 'labelValue': value.strip()})
+        else:
+            click.echo(f"错误: 标签格式不正确 '{item}'，应为 key=value", err=True)
+            return
+
+    if not label_list:
+        click.echo("错误: 至少需要一个标签", err=True)
+        return
+
+    action_text = {'ADD': '增加', 'UPDATE': '修改', 'DELETE': '删除'}
+
+    ecs_client = ECSClient(client)
+    result = ecs_client.update_ecs_label(region_id, instance_id, action, label_list)
+
+    if output_format in ('json', 'yaml'):
+        from utils.helpers import format_output
+        format_output(result, output_format)
+    else:
+        if result.get('statusCode') != 800:
+            click.echo(f"错误 [{result.get('errorCode', '')}]: {result.get('message', '未知错误')}", err=True)
+            sys.exit(1)
+
+        click.echo(f"✓ 云主机标签{action_text.get(action, '操作')}成功")
+        for label in label_list:
+            click.echo(f"  - {label['labelKey']} = {label['labelValue']}")

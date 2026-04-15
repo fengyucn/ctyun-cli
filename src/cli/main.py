@@ -1091,6 +1091,10 @@ cli.add_command(elb)
 from security.commands import security
 cli.add_command(security)
 
+# 将 ecs/commands.py 中定义的命令注册到当前 ecs group
+from ecs.commands import update_ecs_label
+ecs.add_command(update_ecs_label)
+
 
 if __name__ == '__main__':
     cli()

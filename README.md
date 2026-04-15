@@ -135,7 +135,9 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.8.1 (2026-03-30)
+**最新版本**: v1.8.2 (2026-04-15)
+- 🏷️ **ECS 云主机标签管理**：新增 `ecs update-label` 命令，支持增加/修改/删除标签（ADD/UPDATE/DELETE）
+- 🔧 **模块化优化**：修复 `cli/__init__.py` 预导入导致的 RuntimeWarning
 - 🚀 **CCE Namespace 命名空间管理**：新增 5 个 Namespace API，支持完整的 Kubernetes 命名空间生命周期管理
   - 创建、删除、更新、查询命名空间及命名空间列表
   - 支持 YAML 格式资源配置和 labelSelector/fieldSelector 过滤
