@@ -4,6 +4,24 @@
 
 ---
 
+## v1.9.0 (2026-04-22)
+
+### 🚀 新增模块
+- **LTS（云日志服务）**：新增 `lts` 模块脚手架，终端节点 `ctlts-global.ctapi.ctyun.cn`，支持 134 个接口的后续实现
+- **SFS（弹性文件服务）**：新增 `sfs` 模块脚手架，终端节点 `ctsfs-global.ctapi.ctyun.cn`
+- **OceanFS（海量文件服务）**：新增 `oceanfs` 模块脚手架，终端节点 `oceanfs-global.ctapi.ctyun.cn`
+- **Aone（边缘安全加速平台）**：新增 `aone` 模块脚手架，终端节点 `aone-global.ctapi.ctyun.cn`
+
+### 📚 使用示例
+```bash
+ctyun-cli lts --help
+ctyun-cli sfs --help
+ctyun-cli oceanfs --help
+ctyun-cli aone --help
+```
+
+---
+
 ## v1.8.4 (2026-04-22)
 
 ### 🚀 新增功能

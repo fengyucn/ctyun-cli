@@ -1073,6 +1073,18 @@ cli.add_command(iam)
 from ebs.commands import ebs
 cli.add_command(ebs)
 
+from sfs.commands import sfs
+cli.add_command(sfs)
+
+from oceanfs.commands import oceanfs
+cli.add_command(oceanfs)
+
+from aone.commands import aone
+cli.add_command(aone)
+
+from lts.commands import lts
+cli.add_command(lts)
+
 from rdscmd.commands import redis_group
 cli.add_command(redis_group)
 

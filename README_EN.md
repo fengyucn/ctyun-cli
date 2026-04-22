@@ -21,6 +21,7 @@ A unified command-line interface for China Telecom Cloud (CTyun), designed for d
 - [Usage Examples](#usage-examples)
 - [Configuration](#configuration)
 - [API Coverage](#api-coverage)
+- [Changelog](#changelog)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -138,6 +139,22 @@ ctyun-cli cce list-clusters
 ctyun-cli cce create-cluster
 ctyun-cli cce get-kubeconfig
 
+# Namespace management
+ctyun-cli cce namespace list
+ctyun-cli cce namespace create
+ctyun-cli cce namespace show
+
+# Task management
+ctyun-cli cce get-task --task-id <task-id>
+ctyun-cli cce list-cluster-events
+ctyun-cli cce resume-task --task-id <task-id>
+ctyun-cli cce cancel-task --task-id <task-id>
+ctyun-cli cce pause-task --task-id <task-id>
+
+# Tag management
+ctyun-cli cce tag list --cluster-id <cluster-id>
+ctyun-cli cce tag bind --cluster-id <cluster-id> --tags "env=prod"
+
 # ConfigMap management
 ctyun-cli cce configmap list
 ctyun-cli cce configmap show
@@ -146,7 +163,7 @@ ctyun-cli cce configmap show
 ctyun-cli cce logs query
 ```
 
-**36 commands | 37 APIs**
+**41 commands | 42 APIs**
 
 ### Networking
 
@@ -181,6 +198,7 @@ ctyun-cli elb loadbalancer get
 # Target groups
 ctyun-cli elb targetgroup list
 ctyun-cli elb targetgroup targets list
+ctyun-cli elb targetgroup targets show --target-id <target-id>
 
 # Health monitoring
 ctyun-cli elb health-check show
@@ -188,7 +206,7 @@ ctyun-cli elb monitor realtime
 ctyun-cli elb monitor history
 ```
 
-**7 commands | 5 APIs**
+**8 commands | 6 APIs**
 
 #### CDA (Cloud Dedicated Access)
 Enterprise dedicated network connections and hybrid cloud networking.
@@ -462,18 +480,44 @@ done
 | Category | Modules | Commands | APIs | Coverage |
 |----------|---------|----------|------|----------|
 | **Compute** | 2 | 42 | 39 | 100% |
-| **Networking** | 3 | 41 | 39 | 95%+ |
-| **Containers** | 1 | 36 | 37 | 100% |
+| **Networking** | 3 | 42 | 40 | 95%+ |
+| **Containers** | 1 | 41 | 42 | 100% |
 | **Data Services** | 1 | 14 | 19 | 100% |
 | **Observability** | 2 | 58 | 65 | 90%+ |
 | **Management** | 2 | 18 | 17 | 100% |
-| **Total** | **11** | **217** | **283** | **95%+** |
+| **Total** | **15** | **222** | **288** | **95%+** |
 
 ### Version Compatibility
 
 - **API Version**: Supports CTyun API v1/v2
 - **Python**: 3.8, 3.9, 3.10, 3.11, 3.12
 - **Authentication**: EOP signature + legacy AK/SK
+
+---
+
+## Changelog
+
+### v1.9.0 (2026-04-22)
+- **New Module Scaffolding**: Added 4 new service module stubs — LTS (Cloud Log Service), SFS (Elastic File Service), OceanFS (Massive File Service), and Aone (Edge Security Acceleration), each registered as a CLI command group for future API implementation.
+
+### v1.8.4 (2026-04-22)
+- **ELB Target Detail Query**: Added `elb targetgroup targets show` command to query backend target details including IP, port, weight, and health status.
+
+### v1.8.3 (2026-04-22)
+- **CCE Task Management**: Added 5 task management APIs for querying task details, cluster events, and task lifecycle control (resume/cancel/pause).
+- **CCE Tag Management**: Added cluster tag query and bind commands.
+- **Bug Fixes**: Fixed `cce tag bind` API path and request body format.
+
+### v1.8.2 (2026-04-15)
+- **ECS Label Management**: Added `ecs update-label` command supporting ADD/UPDATE/DELETE operations.
+
+### v1.8.1 (2026-03-30)
+- **CCE Namespace Management**: Added 5 Namespace APIs for full Kubernetes namespace lifecycle management.
+
+### v1.8.0 (2026-03-28)
+- **Module Rename**: Renamed `redis` module to `rdscmd` to resolve naming conflict with `redis-py` library.
+
+See full history in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
