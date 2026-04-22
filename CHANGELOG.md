@@ -4,6 +4,20 @@
 
 ---
 
+## v1.8.4 (2026-04-22)
+
+### 🚀 新增功能
+- **ELB 后端主机详情查询**：新增 `show_target` API（GET /v4/elb/show-target），查看后端主机详细信息
+  - `elb targetgroup targets show`：CLI 命令，支持查询后端主机IP、端口、权重、健康状态等
+
+### 📚 使用示例
+```bash
+# 查询后端主机详情
+ctyun-cli elb targetgroup targets show --region-id 200000001852 --target-id target-xxx
+```
+
+---
+
 ## v1.8.3 (2026-04-22)
 
 ### 🚀 新增功能

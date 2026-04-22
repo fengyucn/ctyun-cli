@@ -63,25 +63,29 @@ def billing():
     pass
 
 
-@billing.command()
-@click.pass_context
-@handle_error
-def balance(ctx):
-    """查询账户余额"""
-    client = ctx.obj['client']
-    billing_client = BillingClient(client)
-    
-    result = billing_client.query_account_balance()
-    
-    if result.get('returnCode') == '000000':
-        data = {
-            '账户总余额': result.get('balance', '0.00'),
-            '现金余额': result.get('cashBalance', '0.00'),
-            '信用余额': result.get('creditBalance', '0.00')
-        }
-        format_output(data, ctx.obj.get('output_format', 'table'))
-    else:
-        click.echo(f"查询失败: {result.get('returnMessage', '未知错误')}", err=True)
+# NOTE: balance 命令已禁用
+# 原因：POST /v1/bill/queryAccountBalance 返回 CTAPI_10000: API Not Found
+# EOP门户账单服务(sid=82)中未找到此API，路径可能有误
+# 如需恢复，请先确认正确的API路径
+# @billing.command()
+# @click.pass_context
+# @handle_error
+# def balance(ctx):
+#     """查询账户余额"""
+#     client = ctx.obj['client']
+#     billing_client = BillingClient(client)
+#
+#     result = billing_client.query_account_balance()
+#
+#     if result.get('returnCode') == '000000':
+#         data = {
+#             '账户总余额': result.get('balance', '0.00'),
+#             '现金余额': result.get('cashBalance', '0.00'),
+#             '信用余额': result.get('creditBalance', '0.00')
+#         }
+#         format_output(data, ctx.obj.get('output_format', 'table'))
+#     else:
+#         click.echo(f"查询失败: {result.get('returnMessage', '未知错误')}", err=True)
 
 
 @billing.command()

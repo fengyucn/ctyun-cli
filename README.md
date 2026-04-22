@@ -135,13 +135,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.8.3 (2026-04-22)
-- 🏷️ **CCE 任务管理**：新增 5 个任务管理 API，支持任务详情查询、集群事件列表查询，以及任务暂停/恢复/取消操作
-  - 新增 `cce get-task`、`cce list-cluster-events`、`cce resume-task`、`cce cancel-task`、`cce pause-task` 命令
-- 🏷️ **CCE 标签管理**：新增集群标签查询 `cce tag list` 命令
-- 🔧 **Bug 修复**：修复 `cce tag bind` 的 API 路径和请求体格式错误
+**最新版本**: v1.8.4 (2026-04-22)
+- 🔍 **ELB 后端主机详情查询**：新增 `elb targetgroup targets show` 命令，查看后端主机IP、端口、权重、健康状态等详细信息
 
-**v1.8.2** (2026-04-15)
+**v1.8.3** (2026-04-22)
 - 🏷️ **ECS 云主机标签管理**：新增 `ecs update-label` 命令，支持增加/修改/删除标签（ADD/UPDATE/DELETE）
 - 🔧 **模块化优化**：修复 `cli/__init__.py` 预导入导致的 RuntimeWarning
 

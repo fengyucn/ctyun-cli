@@ -567,6 +567,73 @@ def list_targets(ctx, region_id: str, target_group_id: Optional[str], ids: Optio
         click.echo(table)
 
 
+@targets.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--target-id', required=True, help='后端主机ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def show_target(ctx, region_id: str, target_id: str, output: Optional[str]):
+    """
+    查看后端主机详情
+
+    示例:
+    \b
+    # 查询指定后端主机详情
+    elb targetgroup targets show --region-id 200000001852 --target-id target-xxx
+    """
+    elb_client = get_elb_client(ctx)
+
+    result = elb_client.show_target(
+        region_id=region_id,
+        target_id=target_id
+    )
+
+    # 处理输出格式
+    target_info = result.get('returnObj', {})
+
+    if not target_info:
+        click.echo("未找到后端主机")
+        return
+
+    # 根据输出格式显示结果（命令级别优先）
+    output_format = output or ctx.obj.get('output', 'table')
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误: 需要安装PyYAML库", err=True)
+            import sys
+            sys.exit(1)
+    else:
+        # 表格格式
+        formatted_data = [
+            ('后端主机ID', target_info.get('ID', 'N/A')),
+            ('后端主机组ID', target_info.get('targetGroupID', 'N/A')),
+            ('实例类型', target_info.get('instanceType', 'N/A')),
+            ('实例ID', target_info.get('instanceID', 'N/A')),
+            ('后端主机IP', target_info.get('targetIP', 'N/A')),
+            ('协议端口', target_info.get('protocolPort', 'N/A')),
+            ('权重', target_info.get('weight', 'N/A')),
+            ('IPv4健康状态', target_info.get('healthCheckStatus', 'N/A')),
+            ('IPv6健康状态', target_info.get('healthCheckStatusIpv6', 'N/A')),
+            ('状态', target_info.get('status', 'N/A')),
+            ('可用区', target_info.get('azName', 'N/A')),
+            ('资源池ID', target_info.get('regionID', 'N/A')),
+            ('描述', target_info.get('description', 'N/A')),
+            ('创建时间', target_info.get('createdTime', 'N/A')),
+            ('更新时间', target_info.get('updatedTime', 'N/A')),
+        ]
+
+        click.echo(f"后端主机详情:")
+        for key, value in formatted_data:
+            click.echo(f"  {key}: {value}")
+
+
 @elb.group()
 def listener():
     """监听器管理"""

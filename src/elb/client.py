@@ -268,6 +268,56 @@ class ELBClient:
             logger.error(f"查询后端主机列表失败: {str(e)}")
             raise
 
+    def show_target(self, region_id: str, target_id: str) -> Dict[str, Any]:
+        """
+        查看后端主机详情
+
+        Args:
+            region_id: 区域ID (必填)
+            target_id: 后端主机ID (必填)
+
+        Returns:
+            后端主机详细信息
+        """
+        logger.info(f"查询后端主机详情: regionId={region_id}, targetId={target_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/elb/show-target'
+
+            query_params = {
+                'regionID': region_id,
+                'targetID': target_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body=None
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get('statusCode') != 800:
+                error_code = data.get('errorCode', 'UNKNOWN_ERROR')
+                error_msg = data.get('description', '未知错误')
+                raise Exception(f"ELB API错误 [{error_code}]: {error_msg}")
+
+            logger.info(f"成功获取后端主机详情")
+            return data
+
+        except Exception as e:
+            logger.error(f"查询后端主机详情失败: {str(e)}")
+            raise
+
     def get_target_group(self, region_id: str, target_group_id: str) -> Dict[str, Any]:
         """
         查看后端主机组详情
