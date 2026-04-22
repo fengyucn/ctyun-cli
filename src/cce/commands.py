@@ -1236,9 +1236,14 @@ def bind_cluster_tag(ctx, region_id: str, cluster_id: str, tag_key: str, tag_val
 
     cce_client = CCEClient(client)
 
+    # 根据API文档格式构造请求体
     tag_config = {
-        'tagKey': tag_key,
-        'tagValue': tag_value
+        'tags': [
+            {
+                'key': tag_key,
+                'value': tag_value
+            }
+        ]
     }
 
     result = cce_client.bind_cluster_tag(region_id, cluster_id, tag_config)
@@ -1248,26 +1253,180 @@ def bind_cluster_tag(ctx, region_id: str, cluster_id: str, tag_key: str, tag_val
         format_output(result, output_format)
 
 
-@cce.command('query-task')
+@tag.command('list')
 @click.option('--region-id', required=True, help='区域ID')
-@click.option('--task-id', required=True, help='任务ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--tag-key', help='标签键过滤（可选）')
+@click.option('--page', default=1, type=int, help='当前页码（可选，默认1）')
+@click.option('--page-size', default=20, type=int, help='每页条数（可选，默认20）')
 @click.pass_context
 @handle_error
-def query_async_task(ctx, region_id: str, task_id: str):
-    """查询异步任务状态"""
+def query_cluster_tags(ctx, region_id: str, cluster_id: str,
+                      tag_key: Optional[str], page: int, page_size: int):
+    """查询集群标签列表"""
     client = ctx.obj['client']
     output_format = ctx.obj['output']
 
     cce_client = CCEClient(client)
-    result = cce_client.query_async_task(region_id, task_id)
+
+    result = cce_client.query_cluster_tags(
+        region_id=region_id,
+        cluster_id=cluster_id,
+        tag_key=tag_key,
+        page_now=page,
+        page_size=page_size
+    )
+
+    if output_format == 'table':
+        tags_data = result.get('returnObj', {})
+        # 实际API返回的是 tags 字段，没有 records/total/current/pages
+        records = tags_data.get('tags', []) or tags_data.get('records', [])
+
+        if records:
+            from tabulate import tabulate
+            table_data = []
+            for tag in records:
+                table_data.append([
+                    tag.get('tagId', ''),
+                    tag.get('tagKey', ''),
+                    tag.get('tagValue', ''),
+                    tag.get('createdTime', '')
+                ])
+
+            click.echo(f"\n集群标签列表 (共 {len(records)} 个)\n")
+            headers = ['标签ID', '标签键', '标签值', '创建时间']
+            click.echo(tabulate(table_data, headers=headers, tablefmt='grid'))
+        else:
+            click.echo("未找到标签")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-task')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.pass_context
+@handle_error
+def get_task_detail(ctx, region_id: str, task_id: str):
+    """查询任务详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_task_detail(region_id, task_id)
 
     if output_format == 'table':
         task_info = result.get('returnObj', {})
         if task_info:
             click.echo(f"任务详情:")
-            format_output(result, output_format)
+            click.echo(f"  任务ID: {task_info.get('taskId', 'N/A')}")
+            click.echo(f"  集群ID: {task_info.get('clusterId', 'N/A')}")
+            click.echo(f"  任务类型: {task_info.get('taskType', 'N/A')}")
+            click.echo(f"  任务状态: {task_info.get('taskStatus', 'N/A')}")
+            click.echo(f"  并行数: {task_info.get('parallelNumber', 'N/A')}")
+            click.echo(f"  任务内容: {task_info.get('taskContent', 'N/A')}")
+            click.echo(f"  执行结果: {task_info.get('taskResult', 'N/A')}")
+            click.echo(f"  重试次数: {task_info.get('retryTime', 'N/A')}")
+            click.echo(f"  创建时间: {task_info.get('createdTime', 'N/A')}")
+            click.echo(f"  修改时间: {task_info.get('modifyTime', 'N/A')}")
         else:
             click.echo("未找到任务信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-cluster-events')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--event-type', default=None, help='事件类型过滤')
+@click.option('--task-id', default=None, help='任务ID过滤')
+@click.option('--page-number', default=1, help='页码，默认1')
+@click.option('--page-size', default=10, help='每页条数，默认10')
+@click.pass_context
+@handle_error
+def list_cluster_events(ctx, region_id: str, cluster_id: str, event_type: str, task_id: str, page_number: int, page_size: int):
+    """查询指定集群事件列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_events(region_id, cluster_id, event_type, task_id, page_number, page_size)
+
+    if output_format == 'table':
+        return_obj = result.get('returnObj', {})
+        records = return_obj.get('records', [])
+        total = return_obj.get('total', 0)
+
+        if records:
+            click.echo(f"集群事件列表 (集群ID: {cluster_id}, 共 {total} 个事件):")
+            for record in records:
+                click.echo(f"事件ID: {record.get('eventId', 'N/A')}")
+                click.echo(f"  任务ID: {record.get('taskId', 'N/A')}")
+                click.echo(f"  事件源: {record.get('source', 'N/A')}")
+                click.echo(f"  关联对象: {record.get('subject', 'N/A')}")
+                click.echo(f"  事件类型: {record.get('eventType', 'N/A')}")
+                click.echo(f"  事件内容: {record.get('eventMessage', 'N/A')}")
+                click.echo(f"  创建时间: {record.get('createdTime', 'N/A')}")
+                click.echo("-" * 50)
+        else:
+            click.echo(f"未找到集群事件 (集群ID: {cluster_id})")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('resume-task')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.pass_context
+@handle_error
+def resume_task(ctx, region_id: str, task_id: str):
+    """恢复任务"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.resume_task(region_id, task_id)
+
+    if output_format == 'table':
+        click.echo(f"任务已恢复 (任务ID: {task_id})")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('cancel-task')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.pass_context
+@handle_error
+def cancel_task(ctx, region_id: str, task_id: str):
+    """取消任务"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.cancel_task(region_id, task_id)
+
+    if output_format == 'table':
+        click.echo(f"任务已取消 (任务ID: {task_id})")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('pause-task')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.pass_context
+@handle_error
+def pause_task(ctx, region_id: str, task_id: str):
+    """暂停任务"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.pause_task(region_id, task_id)
+
+    if output_format == 'table':
+        click.echo(f"任务已暂停 (任务ID: {task_id})")
     else:
         format_output(result, output_format)
 

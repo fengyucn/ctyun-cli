@@ -4,6 +4,40 @@
 
 ---
 
+## v1.8.3 (2026-04-22)
+
+### 🚀 新增功能
+- **CCE 任务管理**：新增 5 个任务管理 API，支持任务查询与生命周期控制
+  - `get_task_detail`：查询任务详情（GET /v2/cce/tasks/{taskId}）
+  - `get_cluster_events`：查询指定集群事件列表（GET /v2/cce/events/{clusterId}），支持 eventType、taskId 过滤
+  - `resume_task`：恢复任务（POST /v2/cce/tasks/{taskId}/resume）
+  - `cancel_task`：取消任务（POST /v2/cce/tasks/{taskId}/cancel）
+  - `pause_task`：暂停任务（POST /v2/cce/tasks/{taskId}/pause）
+- **CCE 标签管理**：新增集群标签查询 API
+  - `query_cluster_tags`：查询集群标签列表（GET /v2/cce/clusters/{clusterId}/tags）
+
+### 🔧 Bug 修复
+- **修复 bind_cluster_tag URL 路径错误**：从 `/cse-apig/v2/clusters/{id}/tags/bind` 修正为 `/v2/cce/clusters/{id}/tags`
+- **修复 bind_cluster_tag 请求体格式错误**：从 `{tagKey, tagValue}` 修正为 `{tags: [{key, value}]}`
+- **修复 query_cluster_tags 响应解析**：实际 API 返回 `tags` 字段而非文档中的 `records`
+
+### 📚 使用示例
+```bash
+# 查询任务详情
+ctyun-cli cce get-task --region-id 200000001852 --task-id task-xxx
+
+# 查询集群事件列表
+ctyun-cli cce list-cluster-events --region-id 200000001852 --cluster-id xxx
+
+# 查询集群标签
+ctyun-cli cce tag list --region-id 200000001852 --cluster-id xxx
+
+# 绑定集群标签
+ctyun-cli cce tag bind --region-id 200000001852 --cluster-id xxx --tags "key1=value1,key2=value2"
+```
+
+---
+
 ## v1.8.2 (2026-04-15)
 
 ### 🚀 新增功能

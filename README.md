@@ -135,15 +135,22 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.8.2 (2026-04-15)
+**最新版本**: v1.8.3 (2026-04-22)
+- 🏷️ **CCE 任务管理**：新增 5 个任务管理 API，支持任务详情查询、集群事件列表查询，以及任务暂停/恢复/取消操作
+  - 新增 `cce get-task`、`cce list-cluster-events`、`cce resume-task`、`cce cancel-task`、`cce pause-task` 命令
+- 🏷️ **CCE 标签管理**：新增集群标签查询 `cce tag list` 命令
+- 🔧 **Bug 修复**：修复 `cce tag bind` 的 API 路径和请求体格式错误
+
+**v1.8.2** (2026-04-15)
 - 🏷️ **ECS 云主机标签管理**：新增 `ecs update-label` 命令，支持增加/修改/删除标签（ADD/UPDATE/DELETE）
 - 🔧 **模块化优化**：修复 `cli/__init__.py` 预导入导致的 RuntimeWarning
+
+**v1.8.1** (2026-03-30)
 - 🚀 **CCE Namespace 命名空间管理**：新增 5 个 Namespace API，支持完整的 Kubernetes 命名空间生命周期管理
-  - 创建、删除、更新、查询命名空间及命名空间列表
-  - 支持 YAML 格式资源配置和 labelSelector/fieldSelector 过滤
   - 新增 `cce namespace` 命令组（create/delete/update/show/list）
+
+**v1.8.0** (2026-03-28)
 - 🔧 **彻底解决模块命名冲突**：将 `redis` 模块重命名为 `rdscmd`，从根源解决与 `redis-py` 库的命名冲突问题
-- 🧹 **代码清理**：移除 sys.path hack 临时修复代码，代码更简洁可靠
 - ✅ **零兼容性影响**：用户命令 `ctyun redis xxx` 保持不变
 
 查看完整的更新历史请参阅 [CHANGELOG.md](CHANGELOG.md)

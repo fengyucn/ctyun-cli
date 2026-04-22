@@ -1476,6 +1476,55 @@ class CCEClient:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
 
+    def query_cluster_tags(self, region_id: str, cluster_id: str,
+                          tag_key: Optional[str] = None,
+                          page_now: int = 1, page_size: int = 20) -> Dict[str, Any]:
+        """
+        查询集群标签列表
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            tag_key: 标签键过滤（可选）
+            page_now: 当前页码（可选，默认1）
+            page_size: 每页条数（可选，默认20）
+
+        Returns:
+            集群标签列表的响应结果
+        """
+        logger.info(f"查询集群标签: regionId={region_id}, clusterId={cluster_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/tags'
+
+        query_params = {}
+        if tag_key:
+            query_params['tagKey'] = tag_key
+        if page_now:
+            query_params['pageNow'] = page_now
+        if page_size:
+            query_params['pageSize'] = page_size
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            query_params=query_params
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
     def bind_cluster_tag(self, region_id: str, cluster_id: str, tag_config: Dict[str, Any]) -> Dict[str, Any]:
         """
         绑定集群标签
@@ -1490,7 +1539,7 @@ class CCEClient:
         """
         logger.info(f"绑定集群标签: regionId={region_id}, clusterId={cluster_id}")
 
-        url = f'https://{self.base_endpoint}/cse-apig/v2/clusters/{cluster_id}/tags/bind'
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/tags'
 
         headers = self.eop_auth.sign_request(
             method='POST',
@@ -1514,38 +1563,195 @@ class CCEClient:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
 
-    def query_async_task(self, region_id: str, task_id: str) -> Dict[str, Any]:
+    def get_task_detail(self, region_id: str, task_id: str) -> Dict[str, Any]:
         """
-        查询异步任务
+        查询任务详情（GetClusterTask）
 
         Args:
             region_id: 区域ID
             task_id: 任务ID
 
         Returns:
-            异步任务状态的响应结果
+            任务详情的响应结果
         """
-        logger.info(f"查询异步任务: regionId={region_id}, taskId={task_id}")
+        logger.info(f"查询任务详情: regionId={region_id}, taskId={task_id}")
 
-        url = f'https://{self.base_endpoint}/cse-apig/v2/tasks/{task_id}'
+        url = f'https://{self.base_endpoint}/v2/cce/tasks/{task_id}'
 
         headers = self.eop_auth.sign_request(
             method='GET',
-            url=url,
-            content_type='application/json'
+            url=url
         )
-        headers['regionid'] = region_id
-        headers['urlType'] = 'CTAPI'
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
 
         response = self.client.session.get(url, headers=headers)
 
         if response.status_code == 200:
             result = response.json()
-            if result.get('code') == 800:
+            if result.get('statusCode') == 800:
                 return result
             else:
                 from core import CTYUNAPIError
-                raise CTYUNAPIError(result.get('code', 'unknown'), result.get('message', 'Unknown error'))
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def get_cluster_events(self, region_id: str, cluster_id: str,
+                           event_type: Optional[str] = None,
+                           task_id: Optional[str] = None,
+                           page_number: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询指定集群事件列表（GetClusterEvents）
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            event_type: 事件类型（可选）
+            task_id: 任务ID（可选）
+            page_number: 页码（默认1）
+            page_size: 每页条数（默认10）
+
+        Returns:
+            集群事件列表的响应结果
+        """
+        logger.info(f"查询集群事件列表: regionId={region_id}, clusterId={cluster_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/events/{cluster_id}'
+
+        query_params = {}
+        if event_type:
+            query_params['eventType'] = event_type
+        if task_id:
+            query_params['taskId'] = task_id
+        if page_number:
+            query_params['pageNumber'] = page_number
+        if page_size:
+            query_params['pageSize'] = page_size
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            query_params=query_params
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def resume_task(self, region_id: str, task_id: str) -> Dict[str, Any]:
+        """
+        恢复任务（ResumeClusterTask）
+
+        Args:
+            region_id: 区域ID
+            task_id: 任务ID
+
+        Returns:
+            恢复任务的响应结果
+        """
+        logger.info(f"恢复任务: regionId={region_id}, taskId={task_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/tasks/{task_id}/resume'
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.post(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def cancel_task(self, region_id: str, task_id: str) -> Dict[str, Any]:
+        """
+        取消任务（CancelClusterTask）
+
+        Args:
+            region_id: 区域ID
+            task_id: 任务ID
+
+        Returns:
+            取消任务的响应结果
+        """
+        logger.info(f"取消任务: regionId={region_id}, taskId={task_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/tasks/{task_id}/cancel'
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.post(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def pause_task(self, region_id: str, task_id: str) -> Dict[str, Any]:
+        """
+        暂停任务（PauseClusterTask）
+
+        Args:
+            region_id: 区域ID
+            task_id: 任务ID
+
+        Returns:
+            暂停任务的响应结果
+        """
+        logger.info(f"暂停任务: regionId={region_id}, taskId={task_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/tasks/{task_id}/pause'
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.post(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
         else:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')

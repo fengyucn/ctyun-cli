@@ -4,7 +4,7 @@
 
 import click
 from typing import Optional
-from ebs import EBSClient
+from .client import EBSClient
 from utils import OutputFormatter
 
 
