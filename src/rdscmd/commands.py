@@ -377,29 +377,30 @@ def list_instances(ctx, region_id: str, name: str, page: int, size: int, output_
 
 @redis_group.command('describe')
 @click.option('--instance-id', '-i', required=True, help='Redis实例ID (必需)')
+@click.option('--region-id', '-r', default=None, help='区域ID (默认使用配置中的区域)')
 @click.option('--format', '-f', 'output_format',
               type=click.Choice(['table', 'json', 'summary']),
               default='summary', help='输出格式 (table/json/summary)')
 @click.option('--timeout', '-t', default=30, help='请求超时时间(秒)')
 @click.pass_context
 @validate_credentials
-def describe_instance(ctx, instance_id: str, output_format: str, timeout: int):
+def describe_instance(ctx, instance_id: str, region_id: str, output_format: str, timeout: int):
     """
     查询Redis实例基础详情
 
     示例:
-        ctyun redis describe --instance-id 0d200ac9745c4a0ea7e77ecd3d02f21c
-        ctyun redis describe -i xxx --format json
-        ctyun redis describe -i xxx -f table -t 60
+        ctyun redis describe --instance-id b5fcacfc2e7069553759558b9a4eb27a
+        ctyun redis describe -i xxx --region-id 200000001852
+        ctyun redis describe -i xxx -f json
     """
-    # 获取凭证
     client = ctx.obj['client']
     redis_client = RedisClient(client)
+    redis_client.set_timeout(timeout)
 
     click.echo(f"🔍 正在查询Redis实例详情: {instance_id}")
 
     try:
-        result = redis_client.describe_instances_overview(instance_id)
+        result = redis_client.describe_instances_overview(instance_id, region_id)
 
         if output_format == 'json':
             _display_json(result)
@@ -1239,21 +1240,22 @@ def check_available_resources(ctx, region_id: str, edition: str, version: str,
 
 @redis_group.command('network')
 @click.option('--instance-id', '-i', required=True, help='Redis实例ID (必需)')
+@click.option('--region-id', '-r', default=None, help='区域ID (默认使用配置中的区域)')
 @click.option('--format', '-f', 'output_format',
               type=click.Choice(['table', 'json', 'summary']),
               default='summary', help='输出格式 (table/json/summary)')
 @click.option('--timeout', '-t', default=30, help='请求超时时间(秒)')
 @click.pass_context
 @validate_credentials
-def describe_network(ctx, instance_id: str, output_format: str, timeout: int):
+def describe_network(ctx, instance_id: str, region_id: str, output_format: str, timeout: int):
     """
     查询Redis实例网络信息
 
     示例:
-        ctyun redis network --instance-id 0d200ac9745c4a0ea7e77ecd3d02f21c
+        ctyun redis network --instance-id b5fcacfc2e7069553759558b9a4eb27a
+        ctyun redis network -i xxx --region-id bb9fdb42056f11eda1610242ac110002
         ctyun redis network -i xxx --format json
     """
-    # 获取凭证
     client = ctx.obj['client']
 
     click.echo(f"🌐 正在查询Redis实例网络信息: {instance_id}")
@@ -1262,7 +1264,7 @@ def describe_network(ctx, instance_id: str, output_format: str, timeout: int):
     redis_client.set_timeout(timeout)
 
     try:
-        result = redis_client.describe_db_instance_net_info(instance_id)
+        result = redis_client.describe_db_instance_net_info(instance_id, region_id)
 
         if output_format == 'json':
             _display_json(result)
@@ -1294,45 +1296,93 @@ def _display_instance_overview_table(result: dict, instance_id: str):
 
     if result.get("statusCode") == 800:
         return_obj = result.get("returnObj", {})
+        user_info = return_obj.get("userInfo", {})
         click.echo(f"✅ 查询成功!\n")
 
         # 基本信息
         click.echo("📋 基本信息:")
-        click.echo("-" * 50)
+        click.echo("-" * 55)
         basic_info = [
-            ("实例ID", return_obj.get("prodInstId", "N/A")),
-            ("实例名称", return_obj.get("instanceName", "N/A")),
-            ("实例类型", return_obj.get("instanceType", "N/A")),
-            ("实例状态", return_obj.get("instanceStatus", "N/A")),
-            ("创建时间", return_obj.get("createTime", "N/A")),
+            ("实例ID", user_info.get("prodInstId", "N/A")),
+            ("实例名称", user_info.get("instanceName", "N/A")),
+            ("状态", user_info.get("statusName", "N/A")),
+            ("架构类型", user_info.get("archTypeName", "N/A")),
+            ("节点类型", user_info.get("nodeTypeName", "N/A")),
+            ("引擎版本", user_info.get("engineVersion", "N/A")),
+            ("创建时间", user_info.get("createTime", "N/A")),
+            ("过期时间", user_info.get("expTime", "N/A")),
+            ("描述", user_info.get("description") or "无"),
         ]
-
         for key, value in basic_info:
-            click.echo(f"{key:<12}: {value}")
+            click.echo(f"  {key:<12}: {value}")
 
-        # 配置信息
-        click.echo(f"\n⚙️ 配置信息:")
-        click.echo("-" * 50)
-        config_info = [
-            ("容量(GB)", return_obj.get("capacityMB", 0) // 1024),
-            ("分片数", return_obj.get("shardCount", "N/A")),
-            ("副本数", return_obj.get("copiesCount", "N/A")),
-            ("Redis版本", return_obj.get("engineVersion", "N/A")),
-            ("端口", return_obj.get("port", "N/A")),
+        # 规格信息
+        click.echo(f"\n⚙️ 规格信息:")
+        click.echo("-" * 55)
+        spec_info = [
+            ("容量", user_info.get("capacity", "N/A") + "GB"),
+            ("容量详情", user_info.get("capacityInfo", "N/A")),
+            ("分片数", user_info.get("shardCount", "N/A")),
+            ("分片规格", user_info.get("shardMemSize", "N/A") + "GB"),
+            ("副本数", user_info.get("copiesCount", "N/A")),
+            ("主机类型", user_info.get("hostType", "N/A")),
+            ("CPU架构", user_info.get("cpuArchType", "N/A")),
+            ("磁盘类型", user_info.get("dataDiskTypeName", "N/A")),
         ]
-
-        for key, value in config_info:
-            click.echo(f"{key:<12}: {value}")
+        for key, value in spec_info:
+            click.echo(f"  {key:<12}: {value}")
 
         # 网络信息
         click.echo(f"\n🌐 网络信息:")
-        click.echo("-" * 50)
-        net_info = return_obj.get("network", {})
-        if net_info:
-            click.echo(f"VPC ID: {net_info.get('vpcId', 'N/A')}")
-            click.echo(f"子网ID: {net_info.get('subnetId', 'N/A')}")
-            click.echo(f"内网IP: {net_info.get('innerIp', 'N/A')}")
-            click.echo(f"外网IP: {net_info.get('publicIp', 'N/A')}")
+        click.echo("-" * 55)
+        net_info = [
+            ("VIP地址", f"{user_info.get('vip', 'N/A')}:{user_info.get('vipPort', 'N/A')}"),
+            ("连接地址", user_info.get("connectionAddress", "N/A")),
+            ("VPC网络", user_info.get("netName", "N/A")),
+            ("子网", user_info.get("subnet", "N/A")),
+            ("安全组", user_info.get("securityGroup", "N/A")),
+            ("弹性IP", user_info.get("elasticIp") or "未绑定"),
+        ]
+        for key, value in net_info:
+            click.echo(f"  {key:<12}: {value}")
+
+        # 带宽信息
+        network_info = user_info.get("networkInfo", {})
+        if network_info:
+            click.echo(f"\n📶 带宽信息:")
+            click.echo("-" * 55)
+            bw_info = [
+                ("基准带宽", f"{network_info.get('totalBaseBandwidth', 'N/A')} Gbps"),
+                ("最大带宽", f"{network_info.get('totalMaxBandwidth', 'N/A')} Gbps"),
+                ("最大连接数", network_info.get("totalMaxClients", "N/A")),
+            ]
+            for key, value in bw_info:
+                click.echo(f"  {key:<12}: {value}")
+
+        # 计费信息
+        click.echo(f"\n💰 计费信息:")
+        click.echo("-" * 55)
+        pay_info = [
+            ("付费类型", user_info.get("payTypeName", "N/A")),
+            ("资源池", user_info.get("regionName", "N/A")),
+            ("企业项目", user_info.get("outerProjectName", "N/A")),
+            ("维护窗口", user_info.get("maintenanceTime", "N/A")),
+        ]
+        for key, value in pay_info:
+            click.echo(f"  {key:<12}: {value}")
+
+        # 节点拓扑
+        nodes = return_obj.get("nodes", [])
+        if nodes:
+            click.echo(f"\n🔗 节点拓扑 ({len(nodes)}个主节点):")
+            click.echo("-" * 55)
+            for node in nodes:
+                master_name = node.get("masterName", "N/A")
+                vpc_url = node.get("vpcUrl", "N/A")
+                az_name = node.get("azName", "N/A")
+                click.echo(f"  🟢 {master_name} ({vpc_url}) - {az_name}")
+                for slave in node.get("slaveNodes", []):
+                    click.echo(f"     └─ {slave.get('slaveName', 'N/A')} ({slave.get('vpcUrl', 'N/A')}) - {slave.get('azName', 'N/A')}")
 
     else:
         click.echo(f"❌ API查询失败: {result.get('message', '未知错误')}")
@@ -1350,13 +1400,24 @@ def _display_instance_overview_summary(result: dict, instance_id: str):
 
     if result.get("statusCode") == 800:
         return_obj = result.get("returnObj", {})
+        user_info = return_obj.get("userInfo", {})
+
         click.echo(f"✅ 查询状态: 成功")
-        click.echo(f"🏷️  实例名称: {return_obj.get('instanceName', 'N/A')}")
-        click.echo(f"⚡ 实例状态: {return_obj.get('instanceStatus', 'N/A')}")
-        click.echo(f"🔢 Redis版本: {return_obj.get('engineVersion', 'N/A')}")
-        click.echo(f"💾 容量: {return_obj.get('capacityMB', 0) // 1024}GB")
-        click.echo(f"🔌 端口: {return_obj.get('port', 'N/A')}")
-        click.echo(f"🕐 创建时间: {return_obj.get('createTime', 'N/A')}")
+        click.echo(f"🏷️  实例名称: {user_info.get('instanceName', 'N/A')}")
+        click.echo(f"⚡ 实例状态: {user_info.get('statusName', 'N/A')}")
+        click.echo(f"🔢 引擎版本: Redis {user_info.get('engineVersion', 'N/A')}")
+        click.echo(f"🏗️  架构类型: {user_info.get('archTypeName', 'N/A')} ({user_info.get('nodeTypeName', 'N/A')})")
+        click.echo(f"💾 容量: {user_info.get('capacityInfo', 'N/A')}")
+        click.echo(f"🔌 VIP: {user_info.get('vip', 'N/A')}:{user_info.get('vipPort', 'N/A')}")
+        click.echo(f"🌐 VPC: {user_info.get('netName', 'N/A')}")
+        click.echo(f"💰 付费: {user_info.get('payTypeName', 'N/A')}")
+        click.echo(f"🕐 创建时间: {user_info.get('createTime', 'N/A')}")
+        click.echo(f"⏰ 过期时间: {user_info.get('expTime', 'N/A')}")
+
+        nodes = return_obj.get("nodes", [])
+        if nodes:
+            total_slaves = sum(len(n.get("slaveNodes", [])) for n in nodes)
+            click.echo(f"🔗 节点: {len(nodes)}主 {total_slaves}从")
     else:
         click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
 
@@ -1747,27 +1808,17 @@ def _display_network_table(result: dict, instance_id: str):
         return_obj = result.get("returnObj", {})
 
         click.echo("🌐 网络配置:")
-        click.echo("-" * 40)
+        click.echo("-" * 55)
         network_info = [
-            ("VPC ID", return_obj.get("vpcId", "N/A")),
-            ("子网ID", return_obj.get("subnetId", "N/A")),
-            ("安全组", return_obj.get("securityGroupId", "N/A")),
-            ("可用区", return_obj.get("availableZoneName", "N/A")),
+            ("实例ID", return_obj.get("prodInstId", "N/A")),
+            ("连接地址", return_obj.get("connectionString", "N/A")),
+            ("弹性IP", return_obj.get("elasticIp", "N/A")),
+            ("VPC网络", return_obj.get("netName", "N/A")),
+            ("架构类型", return_obj.get("archTypeName", "N/A")),
+            ("过期时间", return_obj.get("expTime", "N/A")),
         ]
 
         for key, value in network_info:
-            click.echo(f"{key:<12}: {value}")
-
-        click.echo("\n🔗 IP地址:")
-        click.echo("-" * 40)
-        ip_info = [
-            ("内网IP", return_obj.get("innerIp", "N/A")),
-            ("外网IP", return_obj.get("publicIp", "N/A")),
-            ("端口号", return_obj.get("port", "N/A")),
-            ("协议类型", return_obj.get("protocol", "N/A")),
-        ]
-
-        for key, value in ip_info:
             click.echo(f"{key:<12}: {value}")
 
     else:
@@ -1787,10 +1838,11 @@ def _display_network_summary(result: dict, instance_id: str):
         return_obj = result.get("returnObj", {})
 
         click.echo(f"✅ 查询状态: 成功")
-        click.echo(f"🌐 VPC ID: {return_obj.get('vpcId', 'N/A')}")
-        click.echo(f"🔗 内网IP: {return_obj.get('innerIp', 'N/A')}")
-        click.echo(f"🌐 外网IP: {return_obj.get('publicIp', 'N/A')}")
-        click.echo(f"🔌 端口号: {return_obj.get('port', 'N/A')}")
+        click.echo(f"🔗 连接地址: {return_obj.get('connectionString', 'N/A')}")
+        click.echo(f"🌐 弹性IP: {return_obj.get('elasticIp') or '未分配'}")
+        click.echo(f"🏗️  VPC网络: {return_obj.get('netName', 'N/A')}")
+        click.echo(f"🔧 架构类型: {return_obj.get('archTypeName', 'N/A')}")
+        click.echo(f"⏰ 过期时间: {return_obj.get('expTime', 'N/A')}")
 
     else:
         click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
@@ -2271,3 +2323,303 @@ def _display_instance_version_summary(result: dict, instance_id: str):
         click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
         if result.get("statusCode"):
             click.echo(f"错误码: {result.get('statusCode')}")
+
+
+# ========== 拓扑与集群节点命令 ==========
+
+@redis_group.command('topology')
+@click.option('--instance-id', '-i', required=True, help='Redis实例ID (必需)')
+@click.option('--region-id', '-r', default=None, help='区域ID (默认使用配置中的区域)')
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['table', 'json', 'summary']),
+              default='summary', help='输出格式 (table/json/summary)')
+@click.option('--timeout', '-t', default=30, help='请求超时时间(秒)')
+@click.pass_context
+@validate_credentials
+def describe_topology(ctx, instance_id: str, region_id: str, output_format: str, timeout: int):
+    """
+    查询Redis实例的逻辑拓扑
+
+    示例:
+        ctyun redis topology --instance-id b5fcacfc2e7069553759558b9a4eb27a
+        ctyun redis topology -i xxx --region-id bb9fdb42056f11eda1610242ac110002
+        ctyun redis topology -i xxx -f json
+    """
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    redis_client.set_timeout(timeout)
+
+    click.echo(f"🔍 正在查询Redis实例逻辑拓扑: {instance_id}")
+
+    try:
+        result = redis_client.describe_logic_instance_topology(instance_id, region_id)
+
+        if output_format == 'json':
+            _display_json(result)
+        elif output_format == 'table':
+            _display_topology_table(result, instance_id)
+        else:
+            _display_topology_summary(result, instance_id)
+
+    except Exception as e:
+        click.echo(f"❌ 查询逻辑拓扑失败: {str(e)}", err=True)
+        sys.exit(1)
+
+
+def _display_topology_table(result: dict, instance_id: str):
+    """以表格形式显示逻辑拓扑"""
+    click.echo(f"\n🔗 Redis实例逻辑拓扑 (实例: {instance_id})")
+    click.echo("="*80)
+
+    if not result or result.get("error"):
+        click.echo("❌ 查询失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+
+        # Redis节点
+        redis_nodes = return_obj.get("redisNodes", [])
+        click.echo(f"\n📊 Redis节点 (共{len(redis_nodes)}个主节点):")
+        click.echo("-" * 75)
+        click.echo(f"{'主节点名称':<15} {'VPC地址':<25} {'从节点名称':<15} {'从节点VPC地址':<25}")
+        click.echo("-" * 75)
+
+        for node in redis_nodes:
+            master_name = node.get("masterName", "N/A")
+            vpc_url = node.get("vpcUrl", "N/A")
+            slaves = node.get("slaves", [])
+
+            if slaves:
+                for j, slave in enumerate(slaves):
+                    slave_name = slave.get("slaveName", "N/A")
+                    slave_url = slave.get("vpcUrl", "N/A")
+                    if j == 0:
+                        click.echo(f"{master_name:<15} {vpc_url:<25} {slave_name:<15} {slave_url:<25}")
+                    else:
+                        click.echo(f"{'':<15} {'':<25} {slave_name:<15} {slave_url:<25}")
+            else:
+                click.echo(f"{master_name:<15} {vpc_url:<25} {'无':<15} {'':<25}")
+
+        # 接入机节点
+        access_nodes = return_obj.get("accessNodes", [])
+        if access_nodes:
+            click.echo(f"\n🖥️ 接入机节点 (共{len(access_nodes)}个):")
+            click.echo("-" * 55)
+            click.echo(f"{'代理名称':<35} {'VPC地址':<20}")
+            click.echo("-" * 55)
+
+            for node in access_nodes:
+                proxy_name = node.get("proxyName", "N/A")
+                vpc_url = node.get("vpcUrl", "N/A")
+                click.echo(f"{proxy_name:<35} {vpc_url:<20}")
+
+    else:
+        click.echo(f"❌ 查询失败: {result.get('message', '未知错误')}")
+
+
+def _display_topology_summary(result: dict, instance_id: str):
+    """显示逻辑拓扑摘要"""
+    click.echo(f"\n🔗 Redis实例逻辑拓扑摘要 (实例: {instance_id})")
+    click.echo("="*60)
+
+    if not result or result.get("error"):
+        click.echo(f"❌ 查询状态: 失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+
+        redis_nodes = return_obj.get("redisNodes", [])
+        access_nodes = return_obj.get("accessNodes", [])
+
+        total_slaves = sum(len(n.get("slaves", [])) for n in redis_nodes)
+
+        click.echo(f"✅ 查询状态: 成功")
+        click.echo(f"📊 主节点数: {len(redis_nodes)}")
+        click.echo(f"📊 从节点数: {total_slaves}")
+        click.echo(f"🖥️ 接入机数: {len(access_nodes)}")
+
+        if redis_nodes:
+            click.echo(f"\n📍 Redis节点:")
+            for node in redis_nodes:
+                master_name = node.get("masterName", "N/A")
+                vpc_url = node.get("vpcUrl", "N/A")
+                slaves = node.get("slaves", [])
+                slave_count = len(slaves)
+                click.echo(f"   🟢 {master_name} ({vpc_url}) - {slave_count}个从节点")
+                for slave in slaves:
+                    click.echo(f"      └─ {slave.get('slaveName', 'N/A')} ({slave.get('vpcUrl', 'N/A')})")
+
+        if access_nodes:
+            click.echo(f"\n🖥️ 接入机节点:")
+            for node in access_nodes:
+                click.echo(f"   🔗 {node.get('proxyName', 'N/A')} ({node.get('vpcUrl', 'N/A')})")
+
+    else:
+        click.echo(f"❌ 查询状态: 失败 - {result.get('message', '未知错误')}")
+
+
+@redis_group.command('cluster-nodes')
+@click.option('--region-id', '-r', default=None, help='区域ID (默认使用配置中的区域)')
+@click.option('--project-id', default=None, help='企业项目ID (默认: 0)')
+@click.option('--page', '-p', default=1, type=int, help='页码，默认1')
+@click.option('--size', '--page-size', default=10, type=int, help='每页数量，默认10')
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['table', 'json', 'summary']),
+              default='summary', help='输出格式 (table/json/summary)')
+@click.option('--timeout', '-t', default=30, help='请求超时时间(秒)')
+@click.pass_context
+@validate_credentials
+def describe_cluster_nodes(ctx, region_id: str, project_id: str, page: int, size: int,
+                           output_format: str, timeout: int):
+    """
+    批量查询实例节点信息
+
+    示例:
+        ctyun redis cluster-nodes
+        ctyun redis cluster-nodes --region-id bb9fdb42056f11eda1610242ac110002
+        ctyun redis cluster-nodes --page 1 --size 20 -f json
+    """
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    redis_client.set_timeout(timeout)
+
+    click.echo(f"🔍 正在批量查询实例节点信息...")
+
+    try:
+        result = redis_client.describe_instances_cluster_member_info(
+            region_id=region_id,
+            project_id=project_id,
+            page_index=page,
+            page_size=size
+        )
+
+        if output_format == 'json':
+            _display_json(result)
+        elif output_format == 'table':
+            _display_cluster_nodes_table(result)
+        else:
+            _display_cluster_nodes_summary(result)
+
+    except Exception as e:
+        click.echo(f"❌ 批量查询实例节点信息失败: {str(e)}", err=True)
+        sys.exit(1)
+
+
+# 实例类型枚举映射
+_INSTANCE_TYPE_MAP = {
+    1: "经典集群主备版",
+    2: "经典主备版",
+    3: "经典单机版",
+    5: "基础Cluster标准版",
+    6: "基础Cluster单机版",
+    8: "增强Cluster标准版",
+    9: "增强Cluster单机版",
+    10: "基础标准版",
+    11: "基础单机版",
+    12: "增强标准版",
+    13: "增强单机版",
+    14: "基础读写分离-lvs模式版",
+    15: "基础读写分离-elb模式版",
+    16: "增强读写分离-lvs版",
+    17: "基础Proxy集群主备版",
+    18: "增强Proxy集群主备",
+}
+
+
+def _display_cluster_nodes_table(result: dict):
+    """以表格形式显示集群节点信息"""
+    click.echo(f"\n📊 Redis实例集群节点信息")
+    click.echo("="*100)
+
+    if not result or result.get("error"):
+        click.echo("❌ 查询失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+        total = return_obj.get("total", 0)
+        instances = return_obj.get("instances", [])
+
+        click.echo(f"📋 实例总数: {total}")
+
+        for inst in instances:
+            prod_inst_id = inst.get("prodInstId", "N/A")
+            node_total = inst.get("total", 0)
+            rows = inst.get("rows", [])
+
+            click.echo(f"\n🏷️ 实例: {prod_inst_id} (节点数: {node_total})")
+
+            for row in rows:
+                inst_type = row.get("type", 0)
+                type_name = _INSTANCE_TYPE_MAP.get(inst_type, f"未知({inst_type})")
+                slot_info = row.get("slotInfo", "N/A")
+                is_auth = "是" if row.get("isAuth") else "否"
+
+                click.echo(f"   类型: {type_name} | 槽位: {slot_info} | 加密鉴权: {is_auth}")
+                click.echo(f"   {'主节点':<12} {'分片':<12} {'VPC地址':<25} {'可用区':<20} {'从节点':<25}")
+                click.echo("   " + "-" * 95)
+
+                nodes = row.get("nodes", [])
+                for node in nodes:
+                    master_name = node.get("masterName", "N/A")
+                    fragment_name = node.get("fragmentName", "N/A")
+                    vpc_url = node.get("vpcUrl", "N/A")
+                    az_name = node.get("azName", "N/A")
+                    slave_nodes = node.get("slaveNodes", [])
+
+                    slave_info = ", ".join(
+                        f"{s.get('slaveName', '')}({s.get('vpcUrl', '')})"
+                        for s in slave_nodes
+                    ) if slave_nodes else "无"
+
+                    click.echo(f"   {master_name:<12} {fragment_name:<12} {vpc_url:<25} {az_name:<20} {slave_info}")
+
+    else:
+        click.echo(f"❌ 查询失败: {result.get('message', '未知错误')}")
+
+
+def _display_cluster_nodes_summary(result: dict):
+    """显示集群节点信息摘要"""
+    click.echo(f"\n📊 Redis实例集群节点信息摘要")
+    click.echo("="*60)
+
+    if not result or result.get("error"):
+        click.echo(f"❌ 查询状态: 失败")
+        return
+
+    if result.get("statusCode") == 800:
+        return_obj = result.get("returnObj", {})
+        total = return_obj.get("total", 0)
+        instances = return_obj.get("instances", [])
+
+        click.echo(f"✅ 查询状态: 成功")
+        click.echo(f"📋 实例总数: {total}")
+
+        for inst in instances:
+            prod_inst_id = inst.get("prodInstId", "N/A")
+            node_total = inst.get("total", 0)
+            rows = inst.get("rows", [])
+
+            click.echo(f"\n🏷️ 实例: {prod_inst_id}")
+            click.echo(f"   📊 节点数: {node_total}")
+
+            for row in rows:
+                inst_type = row.get("type", 0)
+                type_name = _INSTANCE_TYPE_MAP.get(inst_type, f"未知({inst_type})")
+                is_auth = "是" if row.get("isAuth") else "否"
+
+                click.echo(f"   🔧 类型: {type_name} | 加密鉴权: {is_auth}")
+
+                nodes = row.get("nodes", [])
+                for node in nodes:
+                    master_name = node.get("masterName", "N/A")
+                    fragment_name = node.get("fragmentName", "N/A")
+                    vpc_url = node.get("vpcUrl", "N/A")
+                    az_name = node.get("azName", "N/A")
+                    slave_nodes = node.get("slaveNodes", [])
+
+                    click.echo(f"      🟢 {master_name} [{fragment_name}] ({vpc_url}) - {az_name}")
+                    for slave in slave_nodes:
+                        click.echo(f"         └─ {slave.get('slaveName', 'N/A')} ({slave.get('vpcUrl', 'N/A')}) - {slave.get('azName', 'N/A')}")

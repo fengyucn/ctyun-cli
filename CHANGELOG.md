@@ -4,7 +4,7 @@
 
 ---
 
-## v1.9.0 (2026-04-22)
+## v1.9.0 (2026-04-29)
 
 ### 🚀 新增模块
 - **LTS（云日志服务）**：新增 `lts` 模块脚手架，终端节点 `ctlts-global.ctapi.ctyun.cn`，支持 134 个接口的后续实现
@@ -12,12 +12,21 @@
 - **OceanFS（海量文件服务）**：新增 `oceanfs` 模块脚手架，终端节点 `oceanfs-global.ctapi.ctyun.cn`
 - **Aone（边缘安全加速平台）**：新增 `aone` 模块脚手架，终端节点 `aone-global.ctapi.ctyun.cn`
 
+### 🎯 Redis 模块完善
+- **新增 `redis topology` 命令**：查询实例逻辑拓扑，展示主从节点关系和接入机代理节点
+- **新增 `redis cluster-nodes` 命令**：批量查询实例集群节点信息，支持分页，含 18 种实例类型枚举映射
+- **修复 `redis network` 命令**：更正 API 路径为 `describeDBInstanceNetInfo`，参数改为 `prodInstId`，显示字段对齐真实响应（连接地址/弹性IP/VPC网络/架构类型）
+- **修复 `redis describe` 命令**：更正 API 路径为 `instanceManageMgrServant/describeInstancesOverview`，参数改为 `prodInstId`（header 传 `regionId`），支持 `--region-id` 参数，显示函数完全重写（含规格/带宽/计费/节点拓扑）
+
 ### 📚 使用示例
 ```bash
 ctyun-cli lts --help
 ctyun-cli sfs --help
 ctyun-cli oceanfs --help
 ctyun-cli aone --help
+ctyun-cli redis topology --instance-id <实例ID>
+ctyun-cli redis cluster-nodes
+ctyun-cli redis describe --instance-id <实例ID> -f table
 ```
 
 ---

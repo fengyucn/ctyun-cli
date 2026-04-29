@@ -139,8 +139,9 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.9.0 (2026-04-22)
+**最新版本**: v1.9.0 (2026-04-29)
 - 🆕 **新增服务模块脚手架**：LTS（云日志服务）、SFS（弹性文件服务）、OceanFS（海量文件服务）、Aone（边缘安全加速平台），注册为独立 CLI 命令组，为后续 API 实现做好准备
+- 🎯 **Redis 模块完善**：新增 `topology`（实例逻辑拓扑）、`cluster-nodes`（批量查询集群节点）命令；修复 `network` 和 `describe` 命令的 API 路径、参数及显示字段，支持 `--region-id` 参数
 
 **v1.8.4** (2026-04-22)
 - 🔍 **ELB 后端主机详情查询**：新增 `elb targetgroup targets show` 命令，查看后端主机IP、端口、权重、健康状态等详细信息

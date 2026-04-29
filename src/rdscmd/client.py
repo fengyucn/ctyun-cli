@@ -266,27 +266,33 @@ class RedisClient:
 
     # ========== 查询类API方法 ==========
 
-    def describe_instances_overview(self, instance_id: str) -> Optional[Dict[str, Any]]:
+    def describe_instances_overview(self, instance_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
         """
         查询Redis实例基础详情
 
         Args:
-            instance_id (str): 实例ID
+            instance_id (str): 实例ID (prodInstId)
+            region_id (str): 区域ID，如果不提供则使用默认区域
 
         Returns:
             Optional[Dict[str, Any]]: 实例详情信息
         """
-        logger.info(f"查询Redis实例详情: instanceId={instance_id}")
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询Redis实例详情: prodInstId={instance_id}, regionId={target_region_id}")
 
         try:
-            url = f'{self.service_endpoint}{self.api_path}/describeInstancesOverview'
+            # 使用正确的API路径
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeInstancesOverview'
 
+            # Query参数只包含 prodInstId
             query_params = {
-                'instanceId': instance_id,
-                'regionId': self.region_id
+                'prodInstId': instance_id
             }
 
-            extra_headers = {}
+            # regionId 作为header参数
+            extra_headers = {
+                'regionId': target_region_id
+            }
 
             headers = self.eop_auth.sign_request(
                 method='GET',
@@ -790,27 +796,29 @@ class RedisClient:
                 "exception": str(e)
             }
 
-    def describe_db_instance_net_info(self, instance_id: str) -> Optional[Dict[str, Any]]:
+    def describe_db_instance_net_info(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
         """
         查询Redis实例网络信息
 
         Args:
-            instance_id (str): 实例ID
+            prod_inst_id (str): 实例ID
+            region_id (str): 资源池ID，如果为None则使用默认区域
 
         Returns:
-            Optional[Dict[str, Any]]: 网络信息
+            Optional[Dict[str, Any]]: 网络信息（连接地址、弹性IP、VPC网络、过期时间、架构类型等）
         """
-        logger.info(f"查询Redis实例网络信息: instanceId={instance_id}")
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询Redis实例网络信息: prodInstId={prod_inst_id}, regionId={target_region_id}")
 
         try:
-            url = f'{self.service_endpoint}/v2/networkServant/describeDBInstanceNetInfo'
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeDBInstanceNetInfo'
 
             query_params = {
-                'instanceId': instance_id
+                'prodInstId': prod_inst_id
             }
 
             extra_headers = {
-                'regionId': self.region_id
+                'regionId': target_region_id
             }
 
             headers = self.eop_auth.sign_request(
@@ -1371,6 +1379,123 @@ class RedisClient:
                 'statusCode': 500,
                 'message': str(e),
                 'returnObj': None
+            }
+
+    def describe_logic_instance_topology(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询Redis实例的逻辑拓扑
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 资源池ID，如果为None则使用默认区域
+
+        Returns:
+            Optional[Dict[str, Any]]: 逻辑拓扑信息（Redis节点集合、接入机节点集合）
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询Redis实例逻辑拓扑: prodInstId={prod_inst_id}, regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeLogicInstanceTopology'
+
+            query_params = {
+                'prodInstId': prod_inst_id
+            }
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询实例逻辑拓扑失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def describe_instances_cluster_member_info(self, region_id: str = None, project_id: str = None,
+                                                page_index: int = None, page_size: int = None) -> Optional[Dict[str, Any]]:
+        """
+        批量查询实例节点信息
+
+        Args:
+            region_id (str): 资源池ID，如果为None则使用默认区域
+            project_id (str): 企业项目ID，默认0
+            page_index (int): 当前页码
+            page_size (int): 每页大小
+
+        Returns:
+            Optional[Dict[str, Any]]: 实例节点信息（实例列表及每个实例的集群节点详情）
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"批量查询实例节点信息: regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeInstancesClusterMemberInfo'
+
+            query_params = {}
+            if project_id:
+                query_params['projectId'] = project_id
+            if page_index is not None:
+                query_params['pageIndex'] = str(page_index)
+            if page_size is not None:
+                query_params['pageSize'] = str(page_size)
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"批量查询实例节点信息失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
             }
 
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
