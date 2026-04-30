@@ -139,7 +139,29 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.9.0 (2026-04-29)
+**最新版本**: v1.12.0 (2026-04-30)
+- 🆕 **新增 EMR（翼MapReduce）模块**：终端节点 `emr-global.ctapi.ctyun.cn`，实现 8 个 API
+  - `emr list`：查询集群列表（支持V1/V2），支持名称/状态/类型过滤
+  - `emr describe`：查询集群详情（支持V1/V2），展示类型/版本/VPC/组件
+  - `emr node-groups`：查询节点组信息，展示类型/主机数/CPU/内存/规格
+  - `emr node-detail`：查询节点详情（V2），展示主机IP/状态/部署角色
+  - `emr meta-overview`：查询Hive元数据概览，展示库/表/存储/文件数
+  - `emr meta-table`：查询指定Hive表元数据，展示分区/冷热分区/小文件统计
+
+**v1.11.0** (2026-04-30)
+- 🆕 **新增 CSS（云搜索服务）模块**：终端节点 `ctcsx-global.ctapi.ctyun.cn`，实现 3 个 API
+  - `css list`：查询 OpenSearch/Elasticsearch 实例列表，支持类型/名称/状态过滤
+  - `css describe`：查询实例详情，展示健康状态/规格/节点信息
+  - `css logstash-list`：查询 Logstash 实例列表，展示管道/节点/关联实例
+
+**v1.10.0** (2026-04-30)
+- 🆕 **新增 Kafka（分布式消息服务）模块**：终端节点 `ctgkafka-global.ctapi.ctyun.cn`，实现 4 个 API
+  - `kafka list`：查询实例列表，支持名称过滤（精确/模糊）、状态筛选、分页
+  - `kafka node-status`：查看实例节点健康状态
+  - `kafka floating-ips`：查询可绑定的弹性IP列表
+  - `kafka config`：获取实例配置参数（含静态/动态配置分类）
+
+**v1.9.0** (2026-04-29)
 - 🆕 **新增服务模块脚手架**：LTS（云日志服务）、SFS（弹性文件服务）、OceanFS（海量文件服务）、Aone（边缘安全加速平台），注册为独立 CLI 命令组，为后续 API 实现做好准备
 - 🎯 **Redis 模块完善**：新增 `topology`（实例逻辑拓扑）、`cluster-nodes`（批量查询集群节点）命令；修复 `network` 和 `describe` 命令的 API 路径、参数及显示字段，支持 `--region-id` 参数
 

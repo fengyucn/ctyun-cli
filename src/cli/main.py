@@ -1085,6 +1085,15 @@ cli.add_command(aone)
 from lts.commands import lts
 cli.add_command(lts)
 
+from kafka.commands import kafka
+cli.add_command(kafka)
+
+from css.commands import css
+cli.add_command(css)
+
+from emr.commands import emr
+cli.add_command(emr)
+
 from rdscmd.commands import redis_group
 cli.add_command(redis_group)
 

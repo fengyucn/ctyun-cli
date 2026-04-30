@@ -4,6 +4,66 @@
 
 ---
 
+## v1.12.0 (2026-04-30)
+
+### 🚀 新增模块
+- **EMR（翼MapReduce）**：新增 `emr` 模块，终端节点 `emr-global.ctapi.ctyun.cn`
+  - `emr list`：查询集群列表（支持V1/V2 API），支持名称/状态/类型过滤，分页展示
+  - `emr describe`：查询集群详情（支持V1/V2 API），展示类型/版本/状态/VPC/组件
+  - `emr node-groups`：查询节点组信息（支持V1/V2），展示类型/主机数/规格
+  - `emr node-detail`：查询节点组详情（V2），展示主机名称/IP/状态/角色
+  - `emr meta-overview`：查询Hive元数据概览，展示库/表/存储量/文件数
+  - `emr meta-table`：查询指定Hive表的元数据，展示文件数/存储/分区/冷热分区统计
+
+### 📚 使用示例
+```bash
+ctyun-cli emr list --region-id <资源池ID>
+ctyun-cli emr describe --cluster-id <集群ID>
+ctyun-cli emr node-groups --cluster-id <集群ID> --v2
+ctyun-cli emr node-detail --cluster-id <集群ID>
+ctyun-cli emr meta-overview --cluster-id <集群ID>
+ctyun-cli emr meta-table --cluster-id <集群ID> --database test_db --table test_table
+```
+
+---
+
+## v1.11.0 (2026-04-30)
+
+### 🚀 新增模块
+- **CSS（云搜索服务）**：新增 `css` 模块，终端节点 `ctcsx-global.ctapi.ctyun.cn`
+  - `css list`：查询 OpenSearch/Elasticsearch 实例列表，支持类型/名称/状态过滤，分页展示
+  - `css describe`：查询实例详情，展示健康状态/规格/VPC/各类型节点信息
+  - `css logstash-list`：查询 Logstash 实例列表，展示管道/节点/关联实例
+
+### 📚 使用示例
+```bash
+ctyun-cli css list --region-id <资源池ID> --type 1
+ctyun-cli css describe --cluster-id <实例ID>
+ctyun-cli css logstash-list --region-id <资源池ID>
+```
+
+---
+
+## v1.10.0 (2026-04-30)
+
+### 🚀 新增模块
+- **Kafka（分布式消息服务）**：新增 `kafka` 模块，终端节点 `ctgkafka-global.ctapi.ctyun.cn`
+  - `kafka list`：查询实例列表，支持按名称（精确/模糊匹配）、状态过滤，分页展示
+  - `kafka node-status`：查看实例节点状态，展示各节点IP及健康状态
+  - `kafka floating-ips`：查询可绑定的弹性IP列表
+  - `kafka config`：获取实例配置，展示配置项名称/当前值/默认值/类型/有效值
+
+### 📚 使用示例
+```bash
+ctyun-cli kafka list --region-id <资源池ID>
+ctyun-cli kafka list -r xxx --name test --exact-match
+ctyun-cli kafka node-status -r xxx -i <实例ID>
+ctyun-cli kafka floating-ips -r xxx
+ctyun-cli kafka config -r xxx -i <实例ID>
+```
+
+---
+
 ## v1.9.0 (2026-04-29)
 
 ### 🚀 新增模块
