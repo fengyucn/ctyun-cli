@@ -3,9 +3,9 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-217+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-210+-orange.svg)](docs/MODULES/README.md#命令统计)
-[![Modules](https://img.shields.io/badge/Modules-11+-blue.svg)](docs/MODULES/README.md)
+[![APIs](https://img.shields.io/badge/APIs-263+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-260+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![Modules](https://img.shields.io/badge/Modules-17+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
 
@@ -15,7 +15,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖200+个API，支持15大服务模块
+- 📊 **功能全面** - 覆盖260+个API，支持17大服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -76,24 +76,27 @@ ctyun-cli cce list-clusters
 
 | 服务模块 | 命令数 | API数 | 核心功能 | 文档 |
 |---------|--------|-------|----------|------|
-| **ECS (云服务器)** | 41 | 38 | 实例管理、快照备份、密钥对、订单查询 | [详细文档](docs/MODULES/ecs.md) |
-| **Monitor (监控服务)** | 53 | 54 | 监控数据、告警管理、Top-N统计、事件管理 | [详细文档](docs/MODULES/monitor.md) |
-| **Redis (分布式缓存)** | 14 | 19 | 实例管理、性能监控、网络配置、完整创建功能 | [详细文档](docs/MODULES/redis.md) |
+| **ECS (云服务器)** | 52 | 41 | 实例管理、快照备份、密钥对、订单查询 | [详细文档](docs/MODULES/ecs.md) |
+| **Monitor (监控服务)** | 52 | 54 | 监控数据、告警管理、Top-N统计、事件管理 | [详细文档](docs/MODULES/monitor.md) |
+| **Redis (分布式缓存)** | 18 | 22 | 实例管理、性能监控、网络配置、完整创建功能 | [详细文档](docs/MODULES/redis.md) |
 | **Billing (计费查询)** | 15 | 14 | 账单查询、费用分析、消费统计 | [详细文档](docs/MODULES/billing.md) |
-| **Security (安全卫士)** | 5 | 11 | 安全扫描、漏洞管理、风险评估 | [详细文档](docs/MODULES/security.md) |
+| **Security (安全卫士)** | 6 | 13 | 安全扫描、漏洞管理、风险评估 | [详细文档](docs/MODULES/security.md) |
 | **IAM (身份访问管理)** | 3 | 3 | 项目管理、权限控制 | [详细文档](docs/MODULES/iam.md) |
 | **EBS (弹性块存储)** | 1 | 1 | 块存储管理 | [详细文档](docs/MODULES/ebs.md) |
-| **CDA (云专线)** | 19 | 19 | 专线网关、物理专线、VPC管理、健康检查、链路探测 | [详细文档](docs/MODULES/cda.md) |
+| **CDA (云专线)** | 20 | 21 | 专线网关、物理专线、VPC管理、健康检查、链路探测 | [详细文档](docs/MODULES/cda.md) |
 | **VPC (私有网络)** | 15 | 15 | VPC网络、子网、路由表、安全组、弹性IP | [详细文档](docs/MODULES/vpc.md) |
-| **CCE (容器引擎)** | 36 | 37 | Kubernetes集群、节点池、工作负载、配置管理 | [详细文档](docs/MODULES/cce.md) |
-| **ELB (弹性负载均衡)** | 7 | 5 | 负载均衡器、目标组、后端主机管理 | [详细文档](docs/MODULES/elb.md) |
+| **CCE (容器引擎)** | 49 | 50 | Kubernetes集群、节点池、工作负载、配置管理 | [详细文档](docs/MODULES/cce.md) |
+| **ELB (弹性负载均衡)** | 11 | 11 | 负载均衡器、目标组、后端主机管理 | [详细文档](docs/MODULES/elb.md) |
+| **Kafka (分布式消息服务)** | 4 | 5 | 实例列表、节点状态、弹性IP、配置查询 | [详细文档](docs/MODULES/kafka.md) |
+| **CSS (云搜索服务)** | 3 | 4 | OpenSearch/Elasticsearch/Logstash 实例管理 | [详细文档](docs/MODULES/css.md) |
+| **EMR (翼MapReduce)** | 6 | 9 | 集群、节点组、Hive元数据管理 | [详细文档](docs/MODULES/emr.md) |
 | **SFS (弹性文件服务)** | - | - | 弹性文件存储管理（实现中） | - |
 | **OceanFS (海量文件服务)** | - | - | 海量文件存储管理（实现中） | - |
 | **Aone (边缘安全加速平台)** | - | - | 边缘安全与加速管理（实现中） | - |
 | **LTS (云日志服务)** | - | - | 日志采集、检索、投递、告警管理（实现中） | - |
-| **总计** | **210** | **217** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **总计** | **260** | **263** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：35,000+行代码，217+个API，210+个命令，15大服务模块**
+📊 **规模统计：39,000+行代码，263+个API，260+个命令，17大服务模块**
 
 ## 📚 完整文档
 
