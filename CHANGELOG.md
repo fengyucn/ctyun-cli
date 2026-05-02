@@ -4,6 +4,33 @@
 
 ---
 
+## v1.13.0 (2026-05-02)
+
+### 🚀 新增功能
+- **ECS监控增强**：新增 8 个实时与历史监控命令，支持 CPU/内存/网卡/磁盘 四大维度
+  - `ecs cpu-latest` / `ecs mem-latest` / `ecs network-latest` / `ecs disk-latest`
+  - `ecs cpu-history` / `ecs mem-history` / `ecs network-history` / `ecs disk-history`
+- **ECS订单查询增强**：新增 `query-dedicated-host-uuid` 和 `query-order-uuid` 命令，支持宿主机和通用资源UUID查询
+
+### 📚 使用示例
+```bash
+# 查询CPU实时监控
+ctyun-cli ecs cpu-latest --region-id <区域ID> --device-ids <实例ID>
+
+# 查询CPU历史数据（过去24小时）
+ctyun-cli ecs cpu-history --region-id <区域ID> --device-ids <实例ID> \
+  --start-time $(date -d '24 hours ago' '+%Y-%m-%d %H:%M:%S') \
+  --end-time $(date '+%Y-%m-%d %H:%M:%S')
+
+# 查询宿主机订单UUID
+ctyun-cli ecs query-dedicated-host-uuid --region-id <区域ID> --master-order-id <订单ID>
+
+# 查询任意资源订单UUID
+ctyun-cli ecs query-order-uuid --region-id <区域ID> --master-order-id <订单ID>
+```
+
+---
+
 ## v1.12.0 (2026-04-30)
 
 ### 🚀 新增模块

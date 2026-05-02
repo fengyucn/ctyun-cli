@@ -142,16 +142,11 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.12.0 (2026-04-30)
-- 🆕 **新增 EMR（翼MapReduce）模块**：终端节点 `emr-global.ctapi.ctyun.cn`，实现 8 个 API
-  - `emr list`：查询集群列表（支持V1/V2），支持名称/状态/类型过滤
-  - `emr describe`：查询集群详情（支持V1/V2），展示类型/版本/VPC/组件
-  - `emr node-groups`：查询节点组信息，展示类型/主机数/CPU/内存/规格
-  - `emr node-detail`：查询节点详情（V2），展示主机IP/状态/部署角色
-  - `emr meta-overview`：查询Hive元数据概览，展示库/表/存储/文件数
-  - `emr meta-table`：查询指定Hive表元数据，展示分区/冷热分区/小文件统计
+**最新版本**: v1.13.0 (2026-05-02)
+- 🚀 **ECS监控增强**：新增 `cpu-latest`/`mem-latest`/`network-latest`/`disk-latest` 实时监控命令，以及 `cpu-history`/`mem-history`/`network-history`/`disk-history` 历史数据查询命令
+- 📋 **ECS订单查询增强**：新增 `query-dedicated-host-uuid`（宿主机）和 `query-order-uuid`（通用资源）命令，支持按 masterOrderID 查询 UUID 和订单状态
 
-**v1.11.0** (2026-04-30)
+**v1.12.0** (2026-04-30)
 - 🆕 **新增 CSS（云搜索服务）模块**：终端节点 `ctcsx-global.ctapi.ctyun.cn`，实现 3 个 API
   - `css list`：查询 OpenSearch/Elasticsearch 实例列表，支持类型/名称/状态过滤
   - `css describe`：查询实例详情，展示健康状态/规格/节点信息

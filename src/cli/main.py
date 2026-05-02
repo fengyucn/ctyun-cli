@@ -1113,8 +1113,20 @@ from security.commands import security
 cli.add_command(security)
 
 # 将 ecs/commands.py 中定义的命令注册到当前 ecs group
-from ecs.commands import update_ecs_label
+from ecs.commands import (update_ecs_label, query_dedicated_host_uuid, query_order_uuid,
+                           cpu_history, mem_history, network_history, disk_history,
+                           cpu_latest, mem_latest, network_latest, disk_latest)
 ecs.add_command(update_ecs_label)
+ecs.add_command(query_dedicated_host_uuid)
+ecs.add_command(query_order_uuid)
+ecs.add_command(cpu_history)
+ecs.add_command(mem_history)
+ecs.add_command(network_history)
+ecs.add_command(disk_history)
+ecs.add_command(cpu_latest)
+ecs.add_command(mem_latest)
+ecs.add_command(network_latest)
+ecs.add_command(disk_latest)
 
 
 if __name__ == '__main__':

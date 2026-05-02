@@ -1825,6 +1825,129 @@ def query_uuid(ctx, region_id: str, master_order_id: str, output: Optional[str])
         traceback.print_exc()
 
 
+@ecs.command('query-dedicated-host-uuid')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--master-order-id', required=True, help='订单ID (masterOrderID)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_dedicated_host_uuid(ctx, region_id: str, master_order_id: str, output: Optional[str]):
+    """根据masterOrderID查询宿主机ID"""
+    try:
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+
+        result = ecs_client.query_dedicated_host_uuid_by_order(
+            region_id=region_id,
+            master_order_id=master_order_id
+        )
+
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+
+        return_obj = result.get('returnObj', {})
+
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            order_status_map = {
+                '1': '待支付', '2': '已支付', '3': '完成', '4': '取消',
+                '5': '施工失败', '7': '正在支付中', '8': '待审核',
+                '9': '审核通过', '10': '审核未通过', '11': '撤单完成',
+                '12': '退订中', '13': '退订完成', '14': '开通中',
+                '15': '变更移除', '16': '自动撤单中', '17': '手动撤单中',
+                '18': '终止中', '22': '支付失败', '-2': '待撤单',
+                '-1': '未知', '0': '错误', '140': '已初始化', '999': '逻辑错误'
+            }
+
+            order_status = return_obj.get('orderStatus', '-1')
+            status_text = order_status_map.get(order_status, '未知状态')
+            host_ids = return_obj.get('dedicatedHostIDList', [])
+
+            click.echo("宿主机订单查询结果")
+            click.echo("=" * 80)
+            click.echo(f"订单ID: {master_order_id}")
+            click.echo(f"订单状态: {status_text} ({order_status})")
+
+            if host_ids:
+                click.echo(f"\n宿主机ID列表 ({len(host_ids)}个):")
+                for idx, host_id in enumerate(host_ids, 1):
+                    click.echo(f"  {idx}. {host_id}")
+            else:
+                click.echo("\n暂无宿主机ID（订单可能还在创建中）")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
+@ecs.command('query-order-uuid')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--master-order-id', required=True, help='订单ID (masterOrderId)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_order_uuid(ctx, region_id: str, master_order_id: str, output: Optional[str]):
+    """根据订单号查询资源uuid（通用，返回资源类型和uuid）"""
+    try:
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+
+        result = ecs_client.query_order_uuid(
+            region_id=region_id,
+            master_order_id=master_order_id
+        )
+
+        if result.get('statusCode') != 800:
+            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+            return
+
+        return_obj = result.get('returnObj', {})
+
+        if output and output in ['json', 'yaml']:
+            format_output(return_obj, output)
+        else:
+            order_status_map = {
+                '1': '待支付', '2': '已支付', '3': '完成', '4': '取消',
+                '5': '施工失败', '7': '正在支付中', '8': '待审核',
+                '9': '审核通过', '10': '审核未通过', '11': '撤单完成',
+                '12': '退订中', '13': '退订完成', '14': '开通中',
+                '15': '变更移除', '16': '自动撤单中', '17': '手动撤单中',
+                '18': '终止中', '22': '支付失败', '-2': '待撤单',
+                '-1': '未知', '0': '错误', '140': '已初始化', '999': '逻辑错误'
+            }
+
+            resource_type_map = {
+                'VM': '主机', 'EBS': '磁盘', 'NETWORK': '带宽'
+            }
+
+            order_status = return_obj.get('orderStatus', '-1')
+            status_text = order_status_map.get(order_status, '未知状态')
+            resource_type = return_obj.get('resourceType', 'N/A')
+            resource_type_text = resource_type_map.get(resource_type, resource_type)
+            resource_uuids = return_obj.get('resourceUuid', [])
+
+            click.echo("订单资源查询结果")
+            click.echo("=" * 80)
+            click.echo(f"订单ID: {master_order_id}")
+            click.echo(f"订单状态: {status_text} ({order_status})")
+            click.echo(f"资源类型: {resource_type_text} ({resource_type})")
+
+            if resource_uuids:
+                click.echo(f"\n资源UUID列表 ({len(resource_uuids)}个):")
+                for idx, uuid in enumerate(resource_uuids, 1):
+                    click.echo(f"  {idx}. {uuid}")
+            else:
+                click.echo("\n暂无资源UUID（订单可能还在创建中）")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
 @ecs.command()
 @click.option('--region-id', required=True, help='资源池ID')
 @click.option('--page', default=1, type=int, help='页码')
@@ -2141,6 +2264,221 @@ def query_price(ctx, region_id, resource_type, count, on_demand,
         click.echo(f"运行出错: {e}", err=True)
         import traceback
         traceback.print_exc()
+
+
+# ========== 云主机监控数据命令 ==========
+
+def _display_metric_history(result: dict, metric_type: str, output: Optional[str]):
+    """显示历史监控数据"""
+    if output and output in ['json', 'yaml']:
+        format_output(result, output)
+        return
+
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+
+    return_obj = result.get('returnObj', {})
+    data_list = return_obj.get('result', [])
+    total = return_obj.get('totalCount', 0)
+
+    click.echo(f"\n{metric_type}历史监控数据 (共{total}条记录)")
+    click.echo("=" * 80)
+
+    if not data_list:
+        click.echo("暂无监控数据")
+        return
+
+    for item in data_list:
+        device_uuid = item.get('deviceUUID', 'N/A')
+        click.echo(f"\n云主机: {device_uuid}")
+        click.echo("-" * 60)
+
+        agg_list = item.get('itemAggregateList', {})
+        for metric_name, values in agg_list.items():
+            if type(values).__name__ == 'list' and values:
+                latest = values[-1] if values else {}
+                click.echo(f"  {metric_name}: {latest.get('value', 'N/A')} (采样: {latest.get('samplingTime', 'N/A')}, 共{len(values)}个数据点)")
+            else:
+                click.echo(f"  {metric_name}: {values}")
+
+
+def _display_metric_latest(result: dict, metric_type: str, output: Optional[str]):
+    """显示实时监控数据"""
+    if output and output in ['json', 'yaml']:
+        format_output(result, output)
+        return
+
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+
+    return_obj = result.get('returnObj', {})
+    data_list = return_obj.get('result', [])
+    total = return_obj.get('totalCount', 0)
+
+    click.echo(f"\n{metric_type}实时监控数据 (共{total}条记录)")
+    click.echo("=" * 80)
+
+    if not data_list:
+        click.echo("暂无监控数据")
+        return
+
+    for item in data_list:
+        device_uuid = item.get('deviceUUID', 'N/A')
+        click.echo(f"\n云主机: {device_uuid}")
+        click.echo("-" * 60)
+
+        item_list = item.get('itemList', {})
+        sampling_time = item_list.get('samplingTime', 'N/A')
+        click.echo(f"  采样时间: {sampling_time}")
+        for metric_name, value in item_list.items():
+            if metric_name != 'samplingTime':
+                click.echo(f"  {metric_name}: {value}")
+
+
+@ecs.command('cpu-history')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--start-time', required=True, help='开始时间 (如: 2026-05-01 00:00:00)')
+@click.option('--end-time', required=True, help='结束时间 (如: 2026-05-02 00:00:00)')
+@click.option('--period', type=int, help='聚合周期(秒)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def cpu_history(ctx, region_id, device_ids, start_time, end_time, period, output):
+    """查询指定时间段内的CPU监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_cpu_history(
+        region_id=region_id, device_id_list=device_ids.split(','),
+        start_time=start_time, end_time=end_time, period=period
+    )
+    _display_metric_history(result, 'CPU', output)
+
+
+@ecs.command('mem-history')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--start-time', required=True, help='开始时间')
+@click.option('--end-time', required=True, help='结束时间')
+@click.option('--period', type=int, help='聚合周期(秒)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def mem_history(ctx, region_id, device_ids, start_time, end_time, period, output):
+    """查询指定时间段内的内存监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_mem_history(
+        region_id=region_id, device_id_list=device_ids.split(','),
+        start_time=start_time, end_time=end_time, period=period
+    )
+    _display_metric_history(result, '内存', output)
+
+
+@ecs.command('network-history')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--start-time', required=True, help='开始时间')
+@click.option('--end-time', required=True, help='结束时间')
+@click.option('--period', type=int, help='聚合周期(秒)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def network_history(ctx, region_id, device_ids, start_time, end_time, period, output):
+    """查询指定时间段内的网卡监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_network_history(
+        region_id=region_id, device_id_list=device_ids.split(','),
+        start_time=start_time, end_time=end_time, period=period
+    )
+    _display_metric_history(result, '网卡', output)
+
+
+@ecs.command('disk-history')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--start-time', required=True, help='开始时间')
+@click.option('--end-time', required=True, help='结束时间')
+@click.option('--period', type=int, help='聚合周期(秒)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def disk_history(ctx, region_id, device_ids, start_time, end_time, period, output):
+    """查询指定时间段内的磁盘监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_disk_history(
+        region_id=region_id, device_id_list=device_ids.split(','),
+        start_time=start_time, end_time=end_time, period=period
+    )
+    _display_metric_history(result, '磁盘', output)
+
+
+@ecs.command('cpu-latest')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def cpu_latest(ctx, region_id, device_ids, output):
+    """查询云主机的CPU实时监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_cpu_latest(
+        region_id=region_id, device_id_list=device_ids.split(',')
+    )
+    _display_metric_latest(result, 'CPU', output)
+
+
+@ecs.command('mem-latest')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def mem_latest(ctx, region_id, device_ids, output):
+    """查询云主机的内存实时监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_mem_latest(
+        region_id=region_id, device_id_list=device_ids.split(',')
+    )
+    _display_metric_latest(result, '内存', output)
+
+
+@ecs.command('network-latest')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def network_latest(ctx, region_id, device_ids, output):
+    """查询云主机的网卡实时监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_network_latest(
+        region_id=region_id, device_id_list=device_ids.split(',')
+    )
+    _display_metric_latest(result, '网卡', output)
+
+
+@ecs.command('disk-latest')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='云主机ID列表，逗号分隔')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def disk_latest(ctx, region_id, device_ids, output):
+    """查询云主机的磁盘实时监控数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_vm_disk_latest(
+        region_id=region_id, device_id_list=device_ids.split(',')
+    )
+    _display_metric_latest(result, '磁盘', output)
 
 
 @ecs.command('update-label')

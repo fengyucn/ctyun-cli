@@ -3267,3 +3267,206 @@ class ECSClient:
         except Exception as e:
             logger.error(f"编辑云主机标签失败: {str(e)}")
             raise
+
+    def query_dedicated_host_uuid_by_order(self, region_id: str, master_order_id: str) -> Dict[str, Any]:
+        """
+        根据masterOrderID查询宿主机ID
+
+        Args:
+            region_id: 区域ID (必填)
+            master_order_id: 订单ID (必填)
+
+        Returns:
+            查询结果，包含订单状态和宿主机ID列表
+        """
+        logger.info(f"查询宿主机UUID: regionId={region_id}, masterOrderID={master_order_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/dedicated-host/query-uuid'
+
+            query_params = {
+                'regionID': region_id,
+                'masterOrderID': master_order_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body=None
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询宿主机UUID失败: {str(e)}")
+            raise
+
+    def query_order_uuid(self, region_id: str, master_order_id: str) -> Dict[str, Any]:
+        """
+        根据订单号查询uuid（通用，返回资源类型和资源UUID）
+
+        Args:
+            region_id: 区域ID (必填)
+            master_order_id: 订单ID (必填)
+
+        Returns:
+            查询结果，包含订单状态、资源类型和资源UUID列表
+        """
+        logger.info(f"查询订单资源UUID: regionId={region_id}, masterOrderId={master_order_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/order/query-uuid'
+
+            query_params = {
+                'regionID': region_id,
+                'masterOrderId': master_order_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body=None
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询订单资源UUID失败: {str(e)}")
+            raise
+
+    # ========== 云主机监控数据 API ==========
+
+    def _query_vm_metric_data(self, endpoint_path: str, region_id: str,
+                              device_id_list: List[str], start_time: str = None,
+                              end_time: str = None, period: int = None,
+                              page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """云主机监控数据查询通用方法"""
+        try:
+            url = f'https://{self.base_endpoint}{endpoint_path}'
+
+            body_data = {
+                'regionID': region_id,
+                'deviceIDList': device_id_list
+            }
+            if start_time:
+                body_data['startTime'] = start_time
+            if end_time:
+                body_data['endTime'] = end_time
+            if period is not None:
+                body_data['period'] = period
+            if page_no is not None:
+                body_data['pageNo'] = page_no
+            if page_size is not None:
+                body_data['pageSize'] = page_size
+
+            body = json.dumps(body_data)
+
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params=None,
+                body=body, extra_headers={}
+            )
+
+            response = self.client.session.post(
+                url, data=body, headers=headers, timeout=30
+            )
+
+            response.raise_for_status()
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询监控数据失败 ({endpoint_path}): {str(e)}")
+            raise
+
+    def query_vm_cpu_history(self, region_id: str, device_id_list: List[str],
+                             start_time: str, end_time: str, period: int = None,
+                             page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询指定时间段内的CPU监控数据"""
+        logger.info(f"查询CPU历史监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-cpu-history-metric-data', region_id, device_id_list,
+            start_time, end_time, period, page_no, page_size
+        )
+
+    def query_vm_mem_history(self, region_id: str, device_id_list: List[str],
+                             start_time: str, end_time: str, period: int = None,
+                             page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询指定时间段内的内存监控数据"""
+        logger.info(f"查询内存历史监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-mem-history-metric-data', region_id, device_id_list,
+            start_time, end_time, period, page_no, page_size
+        )
+
+    def query_vm_network_history(self, region_id: str, device_id_list: List[str],
+                                  start_time: str, end_time: str, period: int = None,
+                                  page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询指定时间段内的网卡监控数据"""
+        logger.info(f"查询网卡历史监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-network-history-metric-data', region_id, device_id_list,
+            start_time, end_time, period, page_no, page_size
+        )
+
+    def query_vm_disk_history(self, region_id: str, device_id_list: List[str],
+                               start_time: str, end_time: str, period: int = None,
+                               page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询指定时间段内的磁盘监控数据"""
+        logger.info(f"查询磁盘历史监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-disk-history-metric-data', region_id, device_id_list,
+            start_time, end_time, period, page_no, page_size
+        )
+
+    def query_vm_cpu_latest(self, region_id: str, device_id_list: List[str],
+                             page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询云主机的CPU实时监控数据"""
+        logger.info(f"查询CPU实时监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-cpu-latest-metric-data', region_id, device_id_list,
+            page_no=page_no, page_size=page_size
+        )
+
+    def query_vm_mem_latest(self, region_id: str, device_id_list: List[str],
+                             page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询云主机的内存实时监控数据"""
+        logger.info(f"查询内存实时监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-mem-latest-metric-data', region_id, device_id_list,
+            page_no=page_no, page_size=page_size
+        )
+
+    def query_vm_network_latest(self, region_id: str, device_id_list: List[str],
+                                 page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询云主机的网卡实时监控数据"""
+        logger.info(f"查询网卡实时监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-network-latest-metric-data', region_id, device_id_list,
+            page_no=page_no, page_size=page_size
+        )
+
+    def query_vm_disk_latest(self, region_id: str, device_id_list: List[str],
+                              page_no: int = None, page_size: int = None) -> Dict[str, Any]:
+        """查询云主机的磁盘实时监控数据"""
+        logger.info(f"查询磁盘实时监控: regionId={region_id}, devices={device_id_list}")
+        return self._query_vm_metric_data(
+            '/v4/ecs/vm-disk-latest-metric-data', region_id, device_id_list,
+            page_no=page_no, page_size=page_size
+        )
