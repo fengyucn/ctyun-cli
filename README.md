@@ -142,15 +142,26 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.13.0 (2026-05-02)
+**最新版本**: v1.14.0 (2026-05-07)
+- 🆕 **新增 CloudPC（云电脑/政企版）模块**：终端节点 `ecpc-global.ctapi.ctyun.cn`，实现 10 个查询 API
+  - `cloudpc list` / `cloudpc ecs-list`：查询云电脑和ECS型云电脑列表
+  - `cloudpc images` / `cloudpc volumes` / `cloudpc vpcs` / `cloudpc subnets`：查询镜像、硬盘、网络
+  - `cloudpc users` / `cloudpc orgs` / `cloudpc service-status`：查询用户、部门、服务状态
+- 🤷‍♂️ **求助**：云电脑查询 API 已实现并验证通过，但云电脑使用独立的资源池 ID 体系，已知区域 ID 均返回 `unknown region`。如有知道云电脑的正确资源池 ID，请告诉我！
+
+**v1.13.0** (2026-05-02)
 - 🚀 **ECS监控增强**：新增 `cpu-latest`/`mem-latest`/`network-latest`/`disk-latest` 实时监控命令，以及 `cpu-history`/`mem-history`/`network-history`/`disk-history` 历史数据查询命令
-- 📋 **ECS订单查询增强**：新增 `query-dedicated-host-uuid`（宿主机）和 `query-order-uuid`（通用资源）命令，支持按 masterOrderID 查询 UUID 和订单状态
+- 📋 **ECS订单查询增强**：新增 `query-dedicated-host-uuid`（宿主机）和 `query-order-uuid`（通用资源）命令
 
 **v1.12.0** (2026-04-30)
+- 🆕 **新增 EMR（翼MapReduce）模块**：终端节点 `emr-global.ctapi.ctyun.cn`，实现 8 个 API
+  - `emr list`/`emr describe`/`emr node-groups`/`emr node-detail`/`emr meta-overview`/`emr meta-table`
+
+**v1.11.0** (2026-04-30)
 - 🆕 **新增 CSS（云搜索服务）模块**：终端节点 `ctcsx-global.ctapi.ctyun.cn`，实现 3 个 API
-  - `css list`：查询 OpenSearch/Elasticsearch 实例列表，支持类型/名称/状态过滤
-  - `css describe`：查询实例详情，展示健康状态/规格/节点信息
-  - `css logstash-list`：查询 Logstash 实例列表，展示管道/节点/关联实例
+  - `css list`：查询 OpenSearch/Elasticsearch 实例列表
+  - `css describe`：查询实例详情
+  - `css logstash-list`：查询 Logstash 实例列表
 
 **v1.10.0** (2026-04-30)
 - 🆕 **新增 Kafka（分布式消息服务）模块**：终端节点 `ctgkafka-global.ctapi.ctyun.cn`，实现 4 个 API

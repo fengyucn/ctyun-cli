@@ -4,6 +4,31 @@
 
 ---
 
+## v1.14.0 (2026-05-07)
+
+### 🚀 新增模块
+- **CloudPC（云电脑/政企版）**：新增 `cloudpc` 模块，终端节点 `ecpc-global.ctapi.ctyun.cn`
+  - `cloudpc list`：查询云电脑列表，支持按别名/状态/VPC过滤
+  - `cloudpc ecs-list`：查询弹性云电脑(ECS型)列表
+  - `cloudpc service-status`：查询云电脑服务开通状态
+  - `cloudpc images`：查询可用镜像列表
+  - `cloudpc volumes`：查询云硬盘列表
+  - `cloudpc vpcs` / `cloudpc subnets`：查询VPC和子网
+  - `cloudpc users` / `cloudpc orgs`：查询用户和部门列表
+
+### 🤷‍♂️ 求助
+云电脑查询 API 已实现并验证通过，认证签名、请求参数全部正确。但云电脑使用独立的资源池 ID 体系，`200000001852` 等已知区域 ID 均提示 `unknown region`。如有知道云电脑正确的资源池 ID，请联系作者或在 GitHub Issues 中告知！
+
+### 📚 使用示例
+```bash
+ctyun-cli cloudpc service-status --region-id <云电脑资源池ID>
+ctyun-cli cloudpc list --region-id <云电脑资源池ID>
+ctyun-cli cloudpc vpcs --region-id <云电脑资源池ID>
+ctyun-cli cloudpc users --region-id <云电脑资源池ID>
+```
+
+---
+
 ## v1.13.0 (2026-05-02)
 
 ### 🚀 新增功能

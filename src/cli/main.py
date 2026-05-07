@@ -1094,6 +1094,9 @@ cli.add_command(css)
 from emr.commands import emr
 cli.add_command(emr)
 
+from cloudpc.commands import cloudpc
+cli.add_command(cloudpc)
+
 from rdscmd.commands import redis_group
 cli.add_command(redis_group)
 
