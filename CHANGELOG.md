@@ -4,6 +4,26 @@
 
 ---
 
+## v1.15.0 (2026-05-08)
+
+### 🚀 新增模块
+- **AIServer（模型推理服务）**：新增 `aiserver` 模块，终端节点 `ctinfer-global.ctapi.ctyun.cn`
+  - 计费查询：`billing-models`（预置模型列表）/ `billing-product`（销售品信息）
+  - 订单管理：`create-order` / `orders`（分页查询）/ `unsubscribe`
+  - 服务组管理：`service-groups` / `service-group-models` / `add-service-group` / `delete-service-group`
+  - 模型管理：`models`（预置+我的模型）/ `child-accounts`
+  - 服务监控：8 个报表命令（调用次数/失败率/QPS/响应时延/首token延迟/非首token时延/整句Token时延/Token调用量）
+
+### 📚 使用示例
+```bash
+ctyun-cli aiserver billing-models
+ctyun-cli aiserver billing-product --model-id <模型ID>
+ctyun-cli aiserver models --user-ids <用户ID>
+ctyun-cli aiserver orders --size 10
+```
+
+---
+
 ## v1.14.0 (2026-05-07)
 
 ### 🚀 新增模块

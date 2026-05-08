@@ -142,12 +142,17 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.14.0 (2026-05-07)
+**最新版本**: v1.15.0 (2026-05-08)
+- 🆕 **新增 AIServer（模型推理服务）模块**：终端节点 `ctinfer-global.ctapi.ctyun.cn`，实现 19 个 API
+  - `aiserver billing-models` / `billing-product`：计费查询，获取预置模型和销售品信息
+  - `aiserver orders` / `create-order` / `unsubscribe`：订单管理（分页查询/创建/退订）
+  - `aiserver service-groups` / `add-service-group` / `delete-service-group` / `models`：服务组与模型管理
+  - `aiserver report-call` / `report-fail` / `report-qps` / `report-tokens` 等 8 个监控报表命令
+
+**v1.14.0** (2026-05-07)
 - 🆕 **新增 CloudPC（云电脑/政企版）模块**：终端节点 `ecpc-global.ctapi.ctyun.cn`，实现 10 个查询 API
-  - `cloudpc list` / `cloudpc ecs-list`：查询云电脑和ECS型云电脑列表
-  - `cloudpc images` / `cloudpc volumes` / `cloudpc vpcs` / `cloudpc subnets`：查询镜像、硬盘、网络
-  - `cloudpc users` / `cloudpc orgs` / `cloudpc service-status`：查询用户、部门、服务状态
-- 🤷‍♂️ **求助**：云电脑查询 API 已实现并验证通过，但云电脑使用独立的资源池 ID 体系，已知区域 ID 均返回 `unknown region`。如有知道云电脑的正确资源池 ID，请告诉我！
+  - `cloudpc list` / `cloudpc ecs-list` / `cloudpc images` / `cloudpc volumes` / `cloudpc vpcs` / `cloudpc subnets` / `cloudpc users` / `cloudpc orgs` / `cloudpc service-status`
+- 🤷‍♂️ **求助**：云电脑查询 API 已实现并验证通过，但云电脑使用独立的资源池 ID 体系，已知区域 ID 均返回 `unknown region`
 
 **v1.13.0** (2026-05-02)
 - 🚀 **ECS监控增强**：新增 `cpu-latest`/`mem-latest`/`network-latest`/`disk-latest` 实时监控命令，以及 `cpu-history`/`mem-history`/`network-history`/`disk-history` 历史数据查询命令
@@ -155,27 +160,19 @@ ctyun-cli cce list-clusters
 
 **v1.12.0** (2026-04-30)
 - 🆕 **新增 EMR（翼MapReduce）模块**：终端节点 `emr-global.ctapi.ctyun.cn`，实现 8 个 API
-  - `emr list`/`emr describe`/`emr node-groups`/`emr node-detail`/`emr meta-overview`/`emr meta-table`
 
 **v1.11.0** (2026-04-30)
 - 🆕 **新增 CSS（云搜索服务）模块**：终端节点 `ctcsx-global.ctapi.ctyun.cn`，实现 3 个 API
-  - `css list`：查询 OpenSearch/Elasticsearch 实例列表
-  - `css describe`：查询实例详情
-  - `css logstash-list`：查询 Logstash 实例列表
 
 **v1.10.0** (2026-04-30)
 - 🆕 **新增 Kafka（分布式消息服务）模块**：终端节点 `ctgkafka-global.ctapi.ctyun.cn`，实现 4 个 API
-  - `kafka list`：查询实例列表，支持名称过滤（精确/模糊）、状态筛选、分页
-  - `kafka node-status`：查看实例节点健康状态
-  - `kafka floating-ips`：查询可绑定的弹性IP列表
-  - `kafka config`：获取实例配置参数（含静态/动态配置分类）
 
 **v1.9.0** (2026-04-29)
-- 🆕 **新增服务模块脚手架**：LTS（云日志服务）、SFS（弹性文件服务）、OceanFS（海量文件服务）、Aone（边缘安全加速平台），注册为独立 CLI 命令组，为后续 API 实现做好准备
-- 🎯 **Redis 模块完善**：新增 `topology`（实例逻辑拓扑）、`cluster-nodes`（批量查询集群节点）命令；修复 `network` 和 `describe` 命令的 API 路径、参数及显示字段，支持 `--region-id` 参数
+- 🆕 **新增 LTS/SFS/OceanFS/Aone 模块脚手架**
+- 🎯 **Redis 模块完善**：新增 `topology`/`cluster-nodes` 命令，修复 `network`/`describe` 命令
 
 **v1.8.4** (2026-04-22)
-- 🔍 **ELB 后端主机详情查询**：新增 `elb targetgroup targets show` 命令，查看后端主机IP、端口、权重、健康状态等详细信息
+- 🔍 **ELB 后端主机详情查询**：新增 `elb targetgroup targets show` 命令
 
 **v1.8.3** (2026-04-22)
 - 🏷️ **CCE 任务管理**：新增 5 个任务管理 API（查询/恢复/取消/暂停），以及集群事件列表查询

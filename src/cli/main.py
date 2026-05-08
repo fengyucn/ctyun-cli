@@ -1097,6 +1097,9 @@ cli.add_command(emr)
 from cloudpc.commands import cloudpc
 cli.add_command(cloudpc)
 
+from aiserver.commands import aiserver
+cli.add_command(aiserver)
+
 from rdscmd.commands import redis_group
 cli.add_command(redis_group)
 
