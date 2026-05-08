@@ -711,6 +711,41 @@ def describe_eips(ctx, region_id: str, eip_id: Optional[str], eip_address: Optio
     format_output(result, ctx.obj['output'])
 
 
+@eip.command('detail')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--eip-id', required=True, help='弹性公网IP ID')
+@click.pass_context
+@handle_error
+def eip_detail(ctx, region_id: str, eip_id: str):
+    """
+    查看EIP详情
+    """
+    client = get_vpc_client(ctx)
+    result = client.show_eip(region_id=region_id, eip_id=eip_id)
+    format_output(result, ctx.obj['output'])
+
+
+@eip.command('shared-bandwidths')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--query-content', help='模糊查询（实例名称/带宽ID）')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--page', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量')
+@click.pass_context
+@handle_error
+def shared_bandwidths(ctx, region_id: str, query_content: str,
+                      project_id: str, page: int, page_size: int):
+    """
+    查询共享带宽列表
+    """
+    client = get_vpc_client(ctx)
+    result = client.list_bandwidths_new(
+        region_id=region_id, query_content=query_content,
+        project_id=project_id, page_no=page, page_size=page_size
+    )
+    format_output(result, ctx.obj['output'])
+
+
 # ==================== NAT网关管理命令 ====================
 
 @vpc.group()

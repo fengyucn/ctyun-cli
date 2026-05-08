@@ -4,6 +4,30 @@
 
 ---
 
+## v1.17.0 (2026-05-08)
+
+### 🚀 新增功能
+- **EIP 弹性公网IP增强**：实现真实可用的 EIP 查询 API
+  - `vpc eip detail`：查看EIP详情（GET /v4/eip/show），支持查看带宽/绑定/计费等信息
+  - `vpc eip shared-bandwidths`：查询共享带宽列表（GET /v4/bandwidth/new-list），支持模糊搜索
+- **ECS 文档标记**：完成 48 个 ECS 查询类 API 文档标记
+
+### 📚 使用示例
+```bash
+ctyun-cli vpc eip detail --region-id <资源池ID> --eip-id <EIP_ID>
+ctyun-cli vpc eip shared-bandwidths --region-id <资源池ID>
+```
+
+---
+
+## v1.16.0 (2026-05-08)
+
+### 🚀 新增功能
+- **VPC EIP 查询修复**：将 VPC 模块中 `describe_eips` 从 TODO 空壳实现为真实的 POST 请求
+  - `vpc eip list` 现在可正常查询弹性公网IP列表
+
+---
+
 ## v1.15.0 (2026-05-08)
 
 ### 🚀 新增模块

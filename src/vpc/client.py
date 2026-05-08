@@ -4,6 +4,7 @@ VPC(虚拟私有云)管理模块客户端
 
 from typing import Dict, Any, List, Optional
 import json
+import uuid
 from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
 from utils import logger
@@ -1368,27 +1369,305 @@ class VPCClient:
 
     # ==================== 弹性公网IP查询 ====================
 
-    def describe_eips(self, region_id: str, eip_id: Optional[str] = None,
-                     eip_address: Optional[str] = None, status: Optional[str] = None,
-                     instance_id: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    def describe_eips(self, region_id: str, eip_id: str = None,
+                     eip_address: str = None, status: str = None,
+                     instance_id: str = None, page: int = None,
+                     page_size: int = None, **kwargs) -> Dict[str, Any]:
         """
         查询弹性公网IP列表
 
         Args:
-            region_id: 区域ID
-            eip_id: 弹性公网IP ID（可选）
-            eip_address: 弹性公网IP地址过滤（可选）
-            status: 弹性公网IP状态过滤（可选）
+            region_id: 资源池ID (必填)
+            eip_id: EIP ID（可选）
+            eip_address: EIP地址过滤（可选）
+            status: 状态过滤 ACTIVE/DOWN/FREEZING/EXPIRED（可选）
             instance_id: 绑定的实例ID过滤（可选）
-            **kwargs: 其他查询参数
+            page: 页码（可选）
+            page_size: 每页数量（可选）
 
         Returns:
             弹性公网IP列表
         """
-        logger.info(f"查询弹性公网IP列表: regionId={region_id}, eipId={eip_id}, eipAddress={eip_address}, status={status}, instanceId={instance_id}")
+        logger.info(f"查询弹性公网IP列表: regionId={region_id}")
 
-        # TODO: 实现查询弹性公网IP列表的具体逻辑
-        pass
+        try:
+            url = f'https://{self.base_endpoint}/v4/eip/list'
+
+            body = {
+                'clientToken': str(uuid.uuid4()),
+                'regionID': region_id,
+            }
+
+            if eip_id:
+                body['ids'] = [eip_id]
+            if eip_address:
+                body['ip'] = eip_address
+            if status:
+                body['status'] = status
+            if page is not None:
+                body['page'] = page
+                body['pageNo'] = page
+            if page_size is not None:
+                body['pageSize'] = page_size
+            if instance_id:
+                body['associationID'] = instance_id
+
+            # 额外参数
+            for k, v in kwargs.items():
+                if v is not None:
+                    body[k] = v
+
+            body_json = json.dumps(body)
+
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={},
+                body=body_json, extra_headers={'Content-Type': 'application/json'}
+            )
+
+            response = self.client.session.post(
+                url, data=body_json, headers=headers, timeout=30
+            )
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    "error": True,
+                    "status_code": response.status_code,
+                    "message": f"HTTP {response.status_code}: {response.text}"
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"查询弹性公网IP列表失败: {e}")
+            raise
+
+    def list_shared_bandwidths(self, region_id: str, project_id: str = None,
+                               offset: int = None, limit: int = None,
+                               bandwidth_id: str = None, name: str = None,
+                               status: str = None, charge_mode: str = None,
+                               include_eips: bool = None,
+                               include_statistics: bool = None) -> Dict[str, Any]:
+        """
+        查询共享带宽信息
+
+        Args:
+            region_id: 资源池ID (必填)
+            project_id: 企业项目ID
+            offset: 分页起始位置
+            limit: 每页记录数
+            bandwidth_id: 共享带宽ID
+            name: 共享带宽名称
+            status: 状态过滤
+            charge_mode: 计费方式
+            include_eips: 是否包含弹性IP信息
+            include_statistics: 是否包含统计信息
+
+        Returns:
+            共享带宽列表
+        """
+        logger.info(f"查询共享带宽信息: regionId={region_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/shared-bandwidth/list'
+
+            body = {'regionID': region_id}
+            if project_id:
+                body['projectID'] = project_id
+            if offset is not None:
+                body['offset'] = offset
+            if limit is not None:
+                body['limit'] = limit
+            if bandwidth_id:
+                body['bandwidthId'] = bandwidth_id
+            if name:
+                body['name'] = name
+            if status:
+                body['status'] = status
+            if charge_mode:
+                body['chargeMode'] = charge_mode
+            if include_eips is not None:
+                body['includeEips'] = include_eips
+            if include_statistics is not None:
+                body['includeStatistics'] = include_statistics
+
+            body_json = json.dumps(body)
+
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={},
+                body=body_json, extra_headers={'Content-Type': 'application/json'}
+            )
+
+            response = self.client.session.post(
+                url, data=body_json, headers=headers, timeout=30
+            )
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {"error": True, "status_code": response.status_code, "message": f"HTTP {response.status_code}: {response.text}"}
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询共享带宽信息失败: {e}")
+            raise
+
+    def get_eip_detail(self, region_id: str, eip_id: str,
+                       project_id: str = None, include_statistics: bool = None,
+                       include_history: bool = None,
+                       include_billing: bool = None) -> Dict[str, Any]:
+        """
+        查询弹性IP详情
+
+        Args:
+            region_id: 资源池ID (必填)
+            eip_id: 弹性IP ID (必填)
+            project_id: 企业项目ID
+            include_statistics: 是否包含统计信息
+            include_history: 是否包含操作历史
+            include_billing: 是否包含计费信息
+
+        Returns:
+            弹性IP详情
+        """
+        logger.info(f"查询弹性IP详情: regionId={region_id}, eipId={eip_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/eip/detail'
+
+            body = {'regionID': region_id, 'eipID': eip_id}
+            if project_id:
+                body['projectID'] = project_id
+            if include_statistics is not None:
+                body['includeStatistics'] = include_statistics
+            if include_history is not None:
+                body['includeHistory'] = include_history
+            if include_billing is not None:
+                body['includeBilling'] = include_billing
+
+            body_json = json.dumps(body)
+
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={},
+                body=body_json, extra_headers={'Content-Type': 'application/json'}
+            )
+
+            response = self.client.session.post(
+                url, data=body_json, headers=headers, timeout=30
+            )
+
+            if response.status_code != 200:
+                return {"error": True, "status_code": response.status_code, "message": f"HTTP {response.status_code}: {response.text}"}
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询弹性IP详情失败: {e}")
+            raise
+
+    def list_bandwidths_new(self, region_id: str, query_content: str = None,
+                            project_id: str = None, page_no: int = None,
+                            page_size: int = None) -> Dict[str, Any]:
+        """
+        查询共享带宽列表（新接口）
+
+        Args:
+            region_id: 共享带宽所在的区域id (必填)
+            query_content: 模糊查询，共享带宽实例名称/带宽ID
+            project_id: 企业项目ID
+            page_no: 页码
+            page_size: 每页数量
+
+        Returns:
+            共享带宽列表
+        """
+        logger.info(f"查询共享带宽列表: regionId={region_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/bandwidth/new-list'
+
+            query_params = {'regionID': region_id}
+            if query_content:
+                query_params['queryContent'] = query_content
+            if project_id:
+                query_params['projectID'] = project_id
+            if page_no is not None:
+                query_params['pageNo'] = page_no
+            if page_size is not None:
+                query_params['pageSize'] = page_size
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params,
+                body='', extra_headers={}
+            )
+
+            response = self.client.session.get(
+                url, params=query_params, headers=headers, timeout=30
+            )
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {"error": True, "status_code": response.status_code, "message": f"HTTP {response.status_code}: {response.text}"}
+
+            result = response.json()
+
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"查询共享带宽列表失败: {e}")
+            raise
+
+    def show_eip(self, region_id: str, eip_id: str) -> Dict[str, Any]:
+        """
+        查看EIP详情
+
+        Args:
+            region_id: 资源池ID (必填)
+            eip_id: 弹性公网IP的ID (必填)
+
+        Returns:
+            EIP详情
+        """
+        logger.info(f"查看EIP详情: regionId={region_id}, eipId={eip_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/eip/show'
+
+            query_params = {
+                'regionID': region_id,
+                'eipID': eip_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params,
+                body='', extra_headers={}
+            )
+
+            response = self.client.session.get(
+                url, params=query_params, headers=headers, timeout=30
+            )
+
+            if response.status_code != 200:
+                return {"error": True, "status_code": response.status_code, "message": f"HTTP {response.status_code}: {response.text}"}
+
+            result = response.json()
+
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"查看EIP详情失败: {e}")
+            raise
 
     # ==================== NAT网关查询 ====================
 

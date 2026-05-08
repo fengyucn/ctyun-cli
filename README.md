@@ -142,17 +142,23 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.15.0 (2026-05-08)
+**最新版本**: v1.17.0 (2026-05-08)
+- 🚀 **EIP 弹性公网IP增强**：实现真实可用的 EIP 查询 API
+  - `vpc eip detail`：查看EIP详情（带宽/绑定/计费信息）
+  - `vpc eip shared-bandwidths`：查询共享带宽列表（支持模糊搜索）
+- 🔧 **VPC EIP 查询修复**：`vpc eip list` 从空壳实现为可用状态，支持按状态/IP/实例过滤
+
+**v1.16.0** (2026-05-08)
+- 🔧 **VPC EIP 查询实现**：`vpc eip list` 从 TODO 空壳变为真实的 POST 查询
+
+**v1.15.0** (2026-05-08)
 - 🆕 **新增 AIServer（模型推理服务）模块**：终端节点 `ctinfer-global.ctapi.ctyun.cn`，实现 19 个 API
-  - `aiserver billing-models` / `billing-product`：计费查询，获取预置模型和销售品信息
-  - `aiserver orders` / `create-order` / `unsubscribe`：订单管理（分页查询/创建/退订）
-  - `aiserver service-groups` / `add-service-group` / `delete-service-group` / `models`：服务组与模型管理
-  - `aiserver report-call` / `report-fail` / `report-qps` / `report-tokens` 等 8 个监控报表命令
+  - `aiserver billing-models` / `billing-product` / `orders` / `service-groups` / `models` / `report-call` 等
 
 **v1.14.0** (2026-05-07)
 - 🆕 **新增 CloudPC（云电脑/政企版）模块**：终端节点 `ecpc-global.ctapi.ctyun.cn`，实现 10 个查询 API
   - `cloudpc list` / `cloudpc ecs-list` / `cloudpc images` / `cloudpc volumes` / `cloudpc vpcs` / `cloudpc subnets` / `cloudpc users` / `cloudpc orgs` / `cloudpc service-status`
-- 🤷‍♂️ **求助**：云电脑查询 API 已实现并验证通过，但云电脑使用独立的资源池 ID 体系，已知区域 ID 均返回 `unknown region`
+- 🤷‍♂️ **求助**：云电脑查询 API 已实现并验证通过，但云电脑使用独立的资源池 ID 体系
 
 **v1.13.0** (2026-05-02)
 - 🚀 **ECS监控增强**：新增 `cpu-latest`/`mem-latest`/`network-latest`/`disk-latest` 实时监控命令，以及 `cpu-history`/`mem-history`/`network-history`/`disk-history` 历史数据查询命令
