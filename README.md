@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-263+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-260+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![APIs](https://img.shields.io/badge/APIs-308+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-305+-orange.svg)](docs/MODULES/README.md#命令统计)
 [![Modules](https://img.shields.io/badge/Modules-17+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -92,11 +92,11 @@ ctyun-cli cce list-clusters
 | **EMR (翼MapReduce)** | 6 | 9 | 集群、节点组、Hive元数据管理 | [详细文档](docs/MODULES/emr.md) |
 | **SFS (弹性文件服务)** | - | - | 弹性文件存储管理（实现中） | - |
 | **OceanFS (海量文件服务)** | - | - | 海量文件存储管理（实现中） | - |
-| **Aone (边缘安全加速平台)** | - | - | 边缘安全与加速管理（实现中） | - |
+| **Aone (边缘安全加速平台)** | 45 | 45 | 域名管理、证书管理、缓存刷新/预取、数据统计、安全防护（CC/WAF/DDoS） | - |
 | **LTS (云日志服务)** | - | - | 日志采集、检索、投递、告警管理（实现中） | - |
-| **总计** | **260** | **263** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **总计** | **305** | **308** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：39,000+行代码，263+个API，260+个命令，17大服务模块**
+📊 **规模统计：39,000+行代码，308+个API，305+个命令，17大服务模块**
 
 ## 📚 完整文档
 
