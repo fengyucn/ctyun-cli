@@ -142,7 +142,11 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.17.0 (2026-05-08)
+**最新版本**: v1.17.1 (2026-05-09)
+- 🆕 **Aone（边缘安全加速平台）**：实现 45 个查询类 API（域名/证书/缓存/数据统计/安全防护）
+  - 终端节点 `accessone-global.ctapi.ctyun.cn`，支持 `query-domain-*`、`query-cert-*`、`query-*-data`、`query-cc-attack-*` 等
+
+**v1.17.0** (2026-05-08)
 - 🚀 **EIP 弹性公网IP增强**：实现真实可用的 EIP 查询 API
   - `vpc eip detail`：查看EIP详情（带宽/绑定/计费信息）
   - `vpc eip shared-bandwidths`：查询共享带宽列表（支持模糊搜索）
