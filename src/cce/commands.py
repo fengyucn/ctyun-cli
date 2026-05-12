@@ -316,11 +316,10 @@ def cluster_quota(ctx, region_id: str):
 
     if output_format == 'table':
         quota_data = result.get('returnObj', {})
-        cluster_quota = quota_data.get('clusterQuota', {})
-        cluster_usage = quota_data.get('clusterUsage', {})
+        quota_list = quota_data.get('quotaCenterDataList', [])
 
-        if cluster_quota or cluster_usage:
-            click.echo(f"集群配额与使用量:")
+        if quota_list:
+            click.echo(f"租户资源配额与使用量:")
             format_output(result, output_format)
         else:
             click.echo("未找到配额信息")
@@ -348,6 +347,229 @@ def cluster_quota_usage(ctx, region_id: str):
             format_output(result, output_format)
         else:
             click.echo("未找到配额信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('query-sub-user-permissions')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.option('--user-id', required=True, type=int, help='子用户ID')
+@click.pass_context
+@handle_error
+def query_sub_user_permissions(ctx, region_id: str, cluster_name: str, user_id: int):
+    """查询子账号集群授权信息"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.query_sub_user_permissions(region_id, cluster_name, user_id)
+
+    if output_format == 'table':
+        bindings = result.get('returnObj', [])
+        if bindings:
+            click.echo(f"子账号集群授权信息:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到授权信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-cluster-sub-users')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def list_cluster_sub_users(ctx, region_id: str, cluster_id: str):
+    """查询拥有实例权限的子用户列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_cluster_sub_users(region_id, cluster_id)
+
+    if output_format == 'table':
+        sub_users = result.get('returnObj', [])
+        if sub_users:
+            click.echo(f"拥有实例权限的子用户列表:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到子用户信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-control-plane-arguments')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def get_control_plane_arguments(ctx, region_id: str, cluster_id: str):
+    """查询控制面组件参数"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_control_plane_arguments(region_id, cluster_id)
+
+    if output_format == 'table':
+        args_data = result.get('returnObj', {})
+        if args_data:
+            click.echo(f"控制面组件参数:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到控制面组件参数")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-cluster-resources')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.pass_context
+@handle_error
+def get_cluster_resources(ctx, region_id: str, cluster_name: str):
+    """查询集群资源"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_resources(region_id, cluster_name)
+
+    if output_format == 'table':
+        resources = result.get('returnObj', [])
+        if resources:
+            click.echo(f"集群资源:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到集群资源信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('describe-cluster-v1')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.pass_context
+@handle_error
+def describe_cluster_v1(ctx, region_id: str, cluster_name: str):
+    """查询集群信息 (v1.1, 按集群名称查询)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_info_v1(region_id, cluster_name)
+
+    if output_format == 'table':
+        cluster_info = result.get('returnObj', {})
+        if cluster_info:
+            click.echo(f"集群信息:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到集群信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-cluster-upgrade-status')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.option('--task-id', type=int, help='任务ID（可选）')
+@click.pass_context
+@handle_error
+def get_cluster_upgrade_status(ctx, region_id: str, cluster_name: str, task_id: Optional[int]):
+    """查询集群升级状态"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_upgrade_status(region_id, cluster_name, task_id)
+
+    if output_format == 'table':
+        upgrade_data = result.get('returnObj', [])
+        if upgrade_data:
+            click.echo(f"集群升级状态:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到升级状态信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-cluster-series-task')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--task-id', help='任务ID（可选，不传时查询最新的变更任务）')
+@click.pass_context
+@handle_error
+def get_cluster_series_task(ctx, region_id: str, cluster_id: str, task_id: Optional[str]):
+    """查询集群规格变更任务"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_series_task(region_id, cluster_id, task_id)
+
+    if output_format == 'table':
+        task_data = result.get('returnObj', {})
+        if task_data:
+            click.echo(f"集群规格变更任务:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到规格变更任务信息")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-os-images')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--flavor-name', required=True, help='云主机规格名称')
+@click.option('--vm-type', default='ecs', type=click.Choice(['ecs', 'ebm']), help='查询镜像类型，ecs-云主机镜像, ebm-裸金属镜像')
+@click.option('--project-id', help='企业项目ID（可选）')
+@click.option('--az-name', help='平台可用区名称（可选，查询裸金属镜像时必填）')
+@click.pass_context
+@handle_error
+def list_os_images(ctx, region_id: str, flavor_name: str, vm_type: str,
+                    project_id: Optional[str], az_name: Optional[str]):
+    """查询公共镜像列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_os_images(region_id, flavor_name, vm_type, project_id, az_name)
+
+    if output_format == 'table':
+        images = result.get('returnObj', [])
+        if images:
+            click.echo(f"公共镜像列表:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到公共镜像")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-cluster-network-config')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def get_cluster_network_config(ctx, region_id: str, cluster_id: str):
+    """查看集群网络配置"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_network_config(region_id, cluster_id)
+
+    if output_format == 'table':
+        net_config = result.get('returnObj', {})
+        if net_config:
+            click.echo(f"集群网络配置:")
+            format_output(result, output_format)
+        else:
+            click.echo("未找到网络配置信息")
     else:
         format_output(result, output_format)
 
@@ -398,22 +620,18 @@ def get_kubeconfig(ctx, region_id: str, cluster_id: str, config_type: str,
 
 @cce.command('list-kubernetes-versions')
 @click.option('--region-id', required=True, help='区域ID')
-@click.option('--cluster-type', type=click.Choice(['0', '2']),
-              help='集群类型：0-专有版, 2-托管版')
 @click.pass_context
 @handle_error
-def list_kubernetes_versions(ctx, region_id: str, cluster_type: Optional[str]):
-    """查询Kubernetes版本列表"""
+def list_kubernetes_versions(ctx, region_id: str):
+    """查询Kubernetes版本详情"""
     client = ctx.obj['client']
     output_format = ctx.obj['output']
 
     cce_client = CCEClient(client)
-    cluster_type_int = int(cluster_type) if cluster_type else None
-    result = cce_client.get_kubernetes_versions(region_id, cluster_type_int)
+    result = cce_client.get_kubernetes_versions(region_id)
 
     if output_format == 'table':
-        versions_data = result.get('returnObj', {})
-        versions = versions_data.get('versions', [])
+        versions = result.get('returnObj', [])
         if versions:
             click.echo(f"Kubernetes版本列表:")
             format_output(result, output_format)
@@ -1090,6 +1308,892 @@ def get_statefulset(ctx, region_id: str, cluster_id: str, namespace: str, statef
         format_output(result, output_format)
 
 
+# ========== 扩展Kubernetes资源管理命令 ==========
+
+
+@cce.command('list-crds')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_crds(ctx, region_id: str, cluster_id: str,
+              label_selector: Optional[str], field_selector: Optional[str]):
+    """查询CRD列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_crds(region_id, cluster_id, label_selector, field_selector)
+
+    if output_format == 'table':
+        crds_info = result.get('returnObj', '')
+        if crds_info:
+            click.echo(f"集群 '{cluster_id}' 中的CRD列表:")
+            if isinstance(crds_info, str):
+                click.echo(crds_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到CRD")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-crd')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--crd-name', required=True, help='CRD名称')
+@click.pass_context
+@handle_error
+def get_crd(ctx, region_id: str, cluster_id: str, crd_name: str):
+    """查询CRD详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_crd(region_id, cluster_id, crd_name)
+
+    if output_format == 'table':
+        crd_info = result.get('returnObj', '')
+        if crd_info:
+            click.echo(f"CRD '{crd_name}' 详情:")
+            if isinstance(crd_info, str):
+                click.echo(crd_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到CRD")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-cronjobs')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--api-version', default='v1', help='资源API版本，默认v1')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_cronjobs(ctx, region_id: str, cluster_id: str, namespace: str, api_version: str,
+                  label_selector: Optional[str], field_selector: Optional[str]):
+    """查询CronJob列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_cronjobs(region_id, cluster_id, namespace, api_version, label_selector, field_selector)
+
+    if output_format == 'table':
+        cronjobs_info = result.get('returnObj', '')
+        if cronjobs_info:
+            click.echo(f"命名空间 '{namespace}' 中的CronJob列表:")
+            if isinstance(cronjobs_info, str):
+                click.echo(cronjobs_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到CronJob")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-cronjob')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--cronjob-name', required=True, help='CronJob名称')
+@click.option('--api-version', default='v1', help='资源API版本，默认v1')
+@click.pass_context
+@handle_error
+def get_cronjob(ctx, region_id: str, cluster_id: str, namespace: str, cronjob_name: str, api_version: str):
+    """查询CronJob详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cronjob(region_id, cluster_id, namespace, cronjob_name, api_version)
+
+    if output_format == 'table':
+        cronjob_info = result.get('returnObj', '')
+        if cronjob_info:
+            click.echo(f"CronJob '{cronjob_name}' 详情:")
+            if isinstance(cronjob_info, str):
+                click.echo(cronjob_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到CronJob")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-k8s-nodes')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_k8s_nodes(ctx, region_id: str, cluster_id: str,
+                   label_selector: Optional[str], field_selector: Optional[str]):
+    """查询Kubernetes Node列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_k8s_nodes(region_id, cluster_id, label_selector, field_selector)
+
+    if output_format == 'table':
+        nodes_info = result.get('returnObj', '')
+        if nodes_info:
+            click.echo(f"集群 '{cluster_id}' 中的Kubernetes Node列表:")
+            if isinstance(nodes_info, str):
+                click.echo(nodes_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到Kubernetes Node")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-k8s-node')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--node-name', required=True, help='Kubernetes Node名称')
+@click.pass_context
+@handle_error
+def get_k8s_node(ctx, region_id: str, cluster_id: str, node_name: str):
+    """查询Kubernetes Node详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_k8s_node(region_id, cluster_id, node_name)
+
+    if output_format == 'table':
+        node_info = result.get('returnObj', '')
+        if node_info:
+            click.echo(f"Kubernetes Node '{node_name}' 详情:")
+            if isinstance(node_info, str):
+                click.echo(node_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到Kubernetes Node")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-persistent-volumes')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_persistent_volumes(ctx, region_id: str, cluster_id: str,
+                            label_selector: Optional[str], field_selector: Optional[str]):
+    """查询PersistentVolume列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_persistent_volumes(region_id, cluster_id, label_selector, field_selector)
+
+    if output_format == 'table':
+        pvs_info = result.get('returnObj', '')
+        if pvs_info:
+            click.echo(f"集群 '{cluster_id}' 中的PersistentVolume列表:")
+            if isinstance(pvs_info, str):
+                click.echo(pvs_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到PersistentVolume")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-persistent-volume')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--pv-name', required=True, help='PersistentVolume名称')
+@click.pass_context
+@handle_error
+def get_persistent_volume(ctx, region_id: str, cluster_id: str, pv_name: str):
+    """查询PersistentVolume详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_persistent_volume(region_id, cluster_id, pv_name)
+
+    if output_format == 'table':
+        pv_info = result.get('returnObj', '')
+        if pv_info:
+            click.echo(f"PersistentVolume '{pv_name}' 详情:")
+            if isinstance(pv_info, str):
+                click.echo(pv_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到PersistentVolume")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-persistent-volume-claims')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_persistent_volume_claims(ctx, region_id: str, cluster_id: str, namespace: str,
+                                  label_selector: Optional[str], field_selector: Optional[str]):
+    """查询PersistentVolumeClaim列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_persistent_volume_claims(region_id, cluster_id, namespace, label_selector, field_selector)
+
+    if output_format == 'table':
+        pvcs_info = result.get('returnObj', '')
+        if pvcs_info:
+            click.echo(f"命名空间 '{namespace}' 中的PersistentVolumeClaim列表:")
+            if isinstance(pvcs_info, str):
+                click.echo(pvcs_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到PersistentVolumeClaim")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-persistent-volume-claim')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--pvc-name', required=True, help='PersistentVolumeClaim名称')
+@click.pass_context
+@handle_error
+def get_persistent_volume_claim(ctx, region_id: str, cluster_id: str, namespace: str, pvc_name: str):
+    """查询PersistentVolumeClaim详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_persistent_volume_claim(region_id, cluster_id, namespace, pvc_name)
+
+    if output_format == 'table':
+        pvc_info = result.get('returnObj', '')
+        if pvc_info:
+            click.echo(f"PersistentVolumeClaim '{pvc_name}' 详情:")
+            if isinstance(pvc_info, str):
+                click.echo(pvc_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到PersistentVolumeClaim")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-resource-quotas')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_resource_quotas(ctx, region_id: str, cluster_id: str, namespace: str,
+                         label_selector: Optional[str], field_selector: Optional[str]):
+    """查询ResourceQuota列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_resource_quotas(region_id, cluster_id, namespace, label_selector, field_selector)
+
+    if output_format == 'table':
+        quotas_info = result.get('returnObj', '')
+        if quotas_info:
+            click.echo(f"命名空间 '{namespace}' 中的ResourceQuota列表:")
+            if isinstance(quotas_info, str):
+                click.echo(quotas_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到ResourceQuota")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-resource-quota')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--quota-name', required=True, help='ResourceQuota名称')
+@click.pass_context
+@handle_error
+def get_resource_quota(ctx, region_id: str, cluster_id: str, namespace: str, quota_name: str):
+    """查询ResourceQuota详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_resource_quota(region_id, cluster_id, namespace, quota_name)
+
+    if output_format == 'table':
+        quota_info = result.get('returnObj', '')
+        if quota_info:
+            click.echo(f"ResourceQuota '{quota_name}' 详情:")
+            if isinstance(quota_info, str):
+                click.echo(quota_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到ResourceQuota")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-secrets')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_secrets(ctx, region_id: str, cluster_id: str, namespace: str,
+                 label_selector: Optional[str], field_selector: Optional[str]):
+    """查询Secret列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_secrets(region_id, cluster_id, namespace, label_selector, field_selector)
+
+    if output_format == 'table':
+        secrets_info = result.get('returnObj', '')
+        if secrets_info:
+            click.echo(f"命名空间 '{namespace}' 中的Secret列表:")
+            if isinstance(secrets_info, str):
+                click.echo(secrets_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到Secret")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-secret')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--secret-name', required=True, help='Secret名称')
+@click.pass_context
+@handle_error
+def get_secret(ctx, region_id: str, cluster_id: str, namespace: str, secret_name: str):
+    """查询Secret详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_secret(region_id, cluster_id, namespace, secret_name)
+
+    if output_format == 'table':
+        secret_info = result.get('returnObj', '')
+        if secret_info:
+            click.echo(f"Secret '{secret_name}' 详情:")
+            if isinstance(secret_info, str):
+                click.echo(secret_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到Secret")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-service-accounts')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_service_accounts(ctx, region_id: str, cluster_id: str, namespace: str,
+                          label_selector: Optional[str], field_selector: Optional[str]):
+    """查询ServiceAccount列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_service_accounts(region_id, cluster_id, namespace, label_selector, field_selector)
+
+    if output_format == 'table':
+        sas_info = result.get('returnObj', '')
+        if sas_info:
+            click.echo(f"命名空间 '{namespace}' 中的ServiceAccount列表:")
+            if isinstance(sas_info, str):
+                click.echo(sas_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到ServiceAccount")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-service-account')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--sa-name', required=True, help='ServiceAccount名称')
+@click.pass_context
+@handle_error
+def get_service_account(ctx, region_id: str, cluster_id: str, namespace: str, sa_name: str):
+    """查询ServiceAccount详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_service_account(region_id, cluster_id, namespace, sa_name)
+
+    if output_format == 'table':
+        sa_info = result.get('returnObj', '')
+        if sa_info:
+            click.echo(f"ServiceAccount '{sa_name}' 详情:")
+            if isinstance(sa_info, str):
+                click.echo(sa_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到ServiceAccount")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-storage-classes')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_storage_classes(ctx, region_id: str, cluster_id: str,
+                         label_selector: Optional[str], field_selector: Optional[str]):
+    """查询StorageClass列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_storage_classes(region_id, cluster_id, label_selector, field_selector)
+
+    if output_format == 'table':
+        scs_info = result.get('returnObj', '')
+        if scs_info:
+            click.echo(f"集群 '{cluster_id}' 中的StorageClass列表:")
+            if isinstance(scs_info, str):
+                click.echo(scs_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到StorageClass")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-storage-class')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--sc-name', required=True, help='StorageClass名称')
+@click.pass_context
+@handle_error
+def get_storage_class(ctx, region_id: str, cluster_id: str, sc_name: str):
+    """查询StorageClass详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_storage_class(region_id, cluster_id, sc_name)
+
+    if output_format == 'table':
+        sc_info = result.get('returnObj', '')
+        if sc_info:
+            click.echo(f"StorageClass '{sc_name}' 详情:")
+            if isinstance(sc_info, str):
+                click.echo(sc_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到StorageClass")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-volume-snapshots')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--api-version', default='v1', help='资源API版本，默认v1')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_volume_snapshots(ctx, region_id: str, cluster_id: str, namespace: str, api_version: str,
+                          label_selector: Optional[str], field_selector: Optional[str]):
+    """查询VolumeSnapshot列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_volume_snapshots(region_id, cluster_id, namespace, api_version, label_selector, field_selector)
+
+    if output_format == 'table':
+        vss_info = result.get('returnObj', '')
+        if vss_info:
+            click.echo(f"命名空间 '{namespace}' 中的VolumeSnapshot列表:")
+            if isinstance(vss_info, str):
+                click.echo(vss_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到VolumeSnapshot")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-volume-snapshot')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--vs-name', required=True, help='VolumeSnapshot名称')
+@click.option('--api-version', default='v1', help='资源API版本，默认v1')
+@click.pass_context
+@handle_error
+def get_volume_snapshot(ctx, region_id: str, cluster_id: str, namespace: str, vs_name: str, api_version: str):
+    """查询VolumeSnapshot详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_volume_snapshot(region_id, cluster_id, namespace, vs_name, api_version)
+
+    if output_format == 'table':
+        vs_info = result.get('returnObj', '')
+        if vs_info:
+            click.echo(f"VolumeSnapshot '{vs_name}' 详情:")
+            if isinstance(vs_info, str):
+                click.echo(vs_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到VolumeSnapshot")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-volume-snapshot-classes')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--api-version', default='v1', help='资源API版本，默认v1')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器')
+@click.pass_context
+@handle_error
+def list_volume_snapshot_classes(ctx, region_id: str, cluster_id: str, api_version: str,
+                                 label_selector: Optional[str], field_selector: Optional[str]):
+    """查询VolumeSnapshotClass列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_volume_snapshot_classes(region_id, cluster_id, api_version, label_selector, field_selector)
+
+    if output_format == 'table':
+        vscs_info = result.get('returnObj', '')
+        if vscs_info:
+            click.echo(f"集群 '{cluster_id}' 中的VolumeSnapshotClass列表:")
+            if isinstance(vscs_info, str):
+                click.echo(vscs_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到VolumeSnapshotClass")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-volume-snapshot-class')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--vsc-name', required=True, help='VolumeSnapshotClass名称')
+@click.option('--api-version', default='v1', help='资源API版本，默认v1')
+@click.pass_context
+@handle_error
+def get_volume_snapshot_class(ctx, region_id: str, cluster_id: str, vsc_name: str, api_version: str):
+    """查询VolumeSnapshotClass详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_volume_snapshot_class(region_id, cluster_id, vsc_name, api_version)
+
+    if output_format == 'table':
+        vsc_info = result.get('returnObj', '')
+        if vsc_info:
+            click.echo(f"VolumeSnapshotClass '{vsc_name}' 详情:")
+            if isinstance(vsc_info, str):
+                click.echo(vsc_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到VolumeSnapshotClass")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-events')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--api-version', default='v1', help='资源API版本，默认v1')
+@click.option('--label-selector', help='Kubernetes标签选择器')
+@click.option('--field-selector', help='Kubernetes字段选择器，支持type/regarding.kind/regarding.name/regarding.namespace')
+@click.pass_context
+@handle_error
+def list_events(ctx, region_id: str, cluster_id: str, api_version: str,
+                label_selector: Optional[str], field_selector: Optional[str]):
+    """查询Kubernetes Event列表 (events.k8s.io)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_events(region_id, cluster_id, api_version, label_selector, field_selector)
+
+    if output_format == 'table':
+        events_info = result.get('returnObj', '')
+        if events_info:
+            click.echo(f"集群 '{cluster_id}' 中的Event列表:")
+            if isinstance(events_info, str):
+                click.echo(events_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到Event")
+    else:
+        format_output(result, output_format)
+
+
+# ========== 运维管理命令 ==========
+
+
+@cce.command('get-inspection-job')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def get_inspection_job(ctx, region_id: str, cluster_id: str):
+    """查询巡检任务"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_inspection_job(region_id, cluster_id)
+
+    if output_format == 'table':
+        job_info = result.get('returnObj', {})
+        if job_info:
+            click.echo(f"巡检任务 (集群: {cluster_id}):")
+            from tabulate import tabulate
+            table_data = [[k, v] for k, v in job_info.items()]
+            click.echo(tabulate(table_data, headers=['键', '值'], tablefmt='grid'))
+        else:
+            click.echo("未找到巡检任务")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-inspection-reports')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--page-now', default=1, type=int, help='当前页码，默认1')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
+@click.pass_context
+@handle_error
+def list_inspection_reports(ctx, region_id: str, cluster_id: str, page_now: int, page_size: int):
+    """查询巡检报告列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_inspection_reports(region_id, cluster_id, page_now, page_size)
+
+    if output_format == 'table':
+        return_obj = result.get('returnObj', {})
+        records = return_obj.get('records', [])
+        total = return_obj.get('total', 0)
+        if records:
+            click.echo(f"巡检报告列表 (共 {total} 条):")
+            from tabulate import tabulate
+            table_data = []
+            for r in records:
+                table_data.append([r.get('reportId', ''), r.get('startTime', ''), r.get('endTime', '')])
+            click.echo(tabulate(table_data, headers=['报告ID', '开始时间', '结束时间'], tablefmt='grid'))
+        else:
+            click.echo("未找到巡检报告")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-inspection-report')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--report-id', required=True, help='巡检报告ID')
+@click.option('--page-now', default=1, type=int, help='当前页码，默认1')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
+@click.option('--namespace', help='过滤风险项的命名空间')
+@click.option('--resource-type', help='过滤风险项的资源类型，多值用逗号分隔')
+@click.option('--level', help='过滤风险项的级别，多值用逗号分隔(danger/warning/ignore)')
+@click.pass_context
+@handle_error
+def get_inspection_report(ctx, region_id: str, cluster_id: str, report_id: str,
+                          page_now: int, page_size: int,
+                          namespace: Optional[str], resource_type: Optional[str], level: Optional[str]):
+    """查询巡检报告详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_inspection_report(
+        region_id, cluster_id, report_id, page_now, page_size,
+        namespace, resource_type, level
+    )
+
+    if output_format == 'table':
+        return_obj = result.get('returnObj', {})
+        if return_obj:
+            click.echo(f"巡检报告: {report_id}")
+            click.echo(f"  开始时间: {return_obj.get('startTime', '')}")
+            click.echo(f"  结束时间: {return_obj.get('endTime', '')}")
+            items = return_obj.get('items', {})
+            records = items.get('records', [])
+            total = items.get('total', 0)
+            if records:
+                click.echo(f"\n风险项 (共 {total} 条):")
+                from tabulate import tabulate
+                table_data = []
+                for r in records:
+                    table_data.append([
+                        r.get('namespace', ''),
+                        r.get('resourceType', ''),
+                        r.get('resourceName', ''),
+                        r.get('level', ''),
+                        r.get('message', ''),
+                        (r.get('describe', '') or '')[:40],
+                    ])
+                click.echo(tabulate(table_data, headers=['命名空间', '资源类型', '资源名', '级别', '检查项', '影响'], tablefmt='grid'))
+            else:
+                click.echo("未发现风险项")
+        else:
+            click.echo("未找到巡检报告")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('list-service-cidrs')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def list_service_cidrs(ctx, region_id: str, cluster_id: str):
+    """查询集群服务网段列表"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_service_cidrs(region_id, cluster_id)
+
+    if output_format == 'table':
+        cidrs_info = result.get('returnObj', '')
+        if cidrs_info:
+            click.echo(f"集群 '{cluster_id}' 中的服务网段列表:")
+            if isinstance(cidrs_info, str):
+                click.echo(cidrs_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到服务网段")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('get-service-cidr')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--resource-name', required=True, help='ServiceCidr资源名')
+@click.pass_context
+@handle_error
+def get_service_cidr(ctx, region_id: str, cluster_id: str, resource_name: str):
+    """查询集群服务网段详情"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_service_cidr(region_id, cluster_id, resource_name)
+
+    if output_format == 'table':
+        cidr_info = result.get('returnObj', '')
+        if cidr_info:
+            click.echo(f"服务网段 '{resource_name}' 详情:")
+            if isinstance(cidr_info, str):
+                click.echo(cidr_info)
+            else:
+                format_output(result, output_format)
+        else:
+            click.echo("未找到服务网段")
+    else:
+        format_output(result, output_format)
+
+
+@cce.command('check-component-log-collection')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.pass_context
+@handle_error
+def check_component_log_collection(ctx, region_id: str, cluster_name: str):
+    """查询核心组件日志采集开启情况"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.check_component_log_collection(region_id, cluster_name)
+
+    if output_format == 'table':
+        components = result.get('returnObj', [])
+        if components:
+            click.echo(f"集群 '{cluster_name}' 已开通日志采集的核心组件:")
+            for comp in components:
+                click.echo(f"  - {comp}")
+        else:
+            click.echo("未开通任何核心组件日志采集")
+    else:
+        format_output(result, output_format)
+
+
 # ========== 任务管理命令 ==========
 
 @cce.command('list-tasks')
@@ -1299,6 +2403,99 @@ def query_cluster_tags(ctx, region_id: str, cluster_id: str,
         else:
             click.echo("未找到标签")
     else:
+        format_output(result, output_format)
+
+
+@tag.command('list-by-name')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.pass_context
+@handle_error
+def list_cluster_tags_by_name(ctx, region_id: str, cluster_name: str):
+    """查询集群标签列表（按集群名称查询）"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.list_cluster_tags_by_name(region_id, cluster_name)
+
+    if output_format == 'table':
+        tags_data = result.get('returnObj', {})
+        tags = tags_data.get('tags', [])
+        if tags:
+            click.echo(f"集群 '{cluster_name}' 标签列表 (共 {len(tags)} 个):")
+            from tabulate import tabulate
+            table_data = [[i + 1, tag] for i, tag in enumerate(tags)]
+            click.echo(tabulate(table_data, headers=['序号', '标签'], tablefmt='grid'))
+        else:
+            click.echo("未找到标签")
+    else:
+        format_output(result, output_format)
+
+
+@tag.command('show-simple')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def get_cluster_tags_simple(ctx, region_id: str, cluster_id: str):
+    """查询集群标签（简单字符串标签列表）"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_tags_simple(region_id, cluster_id)
+
+    if output_format == 'table':
+        tags_data = result.get('returnObj', {})
+        tags = tags_data.get('tags', [])
+        if tags:
+            click.echo(f"集群 '{cluster_id}' 标签列表 (共 {len(tags)} 个):")
+            from tabulate import tabulate
+            table_data = [[i + 1, tag] for i, tag in enumerate(tags)]
+            click.echo(tabulate(table_data, headers=['序号', '标签'], tablefmt='grid'))
+        else:
+            click.echo("未找到标签")
+    else:
+        format_output(result, output_format)
+
+
+@tag.command('unbind')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.confirmation_option(prompt='确定要解绑该集群的所有标签吗?')
+@click.pass_context
+@handle_error
+def unbind_cluster_tags(ctx, region_id: str, cluster_name: str):
+    """解绑集群标签（删除所有标签）"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.unbind_cluster_tags(region_id, cluster_name)
+
+    click.echo(f"✓ 集群 '{cluster_name}' 标签已解绑")
+    if output_format != 'table':
+        format_output(result, output_format)
+
+
+@tag.command('modify')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-name', required=True, help='集群名称')
+@click.option('--tags', required=True, help='标签列表，多个标签用逗号分隔，如: tag1,tag2')
+@click.pass_context
+@handle_error
+def modify_cluster_tags(ctx, region_id: str, cluster_name: str, tags: str):
+    """修改集群标签（覆盖所有标签）"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    tag_list = [t.strip() for t in tags.split(',') if t.strip()]
+    result = cce_client.modify_cluster_tags(region_id, cluster_name, tag_list)
+
+    click.echo(f"✓ 集群 '{cluster_name}' 标签已修改: {', '.join(tag_list)}")
+    if output_format != 'table':
         format_output(result, output_format)
 
 
