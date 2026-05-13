@@ -31,7 +31,7 @@ pip install ctyun-cli
 验证安装成功：
 
 ```bash
-ctyun-cli --version
+ctyun-cli --help
 ```
 
 ## ⚡ 快速开始
@@ -47,10 +47,13 @@ export CTYUN_ACCESS_KEY=your_access_key
 export CTYUN_SECRET_KEY=your_secret_key
 ```
 
-或使用交互式配置：
+或使用命令行配置：
 
 ```bash
-ctyun-cli configure
+ctyun-cli configure \
+  --access-key your_access_key \
+  --secret-key your_secret_key \
+  --region cn-north-1
 ```
 
 ### 第二步：开始使用
@@ -142,7 +145,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.18.0 (2026-05-12)
+**最新版本**: v1.18.1 (2026-03-01)
+- 🔧 **CLI 初始化优化**: `configure`/`show-config`/`list-profiles`/`clear-cache` 命令不再需要预先配置认证信息，全新环境可直接运行
+
+**v1.18.0** (2026-05-12)
 - 🆕 **IAM（统一身份认证）全面扩展**：从 3 个 API 扩展至 **34 个**，覆盖 12 大功能分类
   - 用户管理（查询/列表/登录配置/访问控制）
   - 用户组管理（列表/详情/成员查询）
@@ -182,8 +188,6 @@ ctyun-cli cce list-clusters
 **v1.12.0** (2026-04-30)
 - 🆕 **新增 EMR（翼MapReduce）模块**：终端节点 `emr-global.ctapi.ctyun.cn`，实现 8 个 API
 
-**v1.11.0** (2026-04-30)
-- 🆕 **新增 CSS（云搜索服务）模块**：终端节点 `ctcsx-global.ctapi.ctyun.cn`，实现 3 个 API
 
 查看完整的更新历史请参阅 [CHANGELOG.md](CHANGELOG.md)
 

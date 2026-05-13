@@ -44,19 +44,22 @@ def cli(ctx, profile: str, access_key: Optional[str], secret_key: Optional[str],
     ctx.obj['endpoint'] = endpoint
     ctx.obj['output'] = output or config.get_output_format()
 
-    try:
-        # 创建API客户端
-        client = CTYUNClient(
-            access_key=access_key,
-            secret_key=secret_key,
-            region=region,
-            endpoint=endpoint,
-            profile=profile
-        )
-        ctx.obj['client'] = client
-    except Exception as e:
-        click.echo(f"错误: 初始化客户端失败 - {e}", err=True)
-        sys.exit(1)
+    # 不需要 API 客户端的命令跳过初始化
+    _NO_CLIENT_CMDS = {'configure', 'show-config', 'list-profiles', 'clear-cache'}
+    if ctx.invoked_subcommand is not None and ctx.invoked_subcommand not in _NO_CLIENT_CMDS:
+        try:
+            # 创建API客户端
+            client = CTYUNClient(
+                access_key=access_key,
+                secret_key=secret_key,
+                region=region,
+                endpoint=endpoint,
+                profile=profile
+            )
+            ctx.obj['client'] = client
+        except Exception as e:
+            click.echo(f"错误: 初始化客户端失败 - {e}", err=True)
+            sys.exit(1)
 
 
 @cli.command()
