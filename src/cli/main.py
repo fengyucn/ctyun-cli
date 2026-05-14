@@ -1124,7 +1124,13 @@ cli.add_command(security)
 # 将 ecs/commands.py 中定义的命令注册到当前 ecs group
 from ecs.commands import (update_ecs_label, query_dedicated_host_uuid, query_order_uuid,
                            cpu_history, mem_history, network_history, disk_history,
-                           cpu_latest, mem_latest, network_latest, disk_latest)
+                           cpu_latest, mem_latest, network_latest, disk_latest,
+                           get_region_summary, get_region_products, check_region_demand,
+                           get_commands, get_command, get_ca_agent,
+                           describe_send_file_results,
+                           list_dedicated_hosts, check_dedicated_host_demand,
+                           list_dedicated_host_flavors,
+                           list_ports, show_port)
 ecs.add_command(update_ecs_label)
 ecs.add_command(query_dedicated_host_uuid)
 ecs.add_command(query_order_uuid)
@@ -1136,6 +1142,18 @@ ecs.add_command(cpu_latest)
 ecs.add_command(mem_latest)
 ecs.add_command(network_latest)
 ecs.add_command(disk_latest)
+ecs.add_command(get_region_summary)
+ecs.add_command(get_region_products)
+ecs.add_command(check_region_demand)
+ecs.add_command(get_commands)
+ecs.add_command(get_command)
+ecs.add_command(get_ca_agent)
+ecs.add_command(describe_send_file_results)
+ecs.add_command(list_dedicated_hosts)
+ecs.add_command(check_dedicated_host_demand)
+ecs.add_command(list_dedicated_host_flavors)
+ecs.add_command(list_ports)
+ecs.add_command(show_port)
 
 
 if __name__ == '__main__':

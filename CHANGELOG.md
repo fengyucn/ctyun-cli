@@ -4,6 +4,57 @@
 
 ---
 
+## v1.18.4 (2026-05-14)
+
+### 🚀 ECS 查询 API 扩展
+
+**ECS 模块新增 12 个查询 API + CLI 命令**，涵盖资源池、云助手、宿主机、网卡四大类：
+
+#### 资源池查询（3个）
+- `ecs get-region-summary` — 查询资源池概况信息（GET /v4/region/get-summary）
+- `ecs get-region-products` — 查询资源池产品信息（GET /v4/region/get-products）
+- `ecs check-region-demand` — 查询资源池产品可售状态（GET /v4/region/check-demand），支持按规格/可用区/需求量验证
+
+#### 云助手（4个）
+- `ecs get-commands` — 查询云助手命令列表，支持按 ID/名称/类型过滤，分页展示
+- `ecs get-command` — 查询云助手命令详情，显示命令内容/参数/超时等配置
+- `ecs get-ca-agent` — 查询实例是否安装云助手 agent，支持批量实例查询
+- `ecs describe-send-file-results` — 查询文件上传结果，支持按文件名/执行ID过滤
+
+#### 宿主机（3个）
+- `ecs list-dedicated-hosts` — 查询一台或多台宿主机详细信息，支持按状态/名称/关键字过滤，展示 vCPU/内存使用量
+- `ecs check-dedicated-host-demand` — 查询宿主机规格售罄情况
+- `ecs list-dedicated-host-flavors` — 查询宿主机支持的云主机规格列表
+
+#### 网卡（2个）
+- `ecs list-ports` — 查询网卡列表，支持按 VPC/子网/设备ID过滤，展示主IP/MAC/EIP
+- `ecs show-port` — 查询网卡详细信息，展示安全组/辅助IP/EIP/VPC/子网
+
+- **终端节点**：统一使用 `ctecs-global.ctapi.ctyun.cn`
+- **新增 API 数**：12 个查询类 API + 12 个 CLI 命令
+
+### 📚 使用示例
+```bash
+# 资源池查询
+ctyun-cli ecs get-region-summary --region-id 200000001852
+ctyun-cli ecs get-region-products --region-id 200000001852
+ctyun-cli ecs check-region-demand --region-id 200000001852 --product-type ecs --spec-name hc1.large.2
+
+# 云助手
+ctyun-cli ecs get-commands --region-id 200000001852 --page-size 20
+ctyun-cli ecs get-command --region-id 200000001852 --command-id <命令ID>
+
+# 宿主机
+ctyun-cli ecs list-dedicated-hosts --region-id 200000001852
+ctyun-cli ecs check-dedicated-host-demand --region-id 200000001852 --az-name cn-huabei2-tj1A-public-ctcloud --flavor-name DDH-CM7
+
+# 网卡
+ctyun-cli ecs list-ports --region-id 200000001852
+ctyun-cli ecs show-port --region-id 200000001852 --port-id <网卡ID>
+```
+
+---
+
 ## v1.18.1 (2026-03-01)
 
 ### 🔧 Bug 修复

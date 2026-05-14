@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-308+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-305+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![APIs](https://img.shields.io/badge/APIs-397+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-383+-orange.svg)](docs/MODULES/README.md#命令统计)
 [![Modules](https://img.shields.io/badge/Modules-17+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -79,7 +79,7 @@ ctyun-cli cce list-clusters
 
 | 服务模块 | 命令数 | API数 | 核心功能 | 文档 |
 |---------|--------|-------|----------|------|
-| **ECS (云服务器)** | 52 | 41 | 实例管理、快照备份、密钥对、订单查询 | [详细文档](docs/MODULES/ecs.md) |
+| **ECS (云服务器)** | 64 | 53 | 实例管理、快照备份、密钥对、订单查询、资源池查询、云助手、宿主机、网卡 | [详细文档](docs/MODULES/ecs.md) |
 | **Monitor (监控服务)** | 52 | 54 | 监控数据、告警管理、Top-N统计、事件管理 | [详细文档](docs/MODULES/monitor.md) |
 | **Redis (分布式缓存)** | 18 | 22 | 实例管理、性能监控、网络配置、完整创建功能 | [详细文档](docs/MODULES/redis.md) |
 | **Billing (计费查询)** | 15 | 14 | 账单查询、费用分析、消费统计 | [详细文档](docs/MODULES/billing.md) |
@@ -97,9 +97,9 @@ ctyun-cli cce list-clusters
 | **OceanFS (海量文件服务)** | - | - | 海量文件存储管理（实现中） | - |
 | **Aone (边缘安全加速平台)** | 45 | 45 | 域名管理、证书管理、缓存刷新/预取、数据统计、安全防护（CC/WAF/DDoS） | - |
 | **LTS (云日志服务)** | - | - | 日志采集、检索、投递、告警管理（实现中） | - |
-| **总计** | **371** | **385** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **总计** | **383** | **397** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：43,000+行代码，385+个API，371+个命令，17大服务模块**
+📊 **规模统计：43,000+行代码，397+个API，383+个命令，17大服务模块**
 
 ## 📚 完整文档
 
@@ -145,7 +145,14 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.18.1 (2026-03-01)
+**最新版本**: v1.18.4 (2026-05-14)
+- 🚀 **ECS 查询 API 扩展**：新增 12 个查询 API + 12 个 CLI 命令，涵盖资源池(3)、云助手(4)、宿主机(3)、网卡(2)
+  - `ecs get-region-summary` / `get-region-products` / `check-region-demand`
+  - `ecs get-commands` / `get-command` / `get-ca-agent` / `describe-send-file-results`
+  - `ecs list-dedicated-hosts` / `check-dedicated-host-demand` / `list-dedicated-host-flavors`
+  - `ecs list-ports` / `show-port`
+
+**v1.18.1** (2026-03-01)
 - 🔧 **CLI 初始化优化**: `configure`/`show-config`/`list-profiles`/`clear-cache` 命令不再需要预先配置认证信息，全新环境可直接运行
 
 **v1.18.0** (2026-05-12)
