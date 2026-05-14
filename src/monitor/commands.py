@@ -3,6 +3,7 @@
 """
 
 import click
+import json
 from typing import Optional, List
 from datetime import datetime, timedelta
 from core import CTYUNAPIError
@@ -2494,6 +2495,76 @@ def query_custom_events(ctx, region_id: str, custom_event_id: Optional[str],
         click.echo(f"\n{'='*80}")
 
 
+@monitor.command('query-event-alarm-rules')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--service', help='云监控服务')
+@click.option('--dimension', help='云监控维度')
+@click.option('--status', type=int, help='规则状态(0:启用,1:停用)')
+@click.option('--alarm-status', type=int, help='告警状态(0:正常,1:告警)')
+@click.option('--name', help='规则名称')
+@click.option('--project-id', help='项目ID')
+@click.option('--sort', help='排序(-updateTime:按更新时间降序)')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=20, help='页大小')
+@click.pass_context
+@handle_error
+def query_event_alarm_rules(ctx, region_id, service, dimension, status, alarm_status,
+                             name, project_id, sort, page_no, page_size):
+    """查询事件告警规则列表"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).query_event_alarm_rules(
+        region_id, service, dimension, status, alarm_status, name, project_id, sort, page_no, page_size
+    )
+
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data', {})
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        click.echo(f"\n事件告警规则列表\n" + "=" * 80)
+        click.echo(f"总记录数: {data.get('totalCount', 0)} | 当前页: {data.get('currentCount', 0)}/{data.get('totalPage', 0)}")
+
+        rules = data.get('alarmRules', [])
+        if rules:
+            status_map = {0: '启用', 1: '停用'}
+            alarm_status_map = {0: '正常', 1: '告警'}
+            level_map = {1: '紧急', 2: '警示', 3: '普通'}
+            resource_scope_map = {0: '实例资源', 1: '资源分组', 2: '全部资源'}
+
+            table_data = []
+            for rule in rules:
+                conditions = rule.get('conditions', [])
+                condition_str = ''
+                if conditions:
+                    c = conditions[0]
+                    condition_str = f"{c.get('eventName', '')} 出现{c.get('value', '')}次/{c.get('period', '')}"
+                    condition_str = condition_str[:35]
+
+                table_data.append([
+                    rule.get('name', '')[:25],
+                    f"{rule.get('service', '')}/{rule.get('dimension', '')}",
+                    condition_str,
+                    status_map.get(rule.get('status', 0), '未知'),
+                    alarm_status_map.get(rule.get('alarmStatus', 0), '未知'),
+                    level_map.get(conditions[0].get('level', 3), '') if conditions else ''
+                ])
+
+            click.echo(f"\n{tabulate(table_data, headers=['规则名称','服务/维度','条件','状态','告警状态','等级'], tablefmt='grid')}")
+        else:
+            click.echo("\n未找到事件告警规则")
+
+        click.echo("\n" + "=" * 80)
+
+
 @monitor.command('query-custom-event-data')
 @click.option('--region-id', required=True, help='资源池ID')
 @click.option('--custom-event-id', multiple=True, help='自定义事件ID，可多次指定')
@@ -2600,6 +2671,62 @@ def query_custom_event_data(ctx, region_id: str, custom_event_id: tuple,
             click.echo(f"\n未找到事件监控详情")
         
         click.echo(f"\n{'='*80}")
+
+
+@monitor.command('query-custom-event-alarm-rules')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--status', type=int, help='规则状态(0:启用,1:停用)')
+@click.option('--alarm-status', type=int, help='告警状态(0:正常,1:告警)')
+@click.option('--name', help='规则名称')
+@click.option('--sort', help='排序(-updateTime:按更新时间降序)')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=20, help='页大小')
+@click.pass_context
+@handle_error
+def query_custom_event_alarm_rules(ctx, region_id, status, alarm_status, name, sort, page_no, page_size):
+    """查询自定义事件告警规则列表"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).query_custom_event_alarm_rules(
+        region_id, status, alarm_status, name, sort, page_no, page_size
+    )
+
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data', {})
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        click.echo(f"\n自定义事件告警规则列表\n" + "=" * 80)
+        click.echo(f"总记录数: {data.get('totalCount', 0)} | 当前页: {data.get('currentCount', 0)}/{data.get('totalPage', 0)}")
+
+        rules = data.get('alarmRules', [])
+        if rules:
+            status_map = {0: '启用', 1: '停用'}
+            alarm_status_map = {0: '正常', 1: '告警'}
+
+            table_data = []
+            for rule in rules:
+                table_data.append([
+                    rule.get('name', '')[:30],
+                    rule.get('customEventID', '')[:25] + '...',
+                    f"出现{rule.get('value', '')}次/{rule.get('period', '')}",
+                    status_map.get(rule.get('status', 0), '未知'),
+                    alarm_status_map.get(rule.get('alarmStatus', 0), '未知')
+                ])
+
+            click.echo(f"\n{tabulate(table_data, headers=['规则名称','事件ID','条件','状态','告警状态'], tablefmt='grid')}")
+        else:
+            click.echo("\n未找到自定义事件告警规则")
+
+        click.echo("\n" + "=" * 80)
 
 
 @monitor.command('describe-custom-event-alarm-rule')
@@ -4354,6 +4481,47 @@ def query_message_records(ctx, receiver, record_type, method, record_status, sta
         click.echo("\n" + "="*80)
 
 
+@monitor.command('download-message-records')
+@click.option('--start-time', type=int, help='起始时间（毫秒）')
+@click.option('--end-time', type=int, help='截止时间（毫秒）')
+@click.option('--output', help='保存路径，不传则打印到控制台')
+@click.pass_context
+@handle_error
+def download_message_records(ctx, start_time, end_time, output):
+    """导出通知记录（CSV格式）"""
+    client = ctx.obj['client']
+    result = MonitorClient(client).download_message_records(start_time, end_time)
+
+    if not result.get('success'):
+        click.echo(f"❌ 导出失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data')
+
+    if result.get('format') == 'csv':
+        # 二进制CSV内容
+        if output:
+            with open(output, 'wb') as f:
+                f.write(data)
+            click.echo(f"✅ 通知记录已导出到: {output}")
+        else:
+            # 尝试解码并打印
+            try:
+                click.echo(data.decode('utf-8'))
+            except UnicodeDecodeError:
+                click.echo(data.decode('gbk'))
+    else:
+        # JSON响应
+        output_format = ctx.obj.get('output', 'table')
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(data))
+        else:
+            click.echo(f"\n通知记录导出结果")
+            click.echo("=" * 80)
+            click.echo(json.dumps(data, ensure_ascii=False, indent=2))
+
+
 @monitor.command('query-inspection-task-overview')
 @click.option('--region-id', required=True, help='资源池ID')
 @click.option('--task-id', help='巡检任务ID')
@@ -4581,6 +4749,654 @@ def query_inspection_history_detail(ctx, task_id, inspection_item, page_no, page
             click.echo("\n未找到异常详情")
         
         click.echo("\n" + "="*80)
+
+
+@monitor.command('query-message-subscription')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.pass_context
+@handle_error
+def query_message_subscription(ctx, region_id):
+    """查询数据订阅列表"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).query_message_subscription(region_id)
+
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data', {})
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        target_type_map = {1: 'kafka', 4: 'API', 5: 'remoteWrite'}
+        status_map = {0: '上线', 1: '下线'}
+
+        subscriptions = data if isinstance(data, list) else [data]
+        if subscriptions and isinstance(subscriptions, list) and len(subscriptions) > 0:
+            table_data = []
+            for sub in subscriptions:
+                if isinstance(sub, dict):
+                    table_data.append([
+                        sub.get('subscriptionID', ''),
+                        sub.get('name', ''),
+                        target_type_map.get(sub.get('targetType'), sub.get('targetType', '')),
+                        status_map.get(sub.get('status'), sub.get('status', '')),
+                        sub.get('updateTime', '')
+                    ])
+            if table_data:
+                click.echo(f"\n{tabulate(table_data, headers=['订阅ID','名称','目标类型','状态','更新时间'], tablefmt='grid')}")
+            else:
+                click.echo("\n无数据订阅记录")
+        else:
+            click.echo("\n无数据订阅记录")
+
+
+@monitor.command('describe-message-subscription')
+@click.option('--subscription-id', required=True, help='数据订阅ID')
+@click.pass_context
+@handle_error
+def describe_message_subscription(ctx, subscription_id):
+    """查询数据订阅详情"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).describe_message_subscription(subscription_id)
+
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data', {})
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        target_type_map = {1: 'kafka', 4: 'API', 5: 'remoteWrite'}
+        subscription_type_map = {1: '监控数据', 2: '告警数据', 4: '事件数据'}
+        status_map = {0: '上线', 1: '下线'}
+        resource_type_map = {1: '具体实例', 2: '全部资源'}
+
+        click.echo(f"\n数据订阅详情\n" + "=" * 80)
+        click.echo(f"  订阅ID: {data.get('subscriptionID', '')}")
+        click.echo(f"  名称: {data.get('name', '')}")
+        click.echo(f"  资源池: {data.get('regionID', '')}")
+        click.echo(f"  订阅类型: {subscription_type_map.get(data.get('subscriptionType'), data.get('subscriptionType', ''))}")
+        click.echo(f"  状态: {status_map.get(data.get('status'), data.get('status', ''))}")
+        click.echo(f"  服务: {data.get('service', '')}")
+        click.echo(f"  维度: {data.get('dimension', '')}")
+        click.echo(f"  资源类型: {resource_type_map.get(data.get('resourceType'), data.get('resourceType', ''))}")
+        click.echo(f"  目标类型: {target_type_map.get(data.get('targetType'), data.get('targetType', ''))}")
+        click.echo(f"  更新时间: {data.get('updateTime', '')}")
+        click.echo("=" * 80)
+
+
+@monitor.command('notice-pack-list')
+@click.option('--pack-type', required=True, type=click.Choice(['sms', 'voice']), help='套餐包类型(sms:短信,voice:语音)')
+@click.option('--pack-id', help='套餐包ID')
+@click.option('--status', type=int, help='状态(1:正常,2:已用尽,3:已到期,6:冻结,7:下单中)')
+@click.option('--sort-key', help='排序字段(effectiveTime,expireTime,quota,used,orderCtime)')
+@click.option('--sort-type', type=click.Choice(['ASC', 'DESC']), help='排序类型')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='每页记录数')
+@click.pass_context
+@handle_error
+def notice_pack_list(ctx, pack_type, pack_id, status, sort_key, sort_type, page_no, page_size):
+    """查询通知套餐包列表"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).notice_pack_list(pack_type, pack_id, status, sort_key, sort_type, page_no, page_size)
+
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data', {})
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        from datetime import datetime
+        status_map = {1: '正常', 2: '已用尽', 3: '已到期', 6: '冻结', 7: '下单中'}
+
+        click.echo(f"\n通知套餐包列表\n" + "=" * 80)
+        click.echo(f"总记录: {data.get('totalCount', 0)} | 当前页: {data.get('currentCount', 0)}/{data.get('totalPage', 0)}")
+
+        pack_list = data.get('packList', [])
+        if pack_list:
+            table_data = []
+            for pack in pack_list:
+                eff_time = pack.get('effectiveTime', 0)
+                exp_time = pack.get('expireTime', 0)
+                eff_str = datetime.fromtimestamp(eff_time / 1000).strftime('%Y-%m-%d') if eff_time else ''
+                exp_str = datetime.fromtimestamp(exp_time / 1000).strftime('%Y-%m-%d') if exp_time else ''
+                table_data.append([
+                    pack.get('packID', '')[:12] + '...',
+                    pack.get('packType', ''),
+                    status_map.get(pack.get('status'), pack.get('status', '')),
+                    eff_str,
+                    exp_str,
+                    pack.get('quota', 0),
+                    pack.get('used', 0)
+                ])
+            click.echo(f"\n{tabulate(table_data, headers=['套餐包ID','类型','状态','生效时间','到期时间','总量','已用量'], tablefmt='grid')}")
+        else:
+            click.echo("\n未找到套餐包")
+
+
+@monitor.command('notice-pack-used')
+@click.option('--method', required=True, type=click.Choice(['sms', 'voice']), help='通知套餐包类型(sms:短信,voice:语音)')
+@click.pass_context
+@handle_error
+def notice_pack_used(ctx, method):
+    """查询本年度和本月套餐使用情况"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).notice_pack_used(method)
+
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data', {})
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        items = data if isinstance(data, list) else [data]
+        if items and isinstance(items, list):
+            table_data = []
+            for item in items:
+                if isinstance(item, dict):
+                    table_data.append([
+                        '是' if item.get('packIsAvailable') else '否',
+                        item.get('monthPackCost', 0),
+                        item.get('monthFreeCost', 0),
+                        item.get('monthFreeQuota', 0),
+                        item.get('yearCost', 0)
+                    ])
+            if table_data:
+                click.echo(f"\n{tabulate(table_data, headers=['可用套餐','本月已用(收费)','本月已用(免费)','本月免费额度','本年总量'], tablefmt='grid')}")
+            else:
+                click.echo("\n无使用数据")
+
+
+@monitor.command('notice-pack-limit-detail')
+@click.option('--method', required=True, type=click.Choice(['sms', 'voice']), help='通知套餐包类型(sms:短信,voice:语音)')
+@click.pass_context
+@handle_error
+def notice_pack_limit_detail(ctx, method):
+    """查询月度使用上限"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).notice_pack_limit_detail(method)
+
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    data = result.get('data', {})
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        items = data if isinstance(data, list) else [data]
+        if items and isinstance(items, list):
+            table_data = []
+            for item in items:
+                if isinstance(item, dict):
+                    table_data.append([item.get('monthLimit', 0)])
+            if table_data:
+                click.echo(f"\n{tabulate(table_data, headers=['月限流数量'], tablefmt='grid')}")
+            else:
+                click.echo("\n无限流数据")
+
+
+@monitor.command('list-monitor-board')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--board-type', type=click.Choice(['all', 'system', 'custom']), help='看板类型')
+@click.option('--name', help='名称模糊搜索')
+@click.option('--service', help='云监控服务')
+@click.option('--dimension', help='云监控维度')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def list_monitor_board(ctx, region_id, board_type, name, service, dimension, page_no, page_size):
+    """查询监控看板列表"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).list_monitor_board(region_id, board_type, name, service, dimension, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        from datetime import datetime
+        click.echo(f"\n监控看板列表\n" + "=" * 80)
+        click.echo(f"总记录: {data.get('totalCount', 0)} | 当前页: {data.get('currentCount', 0)}/{data.get('totalPage', 0)} | 配额剩余: {data.get('boardQuota', 0)}")
+        boards = data.get('boardList', [])
+        if boards:
+            type_map = {'system': '系统默认', 'custom': '自定义'}
+            table_data = []
+            for b in boards:
+                ct = datetime.fromtimestamp(b.get('createTime', 0)).strftime('%Y-%m-%d %H:%M') if b.get('createTime') else ''
+                ut = datetime.fromtimestamp(b.get('updateTime', 0)).strftime('%Y-%m-%d %H:%M') if b.get('updateTime') else ''
+                table_data.append([b.get('boardID', '')[:12]+'...', b.get('name', ''), type_map.get(b.get('type'), b.get('type', '')), ct, ut])
+            click.echo(f"\n{tabulate(table_data, headers=['看板ID','名称','类型','创建时间','更新时间'], tablefmt='grid')}")
+        else:
+            click.echo("\n无看板数据")
+
+
+@monitor.command('query-monitor-board-sys-services')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.pass_context
+@handle_error
+def query_monitor_board_sys_services(ctx, region_id):
+    """查询系统看板支持服务维度"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).query_monitor_board_sys_services(region_id)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        services = data.get('data', []) if isinstance(data, dict) else data
+        if services:
+            click.echo(f"\n系统看板支持服务维度\n" + "=" * 80)
+            for svc in services:
+                click.echo(f"\n{svc.get('serviceName', '')} ({svc.get('service', '')}):")
+                dims = svc.get('dimensions', [])
+                for d in dims:
+                    click.echo(f"  - {d.get('dimensionName', '')} ({d.get('dimension', '')})")
+        else:
+            click.echo("\n无服务维度数据")
+
+
+@monitor.command('query-monitor-board-view-data')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--view-id', required=True, help='视图ID')
+@click.option('--start-time', type=int, help='查询起始Unix时间戳')
+@click.option('--end-time', type=int, help='查询结束Unix时间戳')
+@click.option('--fun', type=click.Choice(['raw', 'avg', 'min', 'max', 'variance', 'sum']), help='聚合类型')
+@click.option('--period', type=int, default=300, help='聚合周期(秒)')
+@click.pass_context
+@handle_error
+def query_monitor_board_view_data(ctx, region_id, view_id, start_time, end_time, fun, period):
+    """查询看板视图数据"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(client).query_monitor_board_view_data(region_id, view_id, start_time, end_time, fun, period)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    else:
+        click.echo(f"\n看板视图数据\n" + "=" * 80)
+        click.echo(f"视图ID: {data.get('viewID', '')}")
+        click.echo(f"视图类型: {data.get('viewType', '')}")
+        click.echo(f"监控类型: {data.get('monitorType', '')}")
+        if output_format != 'json':
+            click.echo(json.dumps(data.get('viewData', {}), ensure_ascii=False, indent=2))
+
+
+# ==================== 资源列表渲染 Helper ====================
+
+def _render_resource_list(data, title, id_label='实例ID', name_label='名称', extra_headers=None, extra_fields=None):
+    """通用资源列表表格渲染"""
+    from tabulate import tabulate
+    click.echo(f"\n{title}\n" + "=" * 80)
+    click.echo(f"总记录: {data.get('totalCount', 0)} | 当前页: {data.get('currentCount', 0)}/{data.get('totalPage', 0)}")
+    headers = [id_label, name_label, '标识ID']
+    if extra_headers:
+        headers.extend(extra_headers)
+    table_data = []
+    # Try common list key patterns
+    list_keys = ['list', 'ecsList', 'eipList', 'trafficList', 'elbList', 'listenerList',
+                 'zosUserList', 'zosBucketList', 'vpcEndpointList', 'vpcEndpointServiceList']
+    items = []
+    for k in list_keys:
+        val = data.get(k, [])
+        if val:
+            items = val
+            break
+    if not items and isinstance(data, list):
+        items = data
+    for item in items:
+        row = [item.get('instanceID', ''), item.get('instanceName', ''), item.get('deviceUUID', '')]
+        if extra_fields:
+            for field in extra_fields:
+                row.append(item.get(field, ''))
+        table_data.append(row)
+    if table_data:
+        click.echo(f"\n{tabulate(table_data, headers=headers, tablefmt='grid')}")
+    else:
+        click.echo("\n无数据")
+
+
+def _query_resource_list_cmd(ctx, client_method, title, id_label='实例ID', name_label='名称',
+                              extra_headers=None, extra_fields=None, region_id=None,
+                              page_no=None, page_size=None):
+    """通用资源列表命令处理"""
+    client, output_format = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = client_method(region_id, page_no, page_size) if region_id else client_method()
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif output_format == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, title, id_label, name_label, extra_headers, extra_fields)
+
+
+@monitor.command('query-ecs-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_ecs_list(ctx, region_id, page_no, page_size):
+    """查询资源池下云主机列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_ecs_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '云主机列表')
+
+
+@monitor.command('query-pms-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_pms_list(ctx, region_id, page_no, page_size):
+    """查询资源池下物理机列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_pms_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '物理机列表')
+
+
+@monitor.command('query-evs-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_evs_list(ctx, region_id, page_no, page_size):
+    """查询资源池下磁盘列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_evs_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '磁盘列表')
+
+
+@monitor.command('query-eip-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_eip_list(ctx, region_id, page_no, page_size):
+    """查询资源池下弹性IP列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_eip_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '弹性IP列表', extra_headers=['IP地址'], extra_fields=['IP'])
+
+
+@monitor.command('query-traffic-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_traffic_list(ctx, region_id, page_no, page_size):
+    """查询资源池下共享带宽列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_traffic_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '共享带宽列表')
+
+
+@monitor.command('query-elb-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_elb_list(ctx, region_id, page_no, page_size):
+    """查询资源池下负载均衡列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_elb_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '负载均衡列表')
+
+
+@monitor.command('query-listener-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_listener_list(ctx, region_id, page_no, page_size):
+    """查询资源池下监听器列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_listener_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '监听器列表')
+
+
+@monitor.command('query-scaling-group-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_scaling_group_list(ctx, region_id, page_no, page_size):
+    """查询资源池下弹性伸缩组列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_scaling_group_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '弹性伸缩组列表')
+
+
+@monitor.command('query-zos-user-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_zos_user_list(ctx, region_id, page_no, page_size):
+    """查询资源池下对象存储（用户）列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_zos_user_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '对象存储（用户）列表')
+
+
+@monitor.command('query-zos-bucket-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_zos_bucket_list(ctx, region_id, page_no, page_size):
+    """查询资源池下对象存储（存储桶）列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_zos_bucket_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, '对象存储（存储桶）列表')
+
+
+@monitor.command('query-vpc-endpoint-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_vpc_endpoint_list(ctx, region_id, page_no, page_size):
+    """查询资源池下VPC终端节点列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_vpc_endpoint_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, 'VPC终端节点列表')
+
+
+@monitor.command('query-vpc-endpoint-service-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='页大小')
+@click.pass_context
+@handle_error
+def query_vpc_endpoint_service_list(ctx, region_id, page_no, page_size):
+    """查询资源池下VPC终端节点服务列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_vpc_endpoint_service_list(region_id, page_no, page_size)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        _render_resource_list(data, 'VPC终端节点服务列表')
+
+
+@monitor.command('query-monitor-items-by-device')
+@click.option('--device-type', help='设备类型(vm,bare_metal,disk,scaling,traffic,eip,elb,listener等)')
+@click.pass_context
+@handle_error
+def query_monitor_items_by_device(ctx, device_type):
+    """查询各设备类型支持的监控项列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_monitor_items_by_device(device_type)
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True); import sys; sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        click.echo(f"\n各设备类型监控项列表\n" + "=" * 80)
+        items = data.get('monitorItems', [])
+        if items:
+            for mt in items:
+                click.echo(f"\n设备类型: {mt.get('deviceType', '')}")
+                item_list = mt.get('items', [])
+                if item_list:
+                    table_data = [[i.get('name', ''), i.get('desc', ''), i.get('unit', '')] for i in item_list]
+                    click.echo(tabulate(table_data, headers=['指标名称', '描述', '单位'], tablefmt='grid'))
+        else:
+            click.echo("\n无监控项数据")
 
 
 if __name__ == '__main__':

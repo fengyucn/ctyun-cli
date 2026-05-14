@@ -3142,6 +3142,79 @@ class MonitorClient:
             logger.error(f"查询自定义监控告警规则详情失败: {str(e)}", exc_info=True)
             return {'success': False, 'error': 'Exception', 'message': str(e)}
 
+    def query_custom_event_alarm_rules(self, region_id: str, status: Optional[int] = None,
+                                        alarm_status: Optional[int] = None,
+                                        name: Optional[str] = None, sort: Optional[str] = None,
+                                        page_no: Optional[int] = None,
+                                        page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询自定义事件告警规则列表"""
+        logger.info(f"查询自定义事件告警规则列表: region_id={region_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/query-custom-event-alarm-rules"
+            query_params = {'regionID': region_id}
+            if status is not None: query_params['status'] = status
+            if alarm_status is not None: query_params['alarmStatus'] = alarm_status
+            if name: query_params['name'] = name
+            if sort: query_params['sort'] = sort
+            if page_no: query_params['pageNo'] = page_no
+            if page_size: query_params['pageSize'] = page_size
+
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询自定义事件告警规则列表失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    def query_event_alarm_rules(self, region_id: str, service: Optional[str] = None,
+                                 dimension: Optional[str] = None,
+                                 status: Optional[int] = None,
+                                 alarm_status: Optional[int] = None,
+                                 name: Optional[str] = None,
+                                 project_id: Optional[str] = None,
+                                 sort: Optional[str] = None,
+                                 page_no: Optional[int] = None,
+                                 page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询事件告警规则列表"""
+        logger.info(f"查询事件告警规则列表: region_id={region_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/query-event-alarm-rules"
+            query_params = {'regionID': region_id}
+            if service: query_params['service'] = service
+            if dimension: query_params['dimension'] = dimension
+            if status is not None: query_params['status'] = status
+            if alarm_status is not None: query_params['alarmStatus'] = alarm_status
+            if name: query_params['name'] = name
+            if project_id: query_params['projectID'] = project_id
+            if sort: query_params['sort'] = sort
+            if page_no: query_params['pageNo'] = page_no
+            if page_size: query_params['pageSize'] = page_size
+
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询事件告警规则列表失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
     def query_notice_templates(self, service: Optional[str] = None, dimension: Optional[str] = None,
                                name: Optional[str] = None, page_no: Optional[int] = None,
                                page_size: Optional[int] = None) -> Dict[str, Any]:
@@ -3393,6 +3466,39 @@ class MonitorClient:
             logger.error(f"查询通知记录列表失败: {str(e)}", exc_info=True)
             return {'success': False, 'error': 'Exception', 'message': str(e)}
 
+    def download_message_records(self, start_time: Optional[int] = None,
+                                  end_time: Optional[int] = None) -> Dict[str, Any]:
+        """导出通知记录（CSV格式）"""
+        logger.info(f"导出通知记录: start_time={start_time}, end_time={end_time}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/download-message-records"
+            body = {}
+            if start_time: body['startTime'] = start_time
+            if end_time: body['endTime'] = end_time
+
+            body_json = json.dumps(body)
+            headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
+                                                extra_headers={'Content-Type': 'application/json'})
+            response = self.client.session.post(url, json=body, headers=headers, timeout=60, verify=False)
+
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+
+            # 尝试按JSON解析，失败则按CSV二进制内容处理
+            try:
+                result = response.json()
+                if result.get('statusCode') == 800:
+                    return {'success': True, 'data': result.get('returnObj', {})}
+                else:
+                    return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                           'message': result.get('msgDesc', result.get('message', '未知错误'))}
+            except (ValueError, json.JSONDecodeError):
+                # 返回CSV二进制内容
+                return {'success': True, 'data': response.content, 'format': 'csv'}
+        except Exception as e:
+            logger.error(f"导出通知记录失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
     def query_inspection_task_overview(self, region_id: str, task_id: Optional[str] = None) -> Dict[str, Any]:
         """查询巡检任务结果总览"""
         logger.info(f"查询巡检任务结果总览: region_id={region_id}, task_id={task_id}")
@@ -3530,3 +3636,314 @@ class MonitorClient:
         except Exception as e:
             logger.error(f"查询巡检历史详情失败: {str(e)}", exc_info=True)
             return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    # ==================== 数据订阅 Start ====================
+
+    def query_message_subscription(self, region_id: str) -> Dict[str, Any]:
+        """查询数据订阅列表"""
+        logger.info(f"查询数据订阅列表: region_id={region_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/query-message-subscription"
+            query_params = {'regionID': region_id}
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询数据订阅列表失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    def describe_message_subscription(self, subscription_id: str) -> Dict[str, Any]:
+        """查询数据订阅详情"""
+        logger.info(f"查询数据订阅详情: subscription_id={subscription_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/describe-message-subscription"
+            query_params = {'subscriptionID': subscription_id}
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询数据订阅详情失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    # ==================== 数据订阅 End ====================
+
+    # ==================== 套餐管理 Start ====================
+
+    def notice_pack_list(self, pack_type: str, pack_id: Optional[str] = None,
+                         status: Optional[int] = None, sort_key: Optional[str] = None,
+                         sort_type: Optional[str] = None, page_no: Optional[int] = None,
+                         page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询通知套餐包列表"""
+        logger.info(f"查询通知套餐包列表: pack_type={pack_type}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/order/notice-pack-list"
+            query_params = {'packType': pack_type}
+            if pack_id: query_params['packID'] = pack_id
+            if status is not None: query_params['status'] = status
+            if sort_key: query_params['sortKey'] = sort_key
+            if sort_type: query_params['sortType'] = sort_type
+            if page_no: query_params['pageNo'] = page_no
+            if page_size: query_params['pageSize'] = page_size
+
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询通知套餐包列表失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    def notice_pack_used(self, method: str) -> Dict[str, Any]:
+        """查询本年度和本月套餐使用情况"""
+        logger.info(f"查询套餐使用情况: method={method}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/order/notice-pack-used"
+            query_params = {'method': method}
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询套餐使用情况失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    def notice_pack_limit_detail(self, method: str) -> Dict[str, Any]:
+        """查询月度使用上限"""
+        logger.info(f"查询月度使用上限: method={method}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/order/notice-pack-limit-detail"
+            query_params = {'method': method}
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询月度使用上限失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    # ==================== 套餐管理 End ====================
+
+    # ==================== 资源列表查询 Helper ====================
+
+    def _query_resource_list(self, url_path: str, region_id: str, page_no: Optional[int] = None,
+                              page_size: Optional[int] = None) -> Dict[str, Any]:
+        """通用资源列表查询"""
+        logger.info(f"查询资源列表: url_path={url_path}, region_id={region_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/{url_path}"
+            query_params = {'regionID': region_id}
+            if page_no is not None: query_params['pageNo'] = page_no
+            if page_size is not None: query_params['pageSize'] = page_size
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询资源列表失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    # ==================== 监控看板 Start ====================
+
+    def list_monitor_board(self, region_id: str, board_type: Optional[str] = None,
+                           name: Optional[str] = None, service: Optional[str] = None,
+                           dimension: Optional[str] = None, page_no: Optional[int] = None,
+                           page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询监控看板列表"""
+        logger.info(f"查询监控看板列表: region_id={region_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/monitor-board/list"
+            query_params = {'regionID': region_id}
+            if board_type: query_params['boardType'] = board_type
+            if name: query_params['name'] = name
+            if service: query_params['service'] = service
+            if dimension: query_params['dimension'] = dimension
+            if page_no is not None: query_params['pageNo'] = page_no
+            if page_size is not None: query_params['pageSize'] = page_size
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询监控看板列表失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    def query_monitor_board_sys_services(self, region_id: str) -> Dict[str, Any]:
+        """查询系统看板支持服务维度"""
+        logger.info(f"查询系统看板支持服务维度: region_id={region_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/monitor-board/query-sys-services"
+            query_params = {'regionID': region_id}
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询系统看板支持服务维度失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    def query_monitor_board_view_data(self, region_id: str, view_id: str,
+                                       start_time: Optional[int] = None,
+                                       end_time: Optional[int] = None,
+                                       fun: Optional[str] = None,
+                                       period: Optional[int] = None) -> Dict[str, Any]:
+        """查询看板视图数据"""
+        logger.info(f"查询看板视图数据: region_id={region_id}, view_id={view_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/monitor-board/query-view-data"
+            body = {'regionID': region_id, 'viewID': view_id}
+            if start_time is not None: body['startTime'] = start_time
+            if end_time is not None: body['endTime'] = end_time
+            if fun: body['fun'] = fun
+            if period is not None: body['period'] = period
+            body_json = json.dumps(body)
+            headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
+                                                extra_headers={'Content-Type': 'application/json'})
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询看板视图数据失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    # ==================== 监控看板 End ====================
+
+    # ==================== 监控对象资源列表 Start ====================
+
+    def query_ecs_list(self, region_id: str, page_no: Optional[int] = None,
+                       page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下云主机列表"""
+        return self._query_resource_list('query-ecs-list', region_id, page_no, page_size)
+
+    def query_pms_list(self, region_id: str, page_no: Optional[int] = None,
+                       page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下物理机列表"""
+        return self._query_resource_list('query-pms-list', region_id, page_no, page_size)
+
+    def query_evs_list(self, region_id: str, page_no: Optional[int] = None,
+                       page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下磁盘列表"""
+        return self._query_resource_list('query-evs-list', region_id, page_no, page_size)
+
+    def query_eip_list(self, region_id: str, page_no: Optional[int] = None,
+                       page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下弹性IP列表"""
+        return self._query_resource_list('query-eip-list', region_id, page_no, page_size)
+
+    def query_traffic_list(self, region_id: str, page_no: Optional[int] = None,
+                           page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下共享带宽列表"""
+        return self._query_resource_list('query-traffic-list', region_id, page_no, page_size)
+
+    def query_elb_list(self, region_id: str, page_no: Optional[int] = None,
+                       page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下负载均衡列表"""
+        return self._query_resource_list('query-elb-list', region_id, page_no, page_size)
+
+    def query_listener_list(self, region_id: str, page_no: Optional[int] = None,
+                            page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下监听器列表"""
+        return self._query_resource_list('query-listener-list', region_id, page_no, page_size)
+
+    def query_scaling_group_list(self, region_id: str, page_no: Optional[int] = None,
+                                 page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下弹性伸缩组列表"""
+        return self._query_resource_list('query-scaling-group-list', region_id, page_no, page_size)
+
+    def query_zos_user_list(self, region_id: str, page_no: Optional[int] = None,
+                            page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下对象存储（用户）列表"""
+        return self._query_resource_list('query-zos-user-list', region_id, page_no, page_size)
+
+    def query_zos_bucket_list(self, region_id: str, page_no: Optional[int] = None,
+                              page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下对象存储（存储桶）列表"""
+        return self._query_resource_list('query-zos-bucket-list', region_id, page_no, page_size)
+
+    def query_vpc_endpoint_list(self, region_id: str, page_no: Optional[int] = None,
+                                page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下VPC终端节点列表"""
+        return self._query_resource_list('query-vpc-endpoint-list', region_id, page_no, page_size)
+
+    def query_vpc_endpoint_service_list(self, region_id: str, page_no: Optional[int] = None,
+                                         page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询资源池下VPC终端节点服务列表"""
+        return self._query_resource_list('query-vpc-endpoint-service-list', region_id, page_no, page_size)
+
+    def query_monitor_items_by_device(self, device_type: Optional[str] = None) -> Dict[str, Any]:
+        """查询各设备类型支持的监控项列表"""
+        logger.info(f"查询各设备类型监控项: device_type={device_type}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/query-monitor-items"
+            query_params = {}
+            if device_type: query_params['deviceType'] = device_type
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                       'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询各设备类型监控项失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    # ==================== 监控对象资源列表 End ====================

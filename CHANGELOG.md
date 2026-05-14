@@ -4,6 +4,47 @@
 
 ---
 
+## v1.18.5 (2026-05-14)
+
+### 🚀 监控模块大幅扩展
+
+**Monitor 模块新增 21 个查询 API + CLI 命令**，涵盖数据订阅、套餐管理、监控看板、监控对象资源列表四大类：
+
+#### 数据订阅（2个）
+- `monitor query-message-subscription` — 查询数据订阅列表
+- `monitor describe-message-subscription` — 查询数据订阅详情
+
+#### 套餐管理（3个）
+- `monitor notice-pack-list` — 查询通知套餐包列表（支持按状态/排序/分页过滤）
+- `monitor notice-pack-used` — 查询本年度和本月使用情况
+- `monitor notice-pack-limit-detail` — 查询月度使用上限
+
+#### 监控看板（3个）
+- `monitor list-monitor-board` — 查询监控看板列表（支持按类型/名称/服务/维度过滤）
+- `monitor query-monitor-board-sys-services` — 查询系统看板支持服务维度
+- `monitor query-monitor-board-view-data` — 查询看板视图数据（折线图/柱状图/仪表盘/饼图/表格）
+
+#### 监控对象资源列表（12个）
+- `monitor query-ecs-list` — 查询资源池下云主机列表
+- `monitor query-pms-list` — 查询资源池下物理机列表
+- `monitor query-evs-list` — 查询资源池下磁盘列表
+- `monitor query-eip-list` — 查询资源池下弹性IP列表（含IP地址）
+- `monitor query-traffic-list` — 查询资源池下共享带宽列表
+- `monitor query-elb-list` — 查询资源池下负载均衡列表
+- `monitor query-listener-list` — 查询资源池下监听器列表
+- `monitor query-scaling-group-list` — 查询资源池下弹性伸缩组列表
+- `monitor query-zos-user-list` — 查询资源池下对象存储（用户）列表
+- `monitor query-zos-bucket-list` — 查询资源池下对象存储（存储桶）列表
+- `monitor query-vpc-endpoint-list` — 查询资源池下VPC终端节点列表
+- `monitor query-vpc-endpoint-service-list` — 查询资源池下VPC终端节点服务列表
+
+#### 设备类型监控项（1个）
+- `monitor query-monitor-items-by-device` — 查询各设备类型支持的监控项列表（支持vm/bare_metal/disk/eip等15+设备类型）
+
+- **终端节点**：统一使用 `monitor-global.ctapi.ctyun.cn`
+- **新增 API 数**：21 个查询类 API + 21 个 CLI 命令
+- **版本规则**：采用 `主版本.模块版本.功能版本.修复版本` 四位版本号，本次为模块功能增强
+
 ## v1.18.4 (2026-05-14)
 
 ### 🚀 ECS 查询 API 扩展

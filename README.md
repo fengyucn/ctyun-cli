@@ -145,7 +145,14 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.18.4 (2026-05-14)
+**最新版本**: v1.18.5 (2026-05-14)
+- 🚀 **监控模块大幅扩展**：新增 21 个查询 API + 21 个 CLI 命令，涵盖数据订阅(2)、套餐管理(3)、监控看板(3)、资源列表(12)、设备类型监控项(1)
+  - `monitor query-message-subscription` / `describe-message-subscription`
+  - `monitor notice-pack-list` / `notice-pack-used` / `notice-pack-limit-detail`
+  - `monitor list-monitor-board` / `query-monitor-board-sys-services` / `query-monitor-board-view-data`
+  - `monitor query-ecs-list` / `query-pms-list` / `query-evs-list` / `query-eip-list` 等 12 个资源列表
+  
+**v1.18.4** (2026-05-14)
 - 🚀 **ECS 查询 API 扩展**：新增 12 个查询 API + 12 个 CLI 命令，涵盖资源池(3)、云助手(4)、宿主机(3)、网卡(2)
   - `ecs get-region-summary` / `get-region-products` / `check-region-demand`
   - `ecs get-commands` / `get-command` / `get-ca-agent` / `describe-send-file-results`
