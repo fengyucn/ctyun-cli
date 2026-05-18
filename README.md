@@ -3,9 +3,9 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-397+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-383+-orange.svg)](docs/MODULES/README.md#命令统计)
-[![Modules](https://img.shields.io/badge/Modules-17+-blue.svg)](docs/MODULES/README.md)
+[![APIs](https://img.shields.io/badge/APIs-405+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-391+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![Modules](https://img.shields.io/badge/Modules-18+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
 
@@ -82,6 +82,7 @@ ctyun-cli cce list-clusters
 | **ECS (云服务器)** | 64 | 53 | 实例管理、快照备份、密钥对、订单查询、资源池查询、云助手、宿主机、网卡 | [详细文档](docs/MODULES/ecs.md) |
 | **Monitor (监控服务)** | 52 | 54 | 监控数据、告警管理、Top-N统计、事件管理 | [详细文档](docs/MODULES/monitor.md) |
 | **Redis (分布式缓存)** | 18 | 22 | 实例管理、性能监控、网络配置、完整创建功能 | [详细文档](docs/MODULES/redis.md) |
+| **Audit (云审计)** | 8 | 8 | 事件查询、资源池管理、跟踪任务管理 | [详细文档](docs/MODULES/audit.md) |
 | **Billing (计费查询)** | 15 | 14 | 账单查询、费用分析、消费统计 | [详细文档](docs/MODULES/billing.md) |
 | **Security (安全卫士)** | 6 | 13 | 安全扫描、漏洞管理、风险评估 | [详细文档](docs/MODULES/security.md) |
 | **IAM (身份访问管理)** | 34 | 34 | 用户/用户组/权限/策略/委托/AK-SK/MFA/企业项目/身份供应商/敏感操作 | [详细文档](docs/MODULES/iam.md) |
@@ -97,9 +98,9 @@ ctyun-cli cce list-clusters
 | **OceanFS (海量文件服务)** | - | - | 海量文件存储管理（实现中） | - |
 | **Aone (边缘安全加速平台)** | 45 | 45 | 域名管理、证书管理、缓存刷新/预取、数据统计、安全防护（CC/WAF/DDoS） | - |
 | **LTS (云日志服务)** | - | - | 日志采集、检索、投递、告警管理（实现中） | - |
-| **总计** | **383** | **397** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **总计** | **391** | **405** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：43,000+行代码，397+个API，383+个命令，17大服务模块**
+📊 **规模统计：43,000+行代码，405+个API，391+个命令，18大服务模块**
 
 ## 📚 完整文档
 
@@ -145,7 +146,12 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.18.5 (2026-05-14)
+**最新版本**: v1.19.0 (2026-05-18)
+- 🆕 **新增云审计（Cloud Audit）模块**：新增 8 个查询 API + 8 个 CLI 命令，涵盖事件查询、资源池管理、跟踪任务管理
+  - `audit list-events` / `get-event-selection` / `get-service-status` / `get-available-regions`
+  - `audit get-user-authority` / `get-storage-region-info` / `list-tracks` / `get-track`
+  
+**v1.18.5** (2026-05-14)
 - 🚀 **监控模块大幅扩展**：新增 21 个查询 API + 21 个 CLI 命令，涵盖数据订阅(2)、套餐管理(3)、监控看板(3)、资源列表(12)、设备类型监控项(1)
   - `monitor query-message-subscription` / `describe-message-subscription`
   - `monitor notice-pack-list` / `notice-pack-used` / `notice-pack-limit-detail`

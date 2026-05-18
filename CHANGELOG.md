@@ -4,6 +4,28 @@
 
 ---
 
+## v1.19.0 (2026-05-18)
+
+### 🆕 新增云审计（Cloud Audit）模块
+
+**Audit 模块新增 8 个查询 API + 8 个 CLI 命令**，涵盖事件查询、资源池管理、跟踪任务管理四大类：
+
+#### 事件查询（3个）
+- `audit list-events` — 查询事件列表（支持按时间/类型/级别/用户/服务/资源筛选）
+- `audit get-event-selection` — 查询筛选事件的条件列表（事件类型/事件级别/用户/服务类型/资源类型）
+- `audit get-service-status` — 获取服务开通状态
+
+#### 资源池管理（3个）
+- `audit get-available-regions` — 获取云审计支持的资源池列表
+- `audit get-user-authority` — 获取用户授权的桶信息
+- `audit get-storage-region-info` — 获取操作事件存储的资源池信息
+
+#### 跟踪任务管理（2个）
+- `audit list-tracks` — 查询跟踪任务列表
+- `audit get-track` — 查询跟踪任务详情
+
+---
+
 ## v1.18.5 (2026-05-14)
 
 ### 🚀 监控模块大幅扩展
