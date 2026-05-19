@@ -5399,5 +5399,159 @@ def query_monitor_items_by_device(ctx, device_type):
             click.echo("\n无监控项数据")
 
 
+@monitor.command('data-export-tasks')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--task-id', help='任务ID（可选）')
+@click.option('--name', help='任务名称，支持模糊搜索（可选）')
+@click.option('--page', type=int, help='页码，默认1')
+@click.option('--page-size', type=int, help='每页大小，默认20')
+@click.pass_context
+@handle_error
+def data_export_tasks(ctx, region_id: str, task_id: Optional[str],
+                      name: Optional[str], page: Optional[int], page_size: Optional[int]):
+    """查询数据导出任务列表"""
+    cli, fmt = ctx.obj['client'], ctx.obj.get('output', 'table')
+    result = MonitorClient(cli).query_data_export_task(
+        region_id=region_id, task_id=task_id, name=name,
+        page_no=page, page_size=page_size
+    )
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+    data = result.get('data', {})
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(data))
+    elif fmt == 'yaml':
+        import yaml
+        click.echo(yaml.dump(data, allow_unicode=True, default_flow_style=False))
+    else:
+        from tabulate import tabulate
+        tasks = data.get('taskList', [])
+        total = data.get('totalCount', 0)
+        current = data.get('currentCount', len(tasks))
+        click.echo(f"\n数据导出任务列表 (总计: {total} 条, 当前页: {current} 条)\n" + "=" * 100)
+        if tasks:
+            status_map = {0: '待处理', 1: '处理中', 2: '已完成', 3: '失败', 4: '过期'}
+            table_data = []
+            for t in tasks:
+                table_data.append([
+                    t.get('taskID', ''),
+                    t.get('name', ''),
+                    t.get('deviceType', ''),
+                    status_map.get(t.get('status'), '未知'),
+                    f"{t.get('process', 0)}%" if t.get('status') == 1 else '-',
+                    datetime.fromtimestamp(t.get('createTime', 0) / 1000).strftime('%Y-%m-%d %H:%M') if t.get('createTime') else '-',
+                    t.get('msg', '')
+                ])
+            click.echo(tabulate(table_data,
+                                headers=['任务ID', '名称', '设备类型', '状态', '进度', '创建时间', '消息'],
+                                tablefmt='grid'))
+        else:
+            click.echo("\n无数据导出任务")
+
+
+@monitor.command('create-data-export-task')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--name', required=True, help='任务名称，4-20个字符，支持中英文、数字、下划线')
+@click.option('--service', required=True, help='云监控服务 (ecs/evs/pms/...)')
+@click.option('--dimension', required=True, help='云监控维度 (ecs/disk/pms/...)')
+@click.option('--item-name', 'item_names', multiple=True, required=True, help='监控项名称，可多次指定')
+@click.option('--aggregate-type', 'aggregate_types', multiple=True, required=True,
+              help='数据聚合类型 (raw/avg/max/min)，可多次指定')
+@click.option('--start-time', required=True, type=int, help='数据起始时间（Unix时间戳，秒）')
+@click.option('--end-time', required=True, type=int, help='数据截止时间（Unix时间戳，秒）')
+@click.option('--period', type=int, help='聚合周期（秒），除raw外其他聚合类型必传')
+@click.option('--description', help='任务描述，最多50个字符')
+@click.option('--report-template', type=int, default=0, help='报表模板: 0=默认, 1=基础')
+@click.option('--dimension-filter', 'dimension_filters', multiple=True,
+              help='设备标签过滤，格式: name=value1,value2（可多次指定）')
+@click.pass_context
+@handle_error
+def create_data_export_task(ctx, region_id: str, name: str, service: str, dimension: str,
+                            item_names: tuple, aggregate_types: tuple,
+                            start_time: int, end_time: int,
+                            period: Optional[int], description: Optional[str],
+                            report_template: int, dimension_filters: tuple):
+    """创建数据导出任务"""
+    cli = ctx.obj['client']
+    task = {
+        'name': name,
+        'service': service,
+        'dimension': dimension,
+        'itemNameList': list(item_names),
+        'aggregateType': list(aggregate_types),
+        'startTime': start_time,
+        'endTime': end_time,
+        'reportTemplate': report_template
+    }
+    if description:
+        task['description'] = description
+    if period is not None:
+        task['period'] = period
+    if dimension_filters:
+        dims = []
+        for df in dimension_filters:
+            if '=' not in df:
+                click.echo(f"❌ 维度过滤格式错误: {df}，应为 name=value1,value2", err=True)
+                import sys
+                sys.exit(1)
+            n, v = df.split('=', 1)
+            dims.append({'name': n.strip(), 'value': [x.strip() for x in v.split(',')]})
+        task['dimensions'] = dims
+
+    result = MonitorClient(cli).create_data_export_task(region_id=region_id, task=task)
+    if not result.get('success'):
+        click.echo(f"❌ 创建失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+    task_id = result.get('data', {}).get('taskID', '')
+    click.echo(f"✅ 创建成功，任务ID: {task_id}")
+
+
+@monitor.command('delete-data-export-task')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--task-id', 'task_ids', multiple=True, required=True, help='任务ID，可多次指定')
+@click.pass_context
+@handle_error
+def delete_data_export_task(ctx, region_id: str, task_ids: tuple):
+    """删除数据导出任务"""
+    cli = ctx.obj['client']
+    result = MonitorClient(cli).delete_data_export_task(
+        region_id=region_id, task_ids=list(task_ids)
+    )
+    if not result.get('success'):
+        click.echo(f"❌ 删除失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+    success = result.get('data', {}).get('success', False)
+    if success:
+        click.echo("✅ 删除成功")
+    else:
+        click.echo("⚠️ 删除未成功")
+
+
+@monitor.command('download-data-export-task')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.pass_context
+@handle_error
+def download_data_export_task(ctx, region_id: str, task_id: str):
+    """获取数据导出任务文件下载链接"""
+    cli = ctx.obj['client']
+    result = MonitorClient(cli).download_data_export_task(
+        region_id=region_id, task_id=task_id
+    )
+    if not result.get('success'):
+        click.echo(f"❌ 获取下载链接失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+    download_url = result.get('data', {}).get('downloadUrl', '')
+    if download_url:
+        click.echo(f"✅ 下载链接: {download_url}")
+    else:
+        click.echo("⚠️ 暂无下载链接（任务可能未完成）")
+
+
 if __name__ == '__main__':
     monitor()

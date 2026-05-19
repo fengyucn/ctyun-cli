@@ -3946,4 +3946,301 @@ class MonitorClient:
             logger.error(f"查询各设备类型监控项失败: {str(e)}", exc_info=True)
             return {'success': False, 'error': 'Exception', 'message': str(e)}
 
+    # ==================== 数据导出任务 APIs ====================
+
+    def query_data_export_task(self, region_id: str, task_id: Optional[str] = None,
+                                name: Optional[str] = None,
+                                page_no: Optional[int] = None,
+                                page_size: Optional[int] = None) -> Dict[str, Any]:
+        """
+        查询数据导出任务结果
+
+        API: GET /v4/monitor/task-center/query-task
+
+        Args:
+            region_id: 资源池ID
+            task_id: 任务ID（可选）
+            name: 任务名称，支持模糊搜索（可选）
+            page_no: 页码，不传默认1（可选）
+            page_size: 每页大小，不传默认20（可选）
+
+        Returns:
+            {'success': True/False, 'data': {taskList, totalCount, totalPage, currentCount}}
+        """
+        logger.info(f"查询数据导出任务: region_id={region_id}, task_id={task_id}, name={name}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/task-center/query-task"
+
+            query_params = {'regionID': region_id}
+            if task_id:
+                query_params['taskID'] = task_id
+            if name:
+                query_params['name'] = name
+            if page_no is not None:
+                query_params['pageNo'] = page_no
+            if page_size is not None:
+                query_params['pageSize'] = page_size
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params,
+                body=None, extra_headers={}
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"查询参数: {query_params}")
+            logger.debug(f"请求头: {headers}")
+
+            response = self.client.session.get(
+                url, params=query_params, headers=headers,
+                timeout=30, verify=False
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.error(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'success': False,
+                    'error': f'HTTP {response.status_code}',
+                    'message': response.text
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') == 800:
+                return {
+                    'success': True,
+                    'data': result.get('returnObj', {})
+                }
+            else:
+                logger.error(f"API返回错误: {result}")
+                return {
+                    'success': False,
+                    'error': result.get('errorCode', result.get('statusCode')),
+                    'message': result.get('msgDesc', result.get('message', '未知错误'))
+                }
+
+        except Exception as e:
+            logger.error(f"查询数据导出任务失败: {str(e)}", exc_info=True)
+            return {
+                'success': False,
+                'error': 'Exception',
+                'message': str(e)
+            }
+
+    def create_data_export_task(self, region_id: str, task: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        创建数据导出任务
+
+        API: POST /v4/monitor/task-center/create-task
+
+        Args:
+            region_id: 资源池ID
+            task: 任务参数，包含 name, service, dimension, itemNameList, aggregateType,
+                  startTime, endTime 等字段
+
+        Returns:
+            {'success': True/False, 'data': {'taskID': ...}}
+        """
+        logger.info(f"创建数据导出任务: region_id={region_id}, task_name={task.get('name')}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/task-center/create-task"
+
+            body_data = {
+                'regionID': region_id,
+                'task': task
+            }
+            body = json.dumps(body_data)
+
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params=None,
+                body=body, extra_headers={}
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+            logger.debug(f"请求头: {headers}")
+
+            response = self.client.session.post(
+                url, data=body, headers=headers,
+                timeout=30, verify=False
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.error(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'success': False,
+                    'error': f'HTTP {response.status_code}',
+                    'message': response.text
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') == 800:
+                return {
+                    'success': True,
+                    'data': result.get('returnObj', {})
+                }
+            else:
+                logger.error(f"API返回错误: {result}")
+                return {
+                    'success': False,
+                    'error': result.get('errorCode', result.get('statusCode')),
+                    'message': result.get('msgDesc', result.get('message', '未知错误'))
+                }
+
+        except Exception as e:
+            logger.error(f"创建数据导出任务失败: {str(e)}", exc_info=True)
+            return {
+                'success': False,
+                'error': 'Exception',
+                'message': str(e)
+            }
+
+    def delete_data_export_task(self, region_id: str, task_ids: List[str]) -> Dict[str, Any]:
+        """
+        删除数据导出任务
+
+        API: POST /v4/monitor/task-center/delete-task
+
+        Args:
+            region_id: 资源池ID
+            task_ids: 任务ID列表
+
+        Returns:
+            {'success': True/False, 'data': {'success': ...}}
+        """
+        logger.info(f"删除数据导出任务: region_id={region_id}, task_ids={task_ids}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/task-center/delete-task"
+
+            body_data = {
+                'regionID': region_id,
+                'taskID': task_ids
+            }
+            body = json.dumps(body_data)
+
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params=None,
+                body=body, extra_headers={}
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+            logger.debug(f"请求头: {headers}")
+
+            response = self.client.session.post(
+                url, data=body, headers=headers,
+                timeout=30, verify=False
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.error(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'success': False,
+                    'error': f'HTTP {response.status_code}',
+                    'message': response.text
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') == 800:
+                return {
+                    'success': True,
+                    'data': result.get('returnObj', {})
+                }
+            else:
+                logger.error(f"API返回错误: {result}")
+                return {
+                    'success': False,
+                    'error': result.get('errorCode', result.get('statusCode')),
+                    'message': result.get('msgDesc', result.get('message', '未知错误'))
+                }
+
+        except Exception as e:
+            logger.error(f"删除数据导出任务失败: {str(e)}", exc_info=True)
+            return {
+                'success': False,
+                'error': 'Exception',
+                'message': str(e)
+            }
+
+    def download_data_export_task(self, region_id: str, task_id: str) -> Dict[str, Any]:
+        """
+        获取数据导出任务文件下载链接
+
+        API: POST /v4/monitor/task-center/download
+
+        Args:
+            region_id: 资源池ID
+            task_id: 任务ID
+
+        Returns:
+            {'success': True/False, 'data': {'downloadUrl': ...}}
+        """
+        logger.info(f"获取数据导出任务下载链接: region_id={region_id}, task_id={task_id}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/task-center/download"
+
+            body_data = {
+                'regionID': region_id,
+                'taskID': task_id
+            }
+            body = json.dumps(body_data)
+
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params=None,
+                body=body, extra_headers={}
+            )
+
+            logger.debug(f"请求URL: {url}")
+            logger.debug(f"请求体: {body}")
+            logger.debug(f"请求头: {headers}")
+
+            response = self.client.session.post(
+                url, data=body, headers=headers,
+                timeout=30, verify=False
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.error(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'success': False,
+                    'error': f'HTTP {response.status_code}',
+                    'message': response.text
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') == 800:
+                return {
+                    'success': True,
+                    'data': result.get('returnObj', {})
+                }
+            else:
+                logger.error(f"API返回错误: {result}")
+                return {
+                    'success': False,
+                    'error': result.get('errorCode', result.get('statusCode')),
+                    'message': result.get('msgDesc', result.get('message', '未知错误'))
+                }
+
+        except Exception as e:
+            logger.error(f"获取数据导出任务下载链接失败: {str(e)}", exc_info=True)
+            return {
+                'success': False,
+                'error': 'Exception',
+                'message': str(e)
+            }
+
     # ==================== 监控对象资源列表 End ====================

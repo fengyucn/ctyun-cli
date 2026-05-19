@@ -4,6 +4,20 @@
 
 ---
 
+## v1.20.1 (2026-05-19)
+
+### 🚀 Monitor 模块新增数据导出任务 API
+
+**Monitor 模块新增 4 个数据导出任务 API + CLI 命令**，涵盖任务查询、创建、删除、下载四大类：
+
+#### 数据导出任务（4个）
+- `monitor data-export-tasks` — 查询数据导出任务列表（GET /v4/monitor/task-center/query-task），支持按任务ID/名称模糊搜索，分页展示
+- `monitor create-data-export-task` — 创建数据导出任务（POST /v4/monitor/task-center/create-task），支持指定服务、维度、监控项、聚合类型、时间范围等参数
+- `monitor delete-data-export-task` — 删除数据导出任务（POST /v4/monitor/task-center/delete-task），支持批量删除多个任务
+- `monitor download-data-export-task` — 获取数据导出任务文件下载链接（POST /v4/monitor/task-center/download），返回对象存储直链
+
+---
+
 ## v1.20.0 (2026-05-18)
 
 ### 🆕 新增镜像服务（IMS）模块
