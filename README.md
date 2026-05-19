@@ -147,7 +147,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.20.0 (2026-05-18)
+**最新版本**: v1.20.1 (2026-05-19)
+- 🚀 **Monitor 模块新增数据导出任务**：`data-export-tasks` / `create-data-export-task` / `delete-data-export-task` / `download-data-export-task`
+
+**v1.20.0** (2026-05-18)
 - 🆕 **新增 IMS（镜像服务）模块**：`ims list-available` / `describe`，终端节点 `ctimage-global.ctapi.ctyun.cn`
 
 **v1.19.0** (2026-05-18)
