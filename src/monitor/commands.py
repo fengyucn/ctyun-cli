@@ -4,6 +4,7 @@
 
 import click
 import json
+from functools import wraps
 from typing import Optional, List
 from datetime import datetime, timedelta
 from core import CTYUNAPIError
@@ -13,6 +14,7 @@ from monitor import MonitorClient
 
 def handle_error(func):
     """错误处理装饰器"""
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -2859,16 +2861,17 @@ def describe_custom_event_alarm_rule(ctx, region_id: str, alarm_rule_id: str):
 @click.option('--end-time', type=int, help='结束时间戳（秒），status=1时使用')
 @click.option('--page-no', type=int, default=1, help='页码，默认为1')
 @click.option('--page-size', type=int, default=10, help='页大小，默认为10')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
 @click.pass_context
 @handle_error
 def query_alert_history(ctx, region_id: str, status: int,
                        resource_group_id: Optional[str], search_key: Optional[str],
                        search_value: Optional[str], service: tuple,
                        start_time: Optional[int], end_time: Optional[int],
-                       page_no: int, page_size: int):
+                       page_no: int, page_size: int, output):
     """查询告警历史"""
     client = ctx.obj['client']
-    output_format = ctx.obj.get('output', 'table')
+    output_format = output or ctx.obj.get('output', 'table')
     
     # 转换service为列表
     service_list = list(service) if service else None

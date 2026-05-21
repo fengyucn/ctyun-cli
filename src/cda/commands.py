@@ -12,6 +12,7 @@
 """
 
 import click
+from functools import wraps
 from typing import Optional, List
 from core import CTYUNAPIError
 from utils import OutputFormatter, logger
@@ -20,6 +21,7 @@ from cda import init_cda_client, get_cda_client
 
 def handle_error(func):
     """错误处理装饰器"""
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)

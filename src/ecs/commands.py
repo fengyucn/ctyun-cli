@@ -4,6 +4,7 @@
 
 import click
 import sys
+from functools import wraps
 from typing import List, Optional
 from .client import ECSClient
 from utils import ValidationUtils, OutputFormatter
@@ -13,6 +14,7 @@ def handle_error(func):
     """
     错误处理装饰器
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -470,22 +472,6 @@ def resize(ctx, instance_id: str, instance_type: str):
     result = ecs_client.resize_instance(instance_id, instance_type)
     OutputFormatter.color_print(f"✓ 云服务器实例 {instance_id} 规格调整成功", 'green')
     format_output(result, ctx.obj['output'])
-
-
-@ecs.command()
-@click.option('--type', 'image_type', default='public',
-              type=click.Choice(['public', 'private', 'shared']),
-              help='镜像类型')
-@click.option('--os-type', help='操作系统类型过滤')
-@click.pass_context
-@handle_error
-def images(ctx, image_type: str, os_type: Optional[str]):
-    """列出可用的镜像"""
-    client = ctx.obj['client']
-    ecs_client = ECSClient(client)
-
-    result = ecs_client.list_images(image_type=image_type, os_type=os_type)
-    format_output(result.get('images', []), ctx.obj['output'])
 
 
 @ecs.command()

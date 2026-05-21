@@ -3,6 +3,7 @@ VPC(虚拟私有云)命令行接口
 """
 
 import click
+from functools import wraps
 from typing import List, Optional
 # 直接定义装饰器，避免循环导入
 from vpc import VPCClient
@@ -13,6 +14,7 @@ def handle_error(func):
     """
     错误处理装饰器
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)

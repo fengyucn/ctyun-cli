@@ -3,6 +3,7 @@
 """
 
 import click
+from functools import wraps
 from typing import Optional
 from .client import EBSClient
 from utils import OutputFormatter
@@ -10,6 +11,7 @@ from utils import OutputFormatter
 
 def handle_error(func):
     """错误处理装饰器"""
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)

@@ -1131,46 +1131,6 @@ def ondemand_detail(ctx, bill_cycle, page, page_size, product_code, resource_id,
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
 
 
-@billing.command()
-@click.option('--start-date', required=True, help='开始日期，格式：YYYY-MM-DD')
-@click.option('--end-date', required=True, help='结束日期，格式：YYYY-MM-DD')
-@click.option('--product-type', help='产品类型（可选）')
-@click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
-@click.pass_context
-@handle_error
-def consumption(ctx, start_date, end_date, product_type, page, page_size):
-    """查询消费明细"""
-    if not ValidationUtils.validate_date_format(start_date):
-        click.echo("错误: 开始日期格式不正确，应为YYYY-MM-DD格式", err=True)
-        import sys
-        sys.exit(1)
-
-    if not ValidationUtils.validate_date_format(end_date):
-        click.echo("错误: 结束日期格式不正确，应为YYYY-MM-DD格式", err=True)
-        import sys
-        sys.exit(1)
-
-    client = ctx.obj['client']
-    billing_client = BillingClient(client)
-
-    result = billing_client.query_consumption_details(
-        start_date=start_date,
-        end_date=end_date,
-        page_no=page,
-        page_size=page_size,
-        product_type=product_type
-    )
-
-    if result.get('returnCode') == '000000':
-        consumption_list = result.get('consumptionList', [])
-        if consumption_list:
-            click.echo(f"\n消费明细（{start_date} 至 {end_date}，共 {result.get('totalCount', 0)} 条）：")
-            format_output(consumption_list, ctx.obj.get('output_format', 'table'))
-        else:
-            click.echo(f"时间段 {start_date} 至 {end_date} 没有消费记录")
-    else:
-        click.echo(f"查询失败: {result.get('returnMessage', '未知错误')}", err=True)
 
 
 @billing.command()

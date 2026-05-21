@@ -3,6 +3,7 @@
 """
 
 import click
+from functools import wraps
 from typing import Optional
 from core import CTYUNAPIError
 from utils import OutputFormatter, ValidationUtils, logger
@@ -11,6 +12,7 @@ from security import SecurityClient
 
 def handle_error(func):
     """错误处理装饰器"""
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)

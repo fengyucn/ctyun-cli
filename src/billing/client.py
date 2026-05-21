@@ -1248,40 +1248,6 @@ class BillingClient:
             logger.error(f"查询账单明细使用量类型+账期(按需)异常: {str(e)}")
             return self._get_mock_usage_cycle_data(bill_cycle, page_no, page_size)
 
-    def _get_mock_consumption_data(self, start_date: str, end_date: str,
-                                   page_no: int, page_size: int) -> Dict[str, Any]:
-        """获取模拟消费明细数据"""
-        return {
-            'returnCode': '000000',
-            'returnMessage': '成功（模拟数据）',
-            'totalCount': 3,
-            'pageNo': page_no,
-            'pageSize': page_size,
-            'consumptionList': [
-                {
-                    'date': start_date,
-                    'productType': 'ECS',
-                    'productName': '云服务器',
-                    'amount': '123.45',
-                    'region': 'cn-north-1'
-                },
-                {
-                    'date': start_date,
-                    'productType': 'OSS',
-                    'productName': '对象存储',
-                    'amount': '67.89',
-                    'region': 'cn-north-1'
-                },
-                {
-                    'date': end_date,
-                    'productType': 'VPC',
-                    'productName': '虚拟私有云',
-                    'amount': '45.00',
-                    'region': 'cn-south-1'
-                }
-            ]
-        }
-
     def query_ondemand_bill_by_usage_detail(self, bill_cycle: str, page_no: int = 1,
                                            page_size: int = 10, product_code: Optional[str] = None,
                                            resource_id: Optional[str] = None,
