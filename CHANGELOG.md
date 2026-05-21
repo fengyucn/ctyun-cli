@@ -4,6 +4,16 @@
 
 ---
 
+## v1.20.2 (2026-05-21)
+
+### 🔧 CLI 框架修复
+
+- **修复 `handle_error` 装饰器丢失函数元信息**：为 7 个模块（ecs、vpc、monitor、cce、security、cda、ebs）的 `handle_error` 装饰器添加 `@wraps(func)`，修复 Click 看到 "wrapper" 幽灵命令及所有 callback 名称丢失的问题
+- **删除无效的 `billing consumption` 命令**：该命令对应的 API 端点 `/v1/billing/query-consumption-details` 不存在（返回 404），功能已被 `billing ondemand-resource-cycle` 等命令覆盖
+- **`monitor query-alert-history` 添加局部 `--output` 选项**：现在可在命令级别覆盖全局输出格式设置
+
+---
+
 ## v1.20.1 (2026-05-19)
 
 ### 🚀 Monitor 模块新增数据导出任务 API

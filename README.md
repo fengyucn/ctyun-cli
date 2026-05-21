@@ -147,7 +147,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.20.1 (2026-05-19)
+**最新版本**: v1.20.2 (2026-05-21)
+- 🔧 **CLI 框架修复**：修复 `handle_error` 装饰器丢失函数元信息（7 个模块），删除无效的 `billing consumption` 命令，`monitor query-alert-history` 添加局部 `--output` 选项
+
+**v1.20.1** (2026-05-19)
 - 🚀 **Monitor 模块新增数据导出任务**：`data-export-tasks` / `create-data-export-task` / `delete-data-export-task` / `download-data-export-task`
 
 **v1.20.0** (2026-05-18)
