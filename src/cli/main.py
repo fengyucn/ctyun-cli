@@ -1128,7 +1128,7 @@ from ims.commands import ims
 cli.add_command(ims)
 
 # 将 ecs/commands.py 中定义的命令注册到当前 ecs group
-from ecs.commands import (update_ecs_label, query_dedicated_host_uuid, query_order_uuid,
+from ecs.commands import (format_output, update_ecs_label, query_dedicated_host_uuid, query_order_uuid,
                            cpu_history, mem_history, network_history, disk_history,
                            cpu_latest, mem_latest, network_latest, disk_latest,
                            get_region_summary, get_region_products, check_region_demand,
