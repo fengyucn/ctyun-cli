@@ -2951,3 +2951,91 @@ def accounts(ctx, prod_inst_id, region_id, output):
         error_msg = result.get('message', '未知错误') if result else '请求失败'
         click.echo(f"查询失败: {error_msg}", err=True)
         sys.exit(1)
+
+
+@redis_group.command('price')
+@click.option('--order-type', required=True,
+              type=click.Choice(['BUY', 'RENEW', 'UPGRADE', 'EXPANSION', 'CONTRACTION',
+                                 'INCREASE_SHARDS', 'DECREASE_SHARDS',
+                                 'INCREASE_REPLICAS', 'DECREASE_REPLICAS']),
+              help='订单类型')
+@click.option('--prod-inst-id', default=None, help='实例ID（BUY无需填写，其他必填）')
+@click.option('--charge-type', type=click.Choice(['PrePaid', 'PostPaid']), default=None, help='计费模式')
+@click.option('--period', default=None, help='订购时长(月)，PrePaid时必填，取值1~6,12')
+@click.option('--size', type=int, default=None, help='数量，仅订购询价，1-100')
+@click.option('--version', type=click.Choice(['BASIC', 'PLUS']), default=None, help='版本类型')
+@click.option('--edition', default=None, help='实例类型（BUY/UPGRADE必填）')
+@click.option('--engine-version', default=None, help='Redis引擎版本（BUY必填）')
+@click.option('--host-type', default=None, help='主机类型')
+@click.option('--shard-mem-size', default=None, help='分片规格GB')
+@click.option('--mem-unit', type=click.Choice(['M', 'G']), default=None, help='内存规格单位')
+@click.option('--shard-count', type=int, default=None, help='分片数')
+@click.option('--capacity', default=None, help='存储容量GB')
+@click.option('--copies-count', type=int, default=None, help='副本数2~10')
+@click.option('--data-disk-type', type=click.Choice(['SSD', 'SAS']), default=None, help='磁盘类型')
+@click.option('--region-id', '-r', default=None, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def price(ctx, order_type, prod_inst_id, charge_type, period, size, version, edition,
+          engine_version, host_type, shard_mem_size, mem_unit, shard_count, capacity,
+          copies_count, data_disk_type, region_id, output):
+    """费用查询"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.describe_price(
+        order_type=order_type,
+        region_id=region_id,
+        prod_inst_id=prod_inst_id,
+        charge_type=charge_type,
+        period=period,
+        size=size,
+        version=version,
+        edition=edition,
+        engine_version=engine_version,
+        host_type=host_type,
+        shard_mem_size=shard_mem_size,
+        mem_unit=mem_unit,
+        shard_count=shard_count,
+        capacity=capacity,
+        copies_count=copies_count,
+        data_disk_type=data_disk_type
+    )
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', {})
+
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            click.echo(f"\n费用查询结果（订单类型: {order_type}）")
+            click.echo("-" * 80)
+            click.echo(f"订单总价: {return_obj.get('totalPrice', 'N/A')}")
+            click.echo(f"订单最终价格: {return_obj.get('finalPrice', 'N/A')}")
+
+            sub_orders = return_obj.get('subOrderPrices', [])
+            for sub in sub_orders:
+                click.echo(f"\n子订单 ({sub.get('serviceTag', '')}):")
+                click.echo(f"  子订单总价: {sub.get('totalPrice', 'N/A')}")
+                click.echo(f"  子订单最终价格: {sub.get('finalPrice', 'N/A')}")
+
+                item_prices = sub.get('orderItemPrices', [])
+                for item in item_prices:
+                    click.echo(f"    资源ID: {item.get('itemId', '')}")
+                    click.echo(f"    资源类型: {item.get('resourceType', '')}")
+                    click.echo(f"    资源总价: {item.get('totalPrice', 'N/A')}")
+                    click.echo(f"    资源最终价格: {item.get('finalPrice', 'N/A')}")
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)

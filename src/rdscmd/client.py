@@ -1859,6 +1859,112 @@ class RedisClient:
                 "exception": str(e)
             }
 
+    def describe_price(self, order_type: str, region_id: str = None,
+                      prod_inst_id: str = None, charge_type: str = None,
+                      period: str = None, size: int = None, version: str = None,
+                      edition: str = None, engine_version: str = None,
+                      host_type: str = None, shard_mem_size: str = None,
+                      mem_unit: str = None, shard_count: int = None,
+                      capacity: str = None, copies_count: int = None,
+                      data_disk_type: str = None) -> Optional[Dict[str, Any]]:
+        """
+        费用查询
+
+        Args:
+            order_type (str): 订单类型 (BUY/RENEW/UPGRADE/EXPANSION/CONTRACTION/INCREASE_SHARDS/DECREASE_SHARDS/INCREASE_REPLICAS/DECREASE_REPLICAS)
+            region_id (str): 资源池ID
+            prod_inst_id (str): 实例ID（BUY无需填写，其他必填）
+            charge_type (str): 计费模式 PrePaid/PostPaid
+            period (str): 订购时长(月)，PrePaid时必填，取值1~6,12
+            size (int): 数量，仅订购询价，1-100，默认1
+            version (str): 版本类型 BASIC/PLUS
+            edition (str): 实例类型（BUY/UPGRADE必填）
+            engine_version (str): Redis引擎版本（BUY必填）
+            host_type (str): 主机类型
+            shard_mem_size (str): 分片规格GB
+            mem_unit (str): 内存规格单位 M/G
+            shard_count (int): 分片数
+            capacity (str): 存储容量GB
+            copies_count (int): 副本数2~10
+            data_disk_type (str): 磁盘类型 SSD/SAS
+
+        Returns:
+            Optional[Dict[str, Any]]: 价格信息
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"费用查询: orderType={order_type}, regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/lifeCycleServant/describePrice'
+
+            request_body = {
+                'orderType': order_type
+            }
+
+            if prod_inst_id:
+                request_body['prodInstId'] = prod_inst_id
+            if charge_type:
+                request_body['chargeType'] = charge_type
+            if period:
+                request_body['period'] = period
+            if size is not None:
+                request_body['size'] = size
+            if version:
+                request_body['version'] = version
+            if edition:
+                request_body['edition'] = edition
+            if engine_version:
+                request_body['engineVersion'] = engine_version
+            if host_type:
+                request_body['hostType'] = host_type
+            if shard_mem_size:
+                request_body['shardMemSize'] = shard_mem_size
+            if mem_unit:
+                request_body['memUnit'] = mem_unit
+            if shard_count is not None:
+                request_body['shardCount'] = shard_count
+            if capacity:
+                request_body['capacity'] = capacity
+            if copies_count is not None:
+                request_body['copiesCount'] = copies_count
+            if data_disk_type:
+                request_body['dataDiskType'] = data_disk_type
+
+            extra_headers = {
+                'regionId': target_region_id,
+                'Content-Type': 'application/json'
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params={},
+                body=json.dumps(request_body),
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.post(
+                url,
+                json=request_body,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"费用查询失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
         """创建标准错误响应"""
         return {

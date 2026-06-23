@@ -147,7 +147,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.20.3 (2026-06-23)
+**最新版本**: v1.20.4 (2026-06-23)
+- 🚀 **Redis 模块新增费用查询 API**：`redis price`，支持 9 种订单类型询价（订购/续费/升配/扩容/缩容/增减分片/增减副本）
+
+**v1.20.3** (2026-06-23)
 - 🚀 **Redis 模块新增 6 个运维 API**：`node-list` / `log-download` / `replication-state` / `labels` / `running-logs` / `accounts`
 
 **v1.20.2** (2026-05-21)
