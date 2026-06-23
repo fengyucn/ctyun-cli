@@ -4,6 +4,21 @@
 
 ---
 
+## v1.20.3 (2026-06-23)
+
+### 🚀 Redis 模块新增 6 个运维 API
+
+**Redis 模块新增 6 个 API + CLI 命令**，涵盖节点管理、日志、副本状态、标签、账号查询：
+
+- `redis node-list` — 获取 Redis 节点名列表（GET /v2/instanceManageMgrServant/getRedisNodeList），返回节点名称、角色、VPC IP、端口
+- `redis log-download` — 获取日志下载链接（GET /v2/logMgr/downloadRedisRunLog），支持按节点、日期、日志级别查询
+- `redis replication-state` — 获取副本状态（GET /v2/instanceManageMgrServant/queryFragmentReplicationState），返回主从角色、VPC IP、状态、可用区
+- `redis labels` — 查询租户所有标签（GET /v2/label/pageList），支持按标签键值筛选和分页
+- `redis running-logs` — 查询运行日志（GET /v2/logMgr/describeRunningLogRecords），返回生成时间和日志信息
+- `redis accounts` — 查询实例账号（GET /v2/userMgr/describeAccounts），返回账号名、类型、描述
+
+---
+
 ## v1.20.2 (2026-05-21)
 
 ### 🔧 CLI 框架修复

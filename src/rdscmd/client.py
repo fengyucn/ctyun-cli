@@ -1498,6 +1498,367 @@ class RedisClient:
                 "exception": str(e)
             }
 
+    def get_redis_node_list(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        获取Redis节点名列表
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 资源池ID，如果为None则使用默认区域
+
+        Returns:
+            Optional[Dict[str, Any]]: 节点列表（nodeName, role, nodeVpcIp, nodePort）
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"获取Redis节点列表: prodInstId={prod_inst_id}, regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/getRedisNodeList'
+
+            query_params = {
+                'prodInstId': prod_inst_id
+            }
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"获取Redis节点列表失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def get_log_download_url(self, prod_inst_id: str, node_name: str, date: str,
+                             log_type: str = None, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        获取日志下载链接
+
+        Args:
+            prod_inst_id (str): 实例ID
+            node_name (str): 节点名称
+            date (str): 日期，格式YYYY-MM-DD，仅支持最近14天
+            log_type (str): 日志级别（INFO/WARNING/ERROR/FATAL），仅云盘型缓存支持
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: 下载链接（fileName, downloadUrl）
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"获取Redis日志下载链接: prodInstId={prod_inst_id}, node={node_name}, date={date}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/logMgr/downloadRedisRunLog'
+
+            query_params = {
+                'prodInstId': prod_inst_id,
+                'nodeName': node_name,
+                'date': date
+            }
+
+            if log_type:
+                query_params['logType'] = log_type
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"获取Redis日志下载链接失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def query_fragment_replication_state(self, prod_inst_id: str, fragment_name: str,
+                                        region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        获取副本状态
+
+        Args:
+            prod_inst_id (str): 实例ID
+            fragment_name (str): 分片名称（如redis-0）
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: 副本状态列表（role, vpcIp, status, azName）
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"获取副本状态: prodInstId={prod_inst_id}, fragment={fragment_name}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/queryFragmentReplicationState'
+
+            query_params = {
+                'prodInstId': prod_inst_id,
+                'fragmentName': fragment_name
+            }
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"获取副本状态失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def query_labels(self, region_id: str = None, page_index: int = 1,
+                     page_size: int = 10, label_key: str = None,
+                     label_val: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询租户所有标签
+
+        Args:
+            region_id (str): 资源池ID
+            page_index (int): 页码，默认1
+            page_size (int): 每页数量，默认10，范围1-50
+            label_key (str): 标签键（可选）
+            label_val (str): 标签值（可选）
+
+        Returns:
+            Optional[Dict[str, Any]]: 标签列表
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询租户标签: regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/label/pageList'
+
+            query_params = {
+                'pageIndex': str(page_index),
+                'pageSize': str(page_size)
+            }
+
+            if label_key:
+                query_params['labelKey'] = label_key
+            if label_val:
+                query_params['labelVal'] = label_val
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询租户标签失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def query_running_logs(self, prod_inst_id: str, node_name: str,
+                           region_id: str = None, page_index: int = 1,
+                           page_size: int = 10) -> Optional[Dict[str, Any]]:
+        """
+        查询运行日志
+
+        Args:
+            prod_inst_id (str): 实例ID
+            node_name (str): 节点名称
+            region_id (str): 资源池ID
+            page_index (int): 页码，默认1
+            page_size (int): 每页数量，默认10
+
+        Returns:
+            Optional[Dict[str, Any]]: 运行日志列表
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询运行日志: prodInstId={prod_inst_id}, node={node_name}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/logMgr/describeRunningLogRecords'
+
+            query_params = {
+                'prodInstId': prod_inst_id,
+                'nodeName': node_name,
+                'pageIndex': str(page_index),
+                'pageSize': str(page_size)
+            }
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询运行日志失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
+    def describe_accounts(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询实例账号
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: 实例账号列表
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询实例账号: prodInstId={prod_inst_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/userMgr/describeAccounts'
+
+            query_params = {
+                'prodInstId': prod_inst_id
+            }
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询实例账号失败: {e}")
+            return {
+                "error": True,
+                "message": f"请求异常: {str(e)}",
+                "exception": str(e)
+            }
+
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
         """创建标准错误响应"""
         return {

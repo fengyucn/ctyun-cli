@@ -147,7 +147,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.20.2 (2026-05-21)
+**最新版本**: v1.20.3 (2026-06-23)
+- 🚀 **Redis 模块新增 6 个运维 API**：`node-list` / `log-download` / `replication-state` / `labels` / `running-logs` / `accounts`
+
+**v1.20.2** (2026-05-21)
 - 🔧 **CLI 框架修复**：修复 `handle_error` 装饰器丢失函数元信息（7 个模块），删除无效的 `billing consumption` 命令，`monitor query-alert-history` 添加局部 `--output` 选项
 
 **v1.20.1** (2026-05-19)
