@@ -2963,16 +2963,29 @@ def accounts(ctx, prod_inst_id, region_id, output):
 @click.option('--charge-type', type=click.Choice(['PrePaid', 'PostPaid']), default=None, help='计费模式')
 @click.option('--period', default=None, help='订购时长(月)，PrePaid时必填，取值1~6,12')
 @click.option('--size', type=int, default=None, help='数量，仅订购询价，1-100')
-@click.option('--version', type=click.Choice(['BASIC', 'PLUS']), default=None, help='版本类型')
-@click.option('--edition', default=None, help='实例类型（BUY/UPGRADE必填）')
-@click.option('--engine-version', default=None, help='Redis引擎版本（BUY必填）')
-@click.option('--host-type', default=None, help='主机类型')
-@click.option('--shard-mem-size', default=None, help='分片规格GB')
-@click.option('--mem-unit', type=click.Choice(['M', 'G']), default=None, help='内存规格单位')
-@click.option('--shard-count', type=int, default=None, help='分片数')
-@click.option('--capacity', default=None, help='存储容量GB')
-@click.option('--copies-count', type=int, default=None, help='副本数2~10')
-@click.option('--data-disk-type', type=click.Choice(['SSD', 'SAS']), default=None, help='磁盘类型')
+@click.option('--version', type=click.Choice(['BASIC', 'PLUS']), default=None,
+              help='版本类型。BASIC(基础版，默认)/PLUS(增强版)')
+@click.option('--edition',
+              type=click.Choice(['StandardDual', 'DirectCluster', 'ClusterOriginalProxy', 'OriginalMultipleReadLvs']),
+              default=None,
+              help='实例类型（BUY/UPGRADE必填）。StandardDual=标准版, DirectCluster=Cluster集群, ClusterOriginalProxy=Proxy集群, OriginalMultipleReadLvs=读写分离')
+@click.option('--engine-version', default=None,
+              help='Redis引擎版本（BUY必填）。BASIC: 5.0/6.0/7.0, PLUS: 6.0/7.0')
+@click.option('--host-type',
+              type=click.Choice(['S', 'C', 'M', 'HS', 'HC', 'KS', 'KC']),
+              default=None,
+              help='主机类型。X86: S=通用型(默认)/C=计算增强型/M=内存型/HS=海光通用/HC=海光计算增强; ARM: KS=鲲鹏通用/KC=鲲鹏计算增强。增强版Proxy集群和读写分离时必填')
+@click.option('--shard-mem-size', default=None,
+              help='分片规格(GB)。BASIC: 1/2/4/8/16/32/64, PLUS: 4/8/16/32/64')
+@click.option('--mem-unit', type=click.Choice(['M', 'G']), default=None, help='内存规格单位，G(默认)/M(小于1GB时)')
+@click.option('--shard-count', type=int, default=None,
+              help='分片数。仅DirectCluster/ClusterOriginalProxy需填写，取值3~256')
+@click.option('--capacity', default=None,
+              help='实例存储容量(GB)，来自资源池可创建规格memSizeItems。StandardDual/OriginalMultipleReadLvs按此参数计费')
+@click.option('--copies-count', type=int, default=None,
+              help='副本数。StandardDual/DirectCluster/ClusterOriginalProxy: 1~10(默认2), OriginalMultipleReadLvs: 2~10(必填)')
+@click.option('--data-disk-type', type=click.Choice(['SSD', 'SAS']), default=None,
+              help='磁盘类型。SSD=超高IO(默认)/SAS=高IO')
 @click.option('--region-id', '-r', default=None, help='资源池ID')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
 @click.pass_context

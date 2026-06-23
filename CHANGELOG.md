@@ -4,6 +4,14 @@
 
 ---
 
+## v1.20.5 (2026-06-23)
+
+### 🔧 Redis 费用查询命令参数文档完善
+
+- **`redis price` 参数 help 文档大幅完善**：为 `edition`（实例类型）、`host-type`（主机类型）、`version`（版本类型）、`shard-mem-size`（分片规格）、`capacity`（存储容量）、`copies-count`（副本数）、`data-disk-type`（磁盘类型）等参数补充枚举值说明和取值范围，并增加 `click.Choice` 约束以防止无效输入
+
+---
+
 ## v1.20.4 (2026-06-23)
 
 ### 🚀 Redis 模块新增费用查询 API
