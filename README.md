@@ -147,7 +147,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.20.5 (2026-06-23)
+**最新版本**: v1.20.6 (2026-06-23)
+- 🚀 **Redis 模块新增 7 个监控与查询 API**：`proxy-monitor-history` / `rw-sep` / `groups` / `cluster-member-info` / `node-memory` / `node-state` / `available-regions`
+
+**v1.20.5** (2026-06-23)
 - 🔧 **`redis price` 参数文档完善**：为实例类型、主机类型、版本等参数补充枚举值说明和 `click.Choice` 约束
 
 **v1.20.4** (2026-06-23)

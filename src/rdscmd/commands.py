@@ -3052,3 +3052,352 @@ def price(ctx, order_type, prod_inst_id, charge_type, period, size, version, edi
         error_msg = result.get('message', '未知错误') if result else '请求失败'
         click.echo(f"查询失败: {error_msg}", err=True)
         sys.exit(1)
+
+
+@redis_group.command('proxy-monitor-history')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-name', '-n', required=True, help='Proxy节点名称（从逻辑拓扑AccessNode.proxyName获取）')
+@click.option('--start-time', '-s', required=True, help='开始时间（格式：yyyy-MM-dd HH:mm:ss）')
+@click.option('--end-time', '-e', required=True, help='结束时间（格式：yyyy-MM-dd HH:mm:ss）')
+@click.option('--type', '-t', 'monitor_type', required=True, help='监控类型（从性能监控指标列表proxyNodeMonitorList的type字段获取）')
+@click.option('--region-id', '-r', default=None, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def proxy_monitor_history(ctx, prod_inst_id, node_name, start_time, end_time, monitor_type, region_id, output):
+    """查询代理节点性能监控指标历史数据"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.describe_proxy_history_monitor_values(
+        prod_inst_id=prod_inst_id, node_name=node_name,
+        start_time=start_time, end_time=end_time,
+        monitor_type=monitor_type, region_id=region_id
+    )
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', {})
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            rows = return_obj.get('rows', [])
+            click.echo(f"\nProxy节点监控历史 (节点: {node_name}, 指标: {monitor_type})")
+            click.echo("-" * 80)
+            for row in rows:
+                metric = row.get('metric', {})
+                values = row.get('values', [])
+                click.echo(f"指标标签: {metric}")
+                click.echo(f"数据点数量: {len(values)}")
+                if values:
+                    click.echo(f"前5个数据点:")
+                    for v in values[:5]:
+                        click.echo(f"  时间戳={v[0]}, 值={v[1]}")
+                    if len(values) > 5:
+                        click.echo(f"  ... 共{len(values)}个数据点")
+                click.echo()
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)
+
+
+@redis_group.command('rw-sep')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', default=None, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def rw_sep(ctx, prod_inst_id, region_id, output):
+    """查询读写分离状态"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.query_rw_sep(prod_inst_id=prod_inst_id, region_id=region_id)
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', {})
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            is_rw_sep = return_obj.get('isRWSep', None)
+            status_text = '已开启' if is_rw_sep else '未开启' if is_rw_sep is False else '未知'
+            click.echo(f"\n读写分离状态: {status_text}")
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)
+
+
+@redis_group.command('groups')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', default=None, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def groups(ctx, prod_inst_id, region_id, output):
+    """查询分组列表"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.describe_db_group(prod_inst_id=prod_inst_id, region_id=region_id)
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', {})
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            rows = return_obj.get('rows', [])
+            total = return_obj.get('total', len(rows))
+            click.echo(f"\n分组列表 (共{total}个)")
+            click.echo("-" * 80)
+            if rows:
+                table_data = []
+                for row in rows:
+                    table_data.append({
+                        '分组名称': row.get('groupName', ''),
+                        'DB编码': row.get('dborder', ''),
+                        'Redis集群名': row.get('redisSetName', ''),
+                        '更新时间': row.get('latestTime', ''),
+                        '实例名称': row.get('userName', '')
+                    })
+                headers = list(table_data[0].keys())
+                click.echo(OutputFormatter.format_table(table_data, headers))
+            else:
+                click.echo("无分组数据")
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)
+
+
+@redis_group.command('cluster-member-info')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', default=None, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def cluster_member_info(ctx, prod_inst_id, region_id, output):
+    """查询集群节点信息"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.describe_cluster_member_info(prod_inst_id=prod_inst_id, region_id=region_id)
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', {})
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            rows = return_obj.get('rows', [])
+            total = return_obj.get('total', len(rows))
+            type_map = {1: '经典集群主备版', 2: '经典主备版', 3: '经典单机版',
+                        5: '基础Cluster标准版', 6: '基础Cluster单机版',
+                        8: '增强Cluster标准版', 9: '增强Cluster单机版',
+                        10: '基础标准版', 11: '基础单机版',
+                        12: '增强标准版', 13: '增强单机版',
+                        14: '基础读写分离-lvs模式版', 15: '基础读写分离-elb模式版',
+                        16: '增强读写分离-lvs版', 17: '基础Proxy集群主备版', 18: '增强Proxy集群主备'}
+            click.echo(f"\n集群节点信息 (共{total}个RedisSet)")
+            click.echo("-" * 80)
+            for rs in rows:
+                click.echo(f"\nRedis集群: {rs.get('redisSetName', '')}")
+                click.echo(f"  类型: {type_map.get(rs.get('type'), rs.get('type', ''))}")
+                click.echo(f"  槽位: {rs.get('slotInfo', '')}")
+                click.echo(f"  加密鉴权: {'是' if rs.get('isAuth') else '否'}")
+                nodes = rs.get('nodes', [])
+                click.echo(f"  分片数: {len(nodes)}")
+                for node in nodes:
+                    click.echo(f"  分片 {node.get('fragmentName', '')}:")
+                    click.echo(f"    主节点: {node.get('masterName', '')} ({node.get('vpcUrl', '')}) [{node.get('azName', '')}]")
+                    for sn in node.get('slaveNodes', []):
+                        click.echo(f"    从节点: {sn.get('slaveName', '')} ({sn.get('vpcUrl', '')}) [{sn.get('azName', '')}]")
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)
+
+
+@redis_group.command('node-memory')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--ip', required=True, help='Redis节点IP')
+@click.option('--port', required=True, help='Redis节点端口')
+@click.option('--region-id', '-r', default=None, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def node_memory(ctx, prod_inst_id, ip, port, region_id, output):
+    """查询节点内存"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.describe_memory_info(
+        prod_inst_id=prod_inst_id, ip=ip, port=port, region_id=region_id
+    )
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', {})
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            free_mem = return_obj.get('freeMemory', 'N/A')
+            max_mem = return_obj.get('maxMemory', 'N/A')
+            click.echo(f"\n节点内存信息 ({ip}:{port})")
+            click.echo("-" * 80)
+            try:
+                free_mb = int(free_mem) / 1024 / 1024 if free_mem != 'N/A' else 'N/A'
+                max_mb = int(max_mem) / 1024 / 1024 if max_mem != 'N/A' else 'N/A'
+                used_mb = (int(max_mem) - int(free_mem)) / 1024 / 1024 if free_mem != 'N/A' and max_mem != 'N/A' else 'N/A'
+                usage_pct = ((int(max_mem) - int(free_mem)) / int(max_mem) * 100) if free_mem != 'N/A' and max_mem != 'N/A' and int(max_mem) > 0 else 'N/A'
+                click.echo(f"可用内存: {free_mem} bytes ({free_mb:.2f} MB)" if isinstance(free_mb, float) else f"可用内存: {free_mem}")
+                click.echo(f"最大内存: {max_mem} bytes ({max_mb:.2f} MB)" if isinstance(max_mb, float) else f"最大内存: {max_mem}")
+                click.echo(f"已用内存: {used_mb:.2f} MB" if isinstance(used_mb, float) else f"已用内存: {used_mb}")
+                click.echo(f"使用率: {usage_pct:.2f}%" if isinstance(usage_pct, float) else f"使用率: {usage_pct}")
+            except (ValueError, TypeError):
+                click.echo(f"可用内存: {free_mem}")
+                click.echo(f"最大内存: {max_mem}")
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)
+
+
+@redis_group.command('node-state')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-type', type=click.Choice(['redis', 'proxy']), required=True,
+              help='节点类型。redis=Redis节点, proxy=Proxy节点（仅Proxy集群/读写分离/经典集群支持）')
+@click.option('--vpc-url', required=True, help='节点地址（从逻辑拓扑获取vpcUrl字段）')
+@click.option('--region-id', '-r', default=None, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def node_state(ctx, prod_inst_id, node_type, vpc_url, region_id, output):
+    """查询节点状态"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.describe_node_running_state(
+        prod_inst_id=prod_inst_id, node_type=node_type, vpc_url=vpc_url, region_id=region_id
+    )
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', {})
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            status = return_obj.get('status', None)
+            status_map = {0: '运行中', 1: '停止'}
+            status_text = status_map.get(status, f'未知({status})')
+            click.echo(f"\n节点状态 ({node_type}: {vpc_url})")
+            click.echo("-" * 80)
+            click.echo(f"状态: {status_text}")
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)
+
+
+@redis_group.command('available-regions')
+@click.option('--res-pool-code', default=None, help='资源池ID（可选，不传则查询全部）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def available_regions(ctx, res_pool_code, output):
+    """查询可用的资源池"""
+    from utils import OutputFormatter
+
+    client = ctx.obj['client']
+    redis_client = RedisClient(client)
+    output_format = output or ctx.obj.get('output', 'table')
+
+    result = redis_client.get_available_region(res_pool_code=res_pool_code)
+
+    if result and result.get('statusCode') == 800:
+        return_obj = result.get('returnObj', [])
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+                sys.exit(1)
+        else:
+            click.echo(f"\n可用的资源池 (共{len(return_obj)}个)")
+            click.echo("-" * 80)
+            if return_obj:
+                table_data = []
+                for pool in return_obj:
+                    products = pool.get('products', [])
+                    prod_names = ', '.join([p.get('prodName', '') for p in products]) if products else ''
+                    prod_status = ''
+                    for p in products:
+                        prod_status = '正常' if p.get('prodStatus') == '2' else f"异常({p.get('prodStatus')})"
+                        break
+                    table_data.append({
+                        '资源池ID': pool.get('resPoolCode', ''),
+                        '资源池名称': pool.get('resPoolName', ''),
+                        '产品状态': prod_status,
+                        '产品名称': prod_names
+                    })
+                headers = list(table_data[0].keys())
+                click.echo(OutputFormatter.format_table(table_data, headers))
+            else:
+                click.echo("无可用资源池")
+    else:
+        error_msg = result.get('message', '未知错误') if result else '请求失败'
+        click.echo(f"查询失败: {error_msg}", err=True)
+        sys.exit(1)

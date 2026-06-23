@@ -4,6 +4,22 @@
 
 ---
 
+## v1.20.6 (2026-06-23)
+
+### 🚀 Redis 模块新增 7 个监控与查询 API
+
+**Redis 模块新增 7 个 API + CLI 命令**，涵盖 Proxy 节点监控、读写分离、分片管理、节点状态、可用区查询：
+
+- `redis proxy-monitor-history` — 查询代理节点性能监控指标历史数据（GET /v2/resourceMonitor/describeProxyHistoryMonitorValues）
+- `redis rw-sep` — 查询读写分离状态（GET /v2/instanceManageMgrServant/queryRWSep）
+- `redis groups` — 查询分片信息（GET /v2/instanceManageMgrServant/describeDBGroup）
+- `redis cluster-member-info` — 查询集群成员信息（GET /v2/instanceManageMgrServant/describeClusterMemberInfo）
+- `redis node-memory` — 查询节点内存使用（GET /v2/resourceMonitor/describeNodeMemory）
+- `redis node-state` — 查询节点状态（GET /v2/instanceManageMgrServant/describeNodeState）
+- `redis available-regions` — 查询可用资源池列表（GET /v2/instanceManageMgrServant/describeAvailableRegions）
+
+---
+
 ## v1.20.5 (2026-06-23)
 
 ### 🔧 Redis 费用查询命令参数文档完善

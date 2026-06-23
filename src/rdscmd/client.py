@@ -1965,6 +1965,289 @@ class RedisClient:
                 "exception": str(e)
             }
 
+    def describe_proxy_history_monitor_values(self, prod_inst_id: str, node_name: str,
+                                                start_time: str, end_time: str,
+                                                monitor_type: str,
+                                                region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询代理节点性能监控指标历史数据
+
+        Args:
+            prod_inst_id (str): 实例ID
+            node_name (str): Proxy节点名称（从逻辑拓扑AccessNode.proxyName获取）
+            start_time (str): 开始时间（格式：yyyy-MM-dd HH:mm:ss），最大查询范围30天
+            end_time (str): 结束时间（格式：yyyy-MM-dd HH:mm:ss）
+            monitor_type (str): 监控类型（从性能监控指标列表proxyNodeMonitorList的type字段获取）
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: 监控数据（returnObj.rows[].metric, returnObj.rows[].values[]）
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询Proxy节点监控历史: prodInstId={prod_inst_id}, node={node_name}, type={monitor_type}")
+
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/resourceMonitor/describeProxyHistoryMonitorValues'
+
+            query_params = {
+                'prodInstId': prod_inst_id,
+                'nodeName': node_name,
+                'startTime': start_time,
+                'endTime': end_time,
+                'type': monitor_type
+            }
+
+            extra_headers = {
+                'regionId': target_region_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers=extra_headers
+            )
+
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询Proxy节点监控历史失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    def query_rw_sep(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询读写分离状态
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: returnObj.isRWSep (true=开启, false=关闭)
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询读写分离状态: prodInstId={prod_inst_id}, regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/queryRWSep'
+
+            query_params = {'prodInstId': prod_inst_id}
+            extra_headers = {'regionId': target_region_id}
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询读写分离状态失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    def describe_db_group(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询分组列表
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: returnObj.total, returnObj.rows[] (groupName, groupInfo, dborder, redisSetName等)
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询分组列表: prodInstId={prod_inst_id}, regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/groupManageMgrServant/describeDbGroup'
+
+            query_params = {'prodInstId': prod_inst_id}
+            extra_headers = {'regionId': target_region_id}
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询分组列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    def describe_cluster_member_info(self, prod_inst_id: str, region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询集群节点信息
+
+        Args:
+            prod_inst_id (str): 实例ID
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: returnObj.rows[] (redisSetName, nodes[master/slave], slotInfo, isAuth, type)
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询集群节点信息: prodInstId={prod_inst_id}, regionId={target_region_id}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeClusterMemberInfo'
+
+            query_params = {'prodInstId': prod_inst_id}
+            extra_headers = {'regionId': target_region_id}
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询集群节点信息失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    def describe_memory_info(self, prod_inst_id: str, ip: str, port: str,
+                              region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询节点内存
+
+        Args:
+            prod_inst_id (str): 实例ID
+            ip (str): Redis节点IP
+            port (str): Redis节点端口
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: returnObj.freeMemory, returnObj.maxMemory
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询节点内存: prodInstId={prod_inst_id}, ip={ip}, port={port}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeMemoryInfo'
+
+            query_params = {
+                'prodInstId': prod_inst_id,
+                'ip': ip,
+                'port': port
+            }
+            extra_headers = {'regionId': target_region_id}
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询节点内存失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    def describe_node_running_state(self, prod_inst_id: str, node_type: str, vpc_url: str,
+                                     region_id: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询节点状态
+
+        Args:
+            prod_inst_id (str): 实例ID
+            node_type (str): 节点类型（redis/proxy）
+            vpc_url (str): 节点地址（从逻辑拓扑获取vpcUrl字段）
+            region_id (str): 资源池ID
+
+        Returns:
+            Optional[Dict[str, Any]]: returnObj.status (0=运行中, 1=停止)
+        """
+        target_region_id = region_id or self.region_id
+        logger.info(f"查询节点状态: prodInstId={prod_inst_id}, nodeType={node_type}, vpcUrl={vpc_url}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/redisMgr/describeNodeRunningState'
+
+            query_params = {
+                'prodInstId': prod_inst_id,
+                'nodeType': node_type,
+                'vpcUrl': vpc_url
+            }
+            extra_headers = {'regionId': target_region_id}
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers=extra_headers
+            )
+
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询节点状态失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    def get_available_region(self, res_pool_code: str = None) -> Optional[Dict[str, Any]]:
+        """
+        查询可用的资源池
+
+        Args:
+            res_pool_code (str): 资源池ID（可选，不传则查询全部）
+
+        Returns:
+            Optional[Dict[str, Any]]: returnObj[] (resPoolCode, resPoolName, products[])
+        """
+        logger.info(f"查询可用的资源池: resPoolCode={res_pool_code}")
+
+        try:
+            url = f'{self.service_endpoint}/v2/region/getAvailableRegion'
+
+            query_params = {}
+            if res_pool_code:
+                query_params['resPoolCode'] = res_pool_code
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={}
+            )
+
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            logger.debug(f"响应状态码: {response.status_code}")
+
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询可用的资源池失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
         """创建标准错误响应"""
         return {
