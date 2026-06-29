@@ -1196,6 +1196,9 @@ cli.add_command(vpc)
 from elb.commands import elb
 cli.add_command(elb)
 
+from dps.commands import dps
+cli.add_command(dps)
+
 from security.commands import security
 cli.add_command(security)
 
