@@ -5556,5 +5556,110 @@ def download_data_export_task(ctx, region_id: str, task_id: str):
         click.echo("⚠️ 暂无下载链接（任务可能未完成）")
 
 
+@monitor.command('query-detection-point')
+@click.pass_context
+@handle_error
+def query_detection_point(ctx):
+    """查询拨测点信息"""
+    cli = ctx.obj['client']
+    result = MonitorClient(cli).query_detection_point()
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    output = ctx.obj.get('output', 'table')
+    data = result.get('data', {})
+    points = data.get('detectionPointList', [])
+
+    if output == 'json':
+        click.echo(json.dumps(points, ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"\n拨测点列表 (共{len(points)}个)")
+        click.echo("-" * 80)
+        if points:
+            for p in points:
+                status_str = '可用' if p.get('status') else '不可用'
+                click.echo(f"  ID: {p.get('pointID', '')}")
+                click.echo(f"  名称: {p.get('name', '')}")
+                click.echo(f"  描述: {p.get('description', '')}")
+                click.echo(f"  状态: {status_str}")
+                click.echo()
+        else:
+            click.echo("无拨测点数据")
+
+
+@monitor.command('query-instant-detection-task')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--type', 'detect_type', required=True,
+              type=click.Choice(['http', 'ping', 'mtr', 'traceroute']),
+              help='拨测任务类型: http/ping/mtr/traceroute')
+@click.pass_context
+@handle_error
+def query_instant_detection_task(ctx, task_id: str, detect_type: str):
+    """查询拨测任务结果"""
+    cli = ctx.obj['client']
+    result = MonitorClient(cli).query_instant_detection_task(
+        task_id=task_id, detect_type=detect_type
+    )
+    if not result.get('success'):
+        click.echo(f"❌ 查询失败: {result.get('message')}", err=True)
+        import sys
+        sys.exit(1)
+
+    output = ctx.obj.get('output', 'table')
+    data = result.get('data', {})
+
+    if output == 'json':
+        click.echo(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        status_map = {1: '运行中', 2: '已完成', 3: '失败', 4: '过期'}
+        status = data.get('status', None)
+        click.echo(f"\n拨测任务结果 (类型: {detect_type})")
+        click.echo("-" * 80)
+        click.echo(f"任务状态: {status_map.get(status, status)}")
+        click.echo(f"任务耗时: {data.get('duration', 'N/A')} ms")
+        create_time = data.get('createTime')
+        if create_time:
+            from datetime import datetime
+            click.echo(f"创建时间: {datetime.fromtimestamp(create_time / 1000).strftime('%Y-%m-%d %H:%M:%S')}")
+
+        result_data = data.get('data', {})
+        type_map = {
+            'ping': 'pingData', 'http': 'httpData',
+            'mtr': 'mtrData', 'traceroute': 'tracerouteData'
+        }
+        data_key = type_map.get(detect_type, '')
+        data_list = result_data.get(data_key, [])
+
+        click.echo(f"\n拨测结果 (共{len(data_list)}条)")
+        click.echo("-" * 80)
+        for item in data_list:
+            click.echo(f"  拨测点ID: {item.get('pointID', '')}")
+            click.echo(f"  目标IP: {item.get('targetIP', '')}")
+            if detect_type == 'ping':
+                click.echo(f"  状态: {item.get('status', 'N/A')}")
+                click.echo(f"  丢包率: {item.get('packetLoss', 'N/A')}%")
+                click.echo(f"  最大/最小/平均时间: {item.get('maxTime', 'N/A')}/{item.get('minTime', 'N/A')}/{item.get('avgTime', 'N/A')} ms")
+            elif detect_type == 'http':
+                click.echo(f"  状态: {item.get('status', 'N/A')}")
+                click.echo(f"  总时间: {item.get('totalTime', 'N/A')} ms")
+                click.echo(f"  下载大小: {item.get('totalDownloadSize', 'N/A')} KB")
+            elif detect_type in ('mtr', 'traceroute'):
+                info_list = item.get('info', [])
+                click.echo(f"  跳数: {len(info_list)}")
+                for hop in info_list:
+                    if detect_type == 'mtr':
+                        click.echo(f"    [{hop.get('sequence', '')}] {hop.get('host', '')} "
+                                   f"丢包率:{hop.get('packetLossRate', 'N/A')}% "
+                                   f"平均:{hop.get('averageTime', 'N/A')}ms")
+                    else:
+                        click.echo(f"    [{hop.get('sequence', '')}] {hop.get('host', '')} "
+                                   f"总时间:{hop.get('totalTime', 'N/A')}ms")
+            if item.get('detail'):
+                click.echo(f"  详情: {item.get('detail', '')[:100]}")
+            click.echo()
+
+
 if __name__ == '__main__':
     monitor()

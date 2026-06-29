@@ -4244,3 +4244,56 @@ class MonitorClient:
             }
 
     # ==================== 监控对象资源列表 End ====================
+
+    # ==================== 拨测 Start ====================
+
+    def query_detection_point(self) -> Dict[str, Any]:
+        """查询拨测点信息"""
+        logger.info("查询拨测点信息")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/query-detection-point"
+            query_params = {}
+
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params,
+                                                  body=None, extra_headers={})
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                        'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询拨测点信息失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    def query_instant_detection_task(self, task_id: str, detect_type: str) -> Dict[str, Any]:
+        """查询拨测任务结果"""
+        logger.info(f"查询拨测任务结果: task_id={task_id}, type={detect_type}")
+        try:
+            url = f"https://{self.base_endpoint}/v4/monitor/query-instant-detection-task"
+            body = {'taskID': task_id, 'type': detect_type}
+            body_json = json.dumps(body)
+
+            headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
+                                                  extra_headers={'Content-Type': 'application/json'})
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+
+            if response.status_code != 200:
+                return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
+
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return {'success': True, 'data': result.get('returnObj', {})}
+            else:
+                return {'success': False, 'error': result.get('errorCode', result.get('statusCode')),
+                        'message': result.get('msgDesc', result.get('message', '未知错误'))}
+        except Exception as e:
+            logger.error(f"查询拨测任务结果失败: {str(e)}", exc_info=True)
+            return {'success': False, 'error': 'Exception', 'message': str(e)}
+
+    # ==================== 拨测 End ====================

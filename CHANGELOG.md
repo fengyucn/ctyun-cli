@@ -4,6 +4,31 @@
 
 ---
 
+## v1.21.0 (2026-06-29)
+
+### 🆕 新增 ZOS（对象存储）模块 + 多模块询价/拨测扩展
+
+**新增模块**：
+- **ZOS（对象存储）**：`zos query-price` — 存储套餐询价
+
+**ECS 模块新增 1 个 API**：
+- `ecs renew-price` — 资源续订询价，支持 VM/EBS/IP/IP_POOL/NAT/BMS/PGELB/CBR_VM/CBR_VBS 9 种资源类型
+
+**ELB 模块新增 3 个 API**：
+- `elb pgelb-create-price` — PGELB 创建询价
+- `elb pgelb-renew-price` — PGELB 续订询价
+- `elb pgelb-modify-price` — PGELB 变配询价
+
+**Monitor 模块新增 2 个 API**：
+- `monitor query-detection-point` — 查询拨测点列表
+- `monitor query-instant-detection-task` — 查询即时拨测任务
+
+**OceanFS 模块新增 2 个 API**：
+- `oceanfs renew-price` — 文件系统续订询价
+- `oceanfs upgrade-price` — 文件系统升配询价
+
+---
+
 ## v1.20.6 (2026-06-23)
 
 ### 🚀 Redis 模块新增 7 个监控与查询 API

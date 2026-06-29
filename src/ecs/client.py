@@ -3911,6 +3911,86 @@ class ECSClient:
             logger.error(f"订单询价失败: {str(e)}")
             raise
 
+    def renew_query_price(
+        self,
+        region_id: str,
+        resource_type: str,
+        resource_uuid: str,
+        cycle_type: str,
+        cycle_count: int,
+    ) -> Dict[str, Any]:
+        """
+        资源uuid续订询价 - POST /v4/order/renew-query-price
+
+        支持云主机、云硬盘、弹性公网IP、NAT网关、共享带宽、物理机、性能保障型负载均衡、
+        云主机备份存储库和云硬盘备份存储库产品的包年/包月续订询价。
+
+        Args:
+            region_id: 资源池ID
+            resource_type: 资源类型 (VM/EBS/IP/IP_POOL/NAT/BMS/PGELB/CBR_VM/CBR_VBS)
+            resource_uuid: 资源uuid
+            cycle_type: 订购周期类型 MONTH(月) / YEAR(年)
+            cycle_count: 订购周期大小，MONTH范围[1,36]，YEAR范围[1,3]
+
+        Returns:
+            询价结果，包含 totalPrice / finalPrice / subOrderPrices
+        """
+        logger.info(f"续订询价: regionID={region_id}, resourceType={resource_type}, "
+                    f"resourceUUID={resource_uuid}, cycleType={cycle_type}, cycleCount={cycle_count}")
+
+        url = f'https://{self.base_endpoint}/v4/order/renew-query-price'
+
+        body_data = {
+            'regionID': region_id,
+            'resourceType': resource_type,
+            'resourceUUID': resource_uuid,
+            'cycleType': cycle_type,
+            'cycleCount': cycle_count,
+        }
+
+        body = json.dumps(body_data)
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url,
+            query_params=None,
+            body=body,
+            extra_headers={}
+        )
+
+        logger.debug(f"请求URL: {url}")
+        logger.debug(f"请求体: {body}")
+
+        try:
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"响应状态码: {response.status_code}")
+            logger.debug(f"响应内容: {response.text}")
+
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}: {response.text}',
+                    'returnObj': None
+                }
+
+            result = response.json()
+
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"续订询价失败: {str(e)}")
+            raise
+
     def update_ecs_label(
         self,
         region_id: str,

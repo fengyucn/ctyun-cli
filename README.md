@@ -147,7 +147,11 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.20.6 (2026-06-23)
+**最新版本**: v1.21.0 (2026-06-29)
+- 🆕 **新增 ZOS（对象存储）模块**：`zos query-price` 存储套餐询价
+- 🚀 **多模块扩展 8 个 API**：ECS 续订询价、ELB PGELB 询价（3个）、Monitor 拨测查询（2个）、OceanFS 续订/升配询价（2个）
+
+**v1.20.6** (2026-06-23)
 - 🚀 **Redis 模块新增 7 个监控与查询 API**：`proxy-monitor-history` / `rw-sep` / `groups` / `cluster-member-info` / `node-memory` / `node-state` / `available-regions`
 
 **v1.20.5** (2026-06-23)

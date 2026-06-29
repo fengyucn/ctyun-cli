@@ -1296,3 +1296,167 @@ def show_health_check(ctx, region_id: str, health_check_id: str, id: Optional[st
                 click.echo(suggestion)
         else:
             click.echo("✅ 配置看起来合理")
+
+
+def _display_pgelb_price(result: dict, title: str):
+    """统一展示保障型ELB询价结果"""
+    if result.get('statusCode') != 800:
+        error_msg = result.get('description') or result.get('message', '未知错误')
+        click.echo(f"❌ 询价失败: {error_msg}", err=True)
+        import sys
+        sys.exit(1)
+
+    return_obj = result.get('returnObj', {}) or {}
+    total_price = return_obj.get('totalPrice', '-')
+    discount_price = return_obj.get('discountPrice', '-')
+    final_price = return_obj.get('finalPrice', '-')
+    sub_orders = return_obj.get('subOrderPrices', [])
+
+    click.echo("=" * 60)
+    click.echo(title)
+    click.echo("=" * 60)
+    click.echo(f"  {'总价 (CNY)':<14}: {total_price}")
+    if discount_price and discount_price != '-':
+        click.echo(f"  {'折后价 (CNY)':<14}: {discount_price}")
+    click.echo(f"  {'最终价 (CNY)':<14}: {final_price}")
+
+    if sub_orders:
+        click.echo("\n子订单明细:")
+        click.echo("-" * 60)
+        for sub in sub_orders:
+            click.echo(f"  服务标签: {sub.get('serviceTag', '-')}  "
+                       f"总价: {sub.get('totalPrice', '-')}  "
+                       f"最终价: {sub.get('finalPrice', '-')} CNY")
+            for item in sub.get('orderItemPrices', []):
+                click.echo(f"    [{item.get('resourceType', '-')}] "
+                           f"总价: {item.get('totalPrice', '-')}  "
+                           f"最终价: {item.get('finalPrice', '-')} CNY")
+
+
+@elb.command('pgelb-create-price')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--subnet-id', required=True, help='子网ID')
+@click.option('--name', required=True, help='实例名称(2-32字符)')
+@click.option('--sla-name', required=True,
+              help='规格名称(elb.s2.small/s2.large/s3.small/s3.large/s4.small/s4.large/s5.small/s5.large)')
+@click.option('--resource-type', required=True,
+              type=click.Choice(['internal', 'external']),
+              help='部署类型 internal(内网)/external(公网)')
+@click.option('--cycle-type', required=True,
+              type=click.Choice(['month', 'year']),
+              help='计费周期 month(包月)/year(包年)')
+@click.option('--cycle-count', required=True, type=int,
+              help='购买时长(month:1-11, year:1-3)')
+@click.option('--project-id', default=None, help='企业项目ID，默认0')
+@click.option('--vpc-id', default=None, help='VPC ID')
+@click.option('--description', default=None, help='备注说明(0-128字符)')
+@click.option('--eip-id', default=None, help='弹性公网IP ID，external时必填')
+@click.option('--private-ip-address', default=None, help='私有IP地址，不指定则自动分配')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def pgelb_create_price(ctx, region_id, subnet_id, name, sla_name, resource_type,
+                       cycle_type, cycle_count, project_id, vpc_id, description,
+                       eip_id, private_ip_address, output):
+    """保障型负载均衡创建询价"""
+    import uuid
+    try:
+        client = ctx.obj['client']
+        elb_client = ELBClient(client)
+
+        result = elb_client.query_create_pgelb_price(
+            region_id=region_id, subnet_id=subnet_id, name=name,
+            sla_name=sla_name, resource_type=resource_type,
+            cycle_type=cycle_type, cycle_count=cycle_count,
+            client_token=str(uuid.uuid4())[:32],
+            project_id=project_id, vpc_id=vpc_id, description=description,
+            eip_id=eip_id, private_ip_address=private_ip_address,
+        )
+
+        output_format = output or ctx.obj.get('output', 'table')
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+        else:
+            _display_pgelb_price(result, f"创建询价  规格: {sla_name}  周期: {cycle_count}{cycle_type}")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+
+
+@elb.command('pgelb-renew-price')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--elb-id', required=True, help='负载均衡ID')
+@click.option('--cycle-type', required=True,
+              type=click.Choice(['month', 'year']),
+              help='订购类型 month(包月)/year(包年)')
+@click.option('--cycle-count', required=True, type=int,
+              help='订购时长(month:1-11, year:1-3)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def pgelb_renew_price(ctx, region_id, elb_id, cycle_type, cycle_count, output):
+    """保障型负载均衡续订询价"""
+    import uuid
+    try:
+        client = ctx.obj['client']
+        elb_client = ELBClient(client)
+
+        result = elb_client.query_renew_pgelb_price(
+            region_id=region_id, elb_id=elb_id,
+            cycle_type=cycle_type, cycle_count=cycle_count,
+            client_token=str(uuid.uuid4())[:32],
+        )
+
+        output_format = output or ctx.obj.get('output', 'table')
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+        else:
+            _display_pgelb_price(result, f"续订询价  ELB: {elb_id}  周期: {cycle_count}{cycle_type}")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+
+
+@elb.command('pgelb-modify-price')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--elb-id', required=True, help='负载均衡ID')
+@click.option('--sla-name', required=True,
+              help='新规格名称(elb.s2.small/s2.large/s3.small/s3.large/s4.small/s4.large/s5.small/s5.large)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def pgelb_modify_price(ctx, region_id, elb_id, sla_name, output):
+    """保障型负载均衡变配询价"""
+    import uuid
+    try:
+        client = ctx.obj['client']
+        elb_client = ELBClient(client)
+
+        result = elb_client.query_modify_pgelb_spec_price(
+            region_id=region_id, elb_id=elb_id, sla_name=sla_name,
+            client_token=str(uuid.uuid4())[:32],
+        )
+
+        output_format = output or ctx.obj.get('output', 'table')
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+        else:
+            _display_pgelb_price(result, f"变配询价  ELB: {elb_id}  新规格: {sla_name}")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)

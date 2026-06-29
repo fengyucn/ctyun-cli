@@ -1014,6 +1014,81 @@ def query_price(ctx, region_id: str, resource_type: str, count: int, on_demand: 
         traceback.print_exc()
 
 
+@ecs.command('renew-price')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--resource-type', required=True,
+              type=click.Choice(['VM', 'EBS', 'IP', 'IP_POOL', 'NAT', 'BMS', 'PGELB', 'CBR_VM', 'CBR_VBS']),
+              help='资源类型')
+@click.option('--resource-uuid', required=True, help='资源uuid')
+@click.option('--cycle-type', required=True,
+              type=click.Choice(['MONTH', 'YEAR']),
+              help='订购周期类型 MONTH(月) / YEAR(年)')
+@click.option('--cycle-count', required=True, type=int,
+              help='订购周期大小 (MONTH:1-36, YEAR:1-3)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
+@click.pass_context
+def renew_price(ctx, region_id: str, resource_type: str, resource_uuid: str,
+                cycle_type: str, cycle_count: int, output: Optional[str]):
+    """资源uuid续订询价，支持 VM/EBS/IP/IP_POOL/NAT/BMS/PGELB/CBR_VM/CBR_VBS"""
+    try:
+        from ecs.client import ECSClient
+
+        client = ctx.obj['client']
+        ecs_client = ECSClient(client)
+
+        result = ecs_client.renew_query_price(
+            region_id=region_id,
+            resource_type=resource_type,
+            resource_uuid=resource_uuid,
+            cycle_type=cycle_type,
+            cycle_count=cycle_count,
+        )
+
+        output_format = output or ctx.obj.get('output', 'table')
+
+        if output_format == 'json':
+            click.echo(OutputFormatter.format_json(result))
+        elif output_format == 'yaml':
+            try:
+                import yaml
+                click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+            except ImportError:
+                click.echo("错误: 需要安装PyYAML库", err=True)
+        else:
+            if result.get('statusCode') != 800:
+                click.echo(f"API错误 [{result.get('errorCode', '')}]: {result.get('message', '未知错误')}", err=True)
+                return
+
+            return_obj = result.get('returnObj', {}) or {}
+            total_price = return_obj.get('totalPrice', '-')
+            final_price = return_obj.get('finalPrice', '-')
+            sub_orders = return_obj.get('subOrderPrices', [])
+
+            click.echo("=" * 60)
+            click.echo(f"续订询价  资源类型: {resource_type}  UUID: {resource_uuid}")
+            click.echo("=" * 60)
+            click.echo(f"  {'续订周期':<14}: {cycle_count}{cycle_type}")
+            click.echo(f"  {'总价 (CNY)':<14}: {total_price}")
+            click.echo(f"  {'最终价 (CNY)':<14}: {final_price}")
+
+            if sub_orders:
+                click.echo("\n子订单明细:")
+                click.echo("-" * 60)
+                for sub in sub_orders:
+                    click.echo(f"  服务标签: {sub.get('serviceTag', '-')}  "
+                               f"总价: {sub.get('totalPrice', '-')}  "
+                               f"最终价: {sub.get('finalPrice', '-')} CNY")
+                    for item in sub.get('orderItemPrices', []):
+                        click.echo(f"    [{item.get('resourceType', '-')}] "
+                                   f"总价: {item.get('totalPrice', '-')}  "
+                                   f"最终价: {item.get('finalPrice', '-')} CNY")
+
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+
+
 @cli.command()
 def clear_cache():
     """清空所有缓存"""
@@ -1081,6 +1156,9 @@ cli.add_command(sfs)
 
 from oceanfs.commands import oceanfs
 cli.add_command(oceanfs)
+
+from zos.commands import zos
+cli.add_command(zos)
 
 from aone.commands import aone
 cli.add_command(aone)

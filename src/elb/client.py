@@ -691,3 +691,153 @@ class ELBClient:
         except Exception as e:
             logger.error(f"查询健康检查详情失败: {str(e)}")
             raise
+
+    def query_create_pgelb_price(
+        self,
+        region_id: str,
+        subnet_id: str,
+        name: str,
+        sla_name: str,
+        resource_type: str,
+        cycle_type: str,
+        cycle_count: int,
+        client_token: str,
+        project_id: Optional[str] = None,
+        vpc_id: Optional[str] = None,
+        description: Optional[str] = None,
+        eip_id: Optional[str] = None,
+        private_ip_address: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        保障型负载均衡创建询价 - POST /v4/elb/querycreatepgelbprice
+
+        Args:
+            region_id: 区域ID
+            subnet_id: 子网ID
+            name: 实例名称(2-32字符)
+            sla_name: 规格名称(elb.s2.small~elb.s5.large)
+            resource_type: 部署类型 internal(内网)/external(公网)
+            cycle_type: 计费周期 month(包月)/year(包年)
+            cycle_count: 购买时长(month:1-11, year:1-3)
+            client_token: 客户端存根，保证幂等性(1-64字符)
+            project_id: 企业项目ID，默认'0'
+            vpc_id: VPC ID
+            description: 备注说明(0-128字符)
+            eip_id: 弹性公网IP ID，external时必填
+            private_ip_address: 私有IP地址，不指定则自动分配
+        """
+        logger.info(f"保障型负载均衡创建询价: regionID={region_id}, slaName={sla_name}")
+
+        url = f'https://{self.base_endpoint}/v4/elb/query-create-price'
+        body_data: Dict[str, Any] = {
+            'clientToken': client_token,
+            'regionID': region_id,
+            'subnetID': subnet_id,
+            'name': name,
+            'slaName': sla_name,
+            'resourceType': resource_type,
+            'cycleType': cycle_type,
+            'cycleCount': cycle_count,
+        }
+        if project_id:
+            body_data['projectID'] = project_id
+        if vpc_id:
+            body_data['vpcID'] = vpc_id
+        if description:
+            body_data['description'] = description
+        if eip_id:
+            body_data['eipID'] = eip_id
+        if private_ip_address:
+            body_data['privateIpAddress'] = private_ip_address
+
+        body = json.dumps(body_data)
+        headers = self.eop_auth.sign_request(
+            method='POST', url=url, query_params=None, body=body, extra_headers={}
+        )
+
+        try:
+            response = self.client.session.post(url, data=body, headers=headers, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"保障型负载均衡创建询价失败: {str(e)}")
+            raise
+
+    def query_renew_pgelb_price(
+        self,
+        region_id: str,
+        elb_id: str,
+        cycle_type: str,
+        cycle_count: int,
+        client_token: str,
+    ) -> Dict[str, Any]:
+        """
+        保障型负载均衡续订询价 - POST /v4/elb/queryrenewpgelbprice
+
+        Args:
+            region_id: 区域ID
+            elb_id: 负载均衡ID
+            cycle_type: 订购类型 month(包月)/year(包年)
+            cycle_count: 订购时长(month:1-11, year:1-3)
+            client_token: 客户端存根，保证幂等性(1-64字符)
+        """
+        logger.info(f"保障型负载均衡续订询价: regionID={region_id}, elbID={elb_id}")
+
+        url = f'https://{self.base_endpoint}/v4/elb/query-renew-price'
+        body_data = {
+            'clientToken': client_token,
+            'regionID': region_id,
+            'elbID': elb_id,
+            'cycleType': cycle_type,
+            'cycleCount': cycle_count,
+        }
+        body = json.dumps(body_data)
+        headers = self.eop_auth.sign_request(
+            method='POST', url=url, query_params=None, body=body, extra_headers={}
+        )
+
+        try:
+            response = self.client.session.post(url, data=body, headers=headers, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"保障型负载均衡续订询价失败: {str(e)}")
+            raise
+
+    def query_modify_pgelb_spec_price(
+        self,
+        region_id: str,
+        elb_id: str,
+        sla_name: str,
+        client_token: str,
+    ) -> Dict[str, Any]:
+        """
+        保障型负载均衡变配询价 - POST /v4/elb/querymodifypgelbspecprice
+
+        Args:
+            region_id: 区域ID
+            elb_id: 负载均衡ID
+            sla_name: 新规格名称(elb.s2.small~elb.s5.large)
+            client_token: 客户端存根，保证幂等性(1-64字符)
+        """
+        logger.info(f"保障型负载均衡变配询价: regionID={region_id}, elbID={elb_id}, slaName={sla_name}")
+
+        url = f'https://{self.base_endpoint}/v4/elb/query-modify-price'
+        body_data = {
+            'clientToken': client_token,
+            'regionID': region_id,
+            'elbID': elb_id,
+            'slaName': sla_name,
+        }
+        body = json.dumps(body_data)
+        headers = self.eop_auth.sign_request(
+            method='POST', url=url, query_params=None, body=body, extra_headers={}
+        )
+
+        try:
+            response = self.client.session.post(url, data=body, headers=headers, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"保障型负载均衡变配询价失败: {str(e)}")
+            raise
