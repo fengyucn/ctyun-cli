@@ -4,6 +4,25 @@
 
 ---
 
+## v1.24.0 (2026-06-30)
+
+### 🆕 新增 CSSCN（云安全中心）模块
+
+**CSSCN 模块上线**，包含 10 个 CLI 命令，涵盖资产查询、安全统计、告警、漏洞、病毒检测：
+
+- `csscn list` — 查询服务器资产列表
+- `csscn describe` — 查询服务器详情
+- `csscn risk-stats` — 查询风险统计数据
+- `csscn server-stats` — 查询服务器统计数据
+- `csscn agent-stats` — 查询 Agent 统计数据
+- `csscn agent-distribution` — 查询 Agent 分布情况
+- `csscn vuln-stats` — 查询漏洞统计数据
+- `csscn alarms` — 查询告警列表
+- `csscn viruses` — 查询病毒检测列表
+- `csscn quotas` — 查询配额信息
+
+---
+
 ## v1.23.0 (2026-06-30)
 
 ### 🆕 新增 CTMySQL（云数据库 MySQL）模块

@@ -1205,6 +1205,9 @@ cli.add_command(ctmysql)
 from security.commands import security
 cli.add_command(security)
 
+from csscn.commands import csscn
+cli.add_command(csscn)
+
 from audit.commands import audit
 cli.add_command(audit)
 
