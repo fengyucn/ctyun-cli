@@ -4,6 +4,21 @@
 
 ---
 
+## v1.23.0 (2026-06-30)
+
+### 🆕 新增 CTMySQL（云数据库 MySQL）模块
+
+**CTMySQL 模块上线**，包含 6 个 CLI 命令，涵盖实例查询、标签管理、监控、询价：
+
+- `ctmysql list` — 查询 MySQL 实例列表
+- `ctmysql batch-label` — 批量查询实例标签
+- `ctmysql batch-monitor` — 批量查询实例监控数据
+- `ctmysql inquiry` — 新购询价
+- `ctmysql inquiry-upgrade` — 升配询价
+- `ctmysql inquiry-renew` — 续订询价
+
+---
+
 ## v1.22.0 (2026-06-29)
 
 ### 🆕 新增 DPS（数据迁移服务）模块

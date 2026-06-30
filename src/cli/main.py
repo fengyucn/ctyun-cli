@@ -1199,6 +1199,9 @@ cli.add_command(elb)
 from dps.commands import dps
 cli.add_command(dps)
 
+from ctmysql.commands import ctmysql
+cli.add_command(ctmysql)
+
 from security.commands import security
 cli.add_command(security)
 
