@@ -1460,3 +1460,27 @@ def pgelb_modify_price(ctx, region_id, elb_id, sla_name, output):
 
     except Exception as e:
         click.echo(f"运行出错: {e}", err=True)
+
+
+@elb.command('list-labels')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--elb-id', required=True, help='负载均衡器ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_labels(ctx, region_id: str, elb_id: str, output):
+    """获取负载均衡绑定的标签"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_elb_labels(region_id=region_id, elb_id=elb_id)
+    fmt = output or ctx.obj.get('output', 'table')
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(result)); return
+    elif fmt == 'yaml':
+        import yaml; click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False)); return
+    ro = result.get('returnObj', {})
+    labels = ro.get('labels', ro) if isinstance(ro, dict) else ro
+    if isinstance(labels, list):
+        click.echo(f"ELB {elb_id} 标签 (共 {len(labels)} 个)")
+        if labels:
+            click.echo(OutputFormatter.format_table(labels))
+    else:
+        click.echo(OutputFormatter.format_json(result))

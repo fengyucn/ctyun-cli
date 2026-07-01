@@ -849,3 +849,117 @@ def describe_flow_logs(ctx, region_id: str, resource_type: Optional[str],
         status=status
     )
     format_output(result, ctx.obj['output'])
+
+
+# ==================== 标签查询 ====================
+
+def _label_output(ctx, result):
+    """标签查询统一输出"""
+    fmt = ctx.obj.get('output', 'table')
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(result))
+        return
+    return_obj = result.get('returnObj', {})
+    items = return_obj.get('results', [])
+    total = return_obj.get('totalCount', 0)
+    click.echo(f"标签列表 (共 {total} 个)")
+    if items:
+        click.echo(OutputFormatter.format_table(items))
+
+
+@vpc.command('label-query-resources')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--label-id', default=None, help='标签ID')
+@click.option('--label-key', default=None, help='标签Key')
+@click.option('--label-value', default=None, help='标签Value')
+@click.option('--page-number', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.pass_context
+def label_query_resources(ctx, region_id, label_id, label_key, label_value, page_number, page_size):
+    """根据标签获取资源列表"""
+    from vpc.client import VPCClient
+    result = VPCClient(ctx.obj['client']).query_resources_by_label(
+        region_id=region_id, label_id=label_id, label_key=label_key,
+        label_value=label_value, page_number=page_number, page_size=page_size)
+    fmt = ctx.obj.get('output', 'table')
+    if fmt == 'json':
+        click.echo(OutputFormatter.format_json(result)); return
+    ro = result.get('returnObj', {})
+    items = ro.get('results', [])
+    click.echo(f"资源列表 (共 {ro.get('totalCount', 0)} 个)")
+    if items:
+        click.echo(OutputFormatter.format_table(items))
+
+
+@vpc.command('label-query-by-resource')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--resource-type', required=True,
+              help='资源类型: vpc/subnet/acl/security_group/route_table/havip/vpc_peer/vpce_endpoint等')
+@click.option('--resource-id', required=True, help='资源ID')
+@click.option('--page-number', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.pass_context
+def label_query_by_resource(ctx, region_id, resource_type, resource_id, page_number, page_size):
+    """根据资源获取标签"""
+    from vpc.client import VPCClient
+    result = VPCClient(ctx.obj['client']).query_labels_by_resource(
+        region_id=region_id, resource_type=resource_type, resource_id=resource_id,
+        page_number=page_number, page_size=page_size)
+    _label_output(ctx, result)
+
+
+@vpc.command('label-vpc-peer')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--vpc-peer-id', required=True, help='对等链接ID')
+@click.option('--page-number', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.pass_context
+def label_vpc_peer(ctx, region_id, vpc_peer_id, page_number, page_size):
+    """获取对等链接绑定的标签"""
+    from vpc.client import VPCClient
+    result = VPCClient(ctx.obj['client']).list_vpc_peer_labels(
+        region_id=region_id, vpc_peer_id=vpc_peer_id, page_number=page_number, page_size=page_size)
+    _label_output(ctx, result)
+
+
+@vpc.command('label-vpce-endpoint')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--endpoint-id', required=True, help='终端节点ID')
+@click.option('--page-number', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.pass_context
+def label_vpce_endpoint(ctx, region_id, endpoint_id, page_number, page_size):
+    """获取终端节点绑定的标签"""
+    from vpc.client import VPCClient
+    result = VPCClient(ctx.obj['client']).list_vpce_endpoint_labels(
+        region_id=region_id, endpoint_id=endpoint_id, page_number=page_number, page_size=page_size)
+    _label_output(ctx, result)
+
+
+@vpc.command('label-vpce-service')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--endpoint-service-id', required=True, help='终端节点服务ID')
+@click.option('--page-number', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.pass_context
+def label_vpce_service(ctx, region_id, endpoint_service_id, page_number, page_size):
+    """获取终端节点服务绑定的标签"""
+    from vpc.client import VPCClient
+    result = VPCClient(ctx.obj['client']).list_vpce_service_labels(
+        region_id=region_id, endpoint_service_id=endpoint_service_id,
+        page_number=page_number, page_size=page_size)
+    _label_output(ctx, result)
+
+
+@vpc.command('label-private-dns')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--zone-id', required=True, help='内网DNS ID')
+@click.option('--page-no', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.pass_context
+def label_private_dns(ctx, region_id, zone_id, page_no, page_size):
+    """获取内网DNS绑定的标签"""
+    from vpc.client import VPCClient
+    result = VPCClient(ctx.obj['client']).list_private_dns_labels(
+        region_id=region_id, zone_id=zone_id, page_no=page_no, page_size=page_size)
+    _label_output(ctx, result)

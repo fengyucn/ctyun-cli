@@ -3401,3 +3401,26 @@ def available_regions(ctx, res_pool_code, output):
         error_msg = result.get('message', '未知错误') if result else '请求失败'
         click.echo(f"查询失败: {error_msg}", err=True)
         sys.exit(1)
+
+
+@redis_group.command('label-by-resources')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-ids', '-i', required=True, help='实例ID列表，逗号分隔')
+@click.option('--output', type=click.Choice(['table', 'json']), default='table')
+@click.pass_context
+def label_by_resources(ctx, region_id: str, instance_ids: str, output: str):
+    """查询资源绑定的标签列表"""
+    from rdscmd.client import RedisClient
+    inst_ids = [s.strip() for s in instance_ids.split(',') if s.strip()]
+    result = RedisClient(ctx.obj['client']).get_label_list_by_resources(
+        region_id=region_id, prod_inst_ids=inst_ids)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {})
+    rows = ro.get('rows', [])
+    click.echo(f"Redis资源标签 (共 {ro.get('total', 0)} 个)")
+    if rows:
+        for r in rows:
+            resources = r.get('prodResourceIdList', [])
+            res_str = ', '.join(ri.get('resourceId', '')[:16] for ri in resources)
+            click.echo(f"  {r.get('key','')}={r.get('value','')}  ({r.get('resourceCount',0)}个资源) {res_str}")

@@ -2248,6 +2248,25 @@ class RedisClient:
             logger.error(f"查询可用的资源池失败: {e}")
             return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
 
+    def get_label_list_by_resources(self, region_id: str, prod_inst_ids: list) -> Optional[Dict[str, Any]]:
+        """查询资源绑定的标签列表 - POST /v2/label/getLabelListByResources"""
+        logger.info(f"查询Redis资源标签: instCount={len(prod_inst_ids)}")
+        try:
+            url = f'{self.service_endpoint}/v2/label/getLabelListByResources'
+            request_body = {'prodInstIds': prod_inst_ids}
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={},
+                body=json.dumps(request_body),
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.post(url, json=request_body, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询资源标签失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
         """创建标准错误响应"""
         return {

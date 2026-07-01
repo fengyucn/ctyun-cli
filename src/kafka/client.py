@@ -217,3 +217,24 @@ class KafkaClient:
         except Exception as e:
             logger.error(f"获取实例配置失败: {e}")
             return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    def list_tags(self, region_id: str, tag_name: Optional[str] = None,
+                  page_num: int = 1, page_size: int = 10) -> Optional[Dict[str, Any]]:
+        """查询标签列表 - GET /v3/resourceTag/listTag"""
+        logger.info(f"查询Kafka标签列表: regionId={region_id}")
+        try:
+            url = f'https://{self.base_endpoint}/v3/resourceTag/listTag'
+            query_params: Dict[str, Any] = {'pageNum': str(page_num), 'pageSize': str(page_size)}
+            if tag_name:
+                query_params['tagName'] = tag_name
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询标签列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}

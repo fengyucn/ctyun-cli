@@ -1223,7 +1223,8 @@ from ecs.commands import (format_output, update_ecs_label, query_dedicated_host_
                            describe_send_file_results,
                            list_dedicated_hosts, check_dedicated_host_demand,
                            list_dedicated_host_flavors,
-                           list_ports, show_port)
+                           list_ports, show_port,
+                           dedicated_host_label)
 ecs.add_command(update_ecs_label)
 ecs.add_command(query_dedicated_host_uuid)
 ecs.add_command(query_order_uuid)
@@ -1247,6 +1248,7 @@ ecs.add_command(check_dedicated_host_demand)
 ecs.add_command(list_dedicated_host_flavors)
 ecs.add_command(list_ports)
 ecs.add_command(show_port)
+ecs.add_command(dedicated_host_label)
 
 
 if __name__ == '__main__':

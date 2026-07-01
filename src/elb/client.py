@@ -841,3 +841,15 @@ class ELBClient:
         except Exception as e:
             logger.error(f"保障型负载均衡变配询价失败: {str(e)}")
             raise
+
+    def list_elb_labels(self, region_id: str, elb_id: str) -> Dict[str, Any]:
+        """获取负载均衡绑定的标签 - GET /v4/elb/listelblabels"""
+        logger.info(f"获取ELB标签: elbID={elb_id}")
+        url = f'https://{self.base_endpoint}/v4/elb/list-labels'
+        query_params = {'regionID': region_id, 'elbID': elb_id}
+        headers = self.eop_auth.sign_request(
+            method='GET', url=url, query_params=query_params, body=None
+        )
+        response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
+        response.raise_for_status()
+        return response.json()

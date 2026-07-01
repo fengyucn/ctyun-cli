@@ -3247,8 +3247,37 @@ def show_port(ctx, region_id: str, port_id: str, output: Optional[str]):
             if return_obj.get('associatedEip'):
                 eip = return_obj['associatedEip']
                 click.echo(f"  弹性IP: {eip.get('name', '')} ({eip.get('id', '')})")
-                
+
     except Exception as e:
         click.echo(f"运行出错: {e}", err=True)
         import traceback
         traceback.print_exc()
+
+
+@ecs.command('dedicated-host-label')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--host-ids', required=True, help='专有宿主机ID列表，逗号分隔(最多50)')
+@click.option('--action', required=True, type=click.Choice(['BIND', 'UNBIND']),
+              help='操作: BIND(绑定) / UNBIND(解绑)')
+@click.option('--label', required=True, multiple=True,
+              help='标签 key=value，可多次指定')
+@click.pass_context
+def dedicated_host_label(ctx, region_id: str, host_ids: str, action: str, label: tuple):
+    """更新专有宿主机的标签信息"""
+    from ecs.client import ECSClient
+    labels = []
+    for lv in label:
+        if '=' not in lv:
+            click.echo(f"错误: 标签格式应为 key=value，收到: {lv}", err=True)
+        k, v = lv.split('=', 1)
+        labels.append({'labelKey': k.strip(), 'labelValue': v.strip()})
+    try:
+        result = ECSClient(ctx.obj['client']).dedicated_host_update_labels(
+            region_id=region_id, dedicated_host_id_list=host_ids,
+            label_list=labels, operate_type=action)
+        click.echo(f"✓ 专有宿主机标签{('绑定' if action == 'BIND' else '解绑')}成功")
+        click.echo(f"  宿主机: {host_ids}")
+        label_str = ', '.join(f"{l['labelKey']}={l['labelValue']}" for l in labels)
+        click.echo(f"  标签: {label_str}")
+    except Exception as e:
+        click.echo(f"运行出错: {e}", err=True)

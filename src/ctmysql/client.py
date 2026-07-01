@@ -276,3 +276,36 @@ class RDSClient:
         except Exception as e:
             logger.error(f"续费询价失败: {str(e)}")
             raise
+
+    # ==================== 标签查询 ====================
+
+    def list_tag_resources(self, region_id: str, outer_prod_inst_id_list: str,
+                           tag_vo_list: str = '') -> Dict[str, Any]:
+        """查询标签列表 - GET /v1/open-api/tag/list-tag-resources"""
+        logger.info(f"查询RDS标签列表: instIds={outer_prod_inst_id_list}")
+        query_params = {'outerProdInstIdList': outer_prod_inst_id_list}
+        if tag_vo_list:
+            query_params['tagVOList'] = tag_vo_list
+        return self._get(
+            '/RDS2/v1/open-api/tag/list-tag-resources',
+            region_id, query_params, '查询RDS标签列表'
+        )
+
+    def get_instance_labels(self, region_id: str, outer_prod_inst_id: str,
+                            page_now: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """获取实例所绑定的标签 - GET /RDS2/v2/open-api/tag/label"""
+        logger.info(f"获取实例标签: instId={outer_prod_inst_id}")
+        query_params = {'outerProdInstId': outer_prod_inst_id, 'pageNow': page_now, 'pageSize': page_size}
+        return self._get(
+            '/RDS2/v2/open-api/tag/label',
+            region_id, query_params, '获取实例标签'
+        )
+
+    def get_all_labels(self, region_id: str, page_now: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """获取用户的所有标签 - GET /RDS2/v2/open-api/tag/all-label"""
+        logger.info(f"获取用户所有标签: regionId={region_id}")
+        query_params = {'pageNow': page_now, 'pageSize': page_size}
+        return self._get(
+            '/RDS2/v2/open-api/tag/all-label',
+            region_id, query_params, '获取用户所有标签'
+        )

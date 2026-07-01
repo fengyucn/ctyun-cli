@@ -4263,3 +4263,36 @@ class ECSClient:
             '/v4/ecs/vm-disk-latest-metric-data', region_id, device_id_list,
             page_no=page_no, page_size=page_size
         )
+
+    def dedicated_host_update_labels(self, region_id: str,
+                                     dedicated_host_id_list: str,
+                                     label_list: list,
+                                     operate_type: str = 'BIND') -> Dict[str, Any]:
+        """
+        更新专有宿主机的标签信息 - POST /v4/ecs/dedicated-host/update-labels
+
+        Args:
+            region_id: 资源池ID
+            dedicated_host_id_list: 专有宿主机ID列表，逗号分隔(最多50)
+            label_list: 标签列表 [{'labelKey':'k','labelValue':'v'}, ...]
+            operate_type: BIND(绑定) / UNBIND(解绑)
+        """
+        logger.info(f"更新专有宿主机标签: ids={dedicated_host_id_list}, type={operate_type}")
+        url = f'https://{self.base_endpoint}/v4/ecs/dedicated-host/update-labels'
+        body_data = {
+            'regionID': region_id,
+            'dedicatedHostIDList': dedicated_host_id_list,
+            'labelList': label_list,
+            'operateType': operate_type,
+        }
+        body = json.dumps(body_data)
+        headers = self.eop_auth.sign_request(
+            method='POST', url=url, query_params=None, body=body
+        )
+        response = self.client.session.post(url, data=body, headers=headers, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        if data.get('statusCode') != 800:
+            raise Exception(f"ECS API错误: {data.get('message', '未知错误')}")
+        logger.info(f"成功更新专有宿主机标签")
+        return data

@@ -478,3 +478,30 @@ def _display_config_summary(result: dict, instance_id: str):
                 value = cfg.get("value", "N/A")
                 desc = cfg.get("desc", "")[:30]
                 click.echo(f"   • {name}: {value} ({desc})")
+
+
+@kafka.command('list-tags')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--tag-name', default=None, help='标签名称(模糊查询)')
+@click.option('--page-num', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.option('--output', type=click.Choice(['table', 'json']), default='table')
+@click.pass_context
+def list_tags(ctx, region_id: str, tag_name: Optional[str], page_num: int, page_size: int, output: str):
+    """查询标签列表"""
+    from kafka.client import KafkaClient
+    result = KafkaClient(ctx.obj['client']).list_tags(
+        region_id=region_id, tag_name=tag_name, page_num=page_num, page_size=page_size)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    data = result.get('returnObj', {}).get('data', [])
+    if isinstance(data, str):
+        import json as _json
+        try: data = _json.loads(data)
+        except: pass
+    if isinstance(data, list):
+        click.echo(f"Kafka标签列表 (共 {len(data)} 个)")
+        if data:
+            click.echo(json.dumps(data, indent=2, ensure_ascii=False))
+    else:
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False))

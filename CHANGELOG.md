@@ -4,6 +4,21 @@
 
 ---
 
+## v1.24.2 (2026-07-01)
+
+### 🚀 多模块新增 13 个标签管理 API
+
+**跨 6 个模块统一新增标签/标记管理命令**：
+
+- **VPC（6个）**：`label-query-resources` / `label-query-by-resource` / `label-vpc-peer` / `label-vpce-endpoint` / `label-vpce-service` / `label-private-dns`
+- **CTMySQL（3个）**：`label-list` / `label-instance` / `label-all`
+- **ECS（1个）**：`dedicated-host-label` — 专属宿主机标签管理
+- **ELB（1个）**：`list-labels` — 查询标签列表
+- **Kafka（1个）**：`list-tags` — 查询标签列表
+- **Redis（1个）**：`label-by-resources` — 按资源查询标签
+
+---
+
 ## v1.24.1 (2026-07-01)
 
 ### 🔧 Billing 模块对齐最新 API 文档

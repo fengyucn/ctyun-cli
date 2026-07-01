@@ -452,3 +452,79 @@ def inquiry_renew(ctx, region_id: str, inst_id: str, month: int,
     if fmt != 'table':
         return
     _display_price(result, f"续费询价  实例: {inst_id}  {month}月")
+
+
+# ==================== 标签查询 ====================
+
+@ctmysql.command('label-list')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-ids', required=True, help='实例ID列表，逗号分隔(最多10个)')
+@click.option('--tag-filter', default=None, help='标签过滤，格式 key:value，逗号分隔')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def label_list(ctx, region_id: str, instance_ids: str, tag_filter: Optional[str], output: Optional[str]):
+    """查询实例标签列表"""
+    from ctmysql.client import RDSClient
+    result = RDSClient(ctx.obj['client']).list_tag_resources(
+        region_id=region_id, outer_prod_inst_id_list=instance_ids, tag_vo_list=tag_filter or '')
+    fmt = _output(ctx, result, output)
+    if fmt != 'table':
+        return
+    items = result.get('returnObj', [])
+    if isinstance(items, dict):
+        items = [items]
+    click.echo(f"RDS实例标签 (共 {len(items)} 条)")
+    if items:
+        table_data = []
+        for item in items:
+            tags = item.get('tags', [])
+            tag_str = ', '.join(f"{t.get('key','')}={t.get('value','')}" for t in tags)
+            table_data.append({'实例ID': item.get('outerProdInstId', ''), '标签': tag_str})
+        click.echo(OutputFormatter.format_table(table_data))
+
+
+@ctmysql.command('label-instance')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='实例ID')
+@click.option('--page-now', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def label_instance(ctx, region_id: str, instance_id: str, page_now: int, page_size: int, output: Optional[str]):
+    """获取实例所绑定的标签"""
+    from ctmysql.client import RDSClient
+    result = RDSClient(ctx.obj['client']).get_instance_labels(
+        region_id=region_id, outer_prod_inst_id=instance_id, page_now=page_now, page_size=page_size)
+    fmt = _output(ctx, result, output)
+    if fmt != 'table':
+        return
+    ro = result.get('returnObj', {})
+    records = ro.get('pageRecords', [])
+    click.echo(f"实例 {instance_id} 标签 (共 {ro.get('total', 0)} 个)")
+    if records:
+        click.echo(OutputFormatter.format_table(records))
+
+
+@ctmysql.command('label-all')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--page-now', type=int, default=1, show_default=True)
+@click.option('--page-size', type=int, default=10, show_default=True)
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def label_all(ctx, region_id: str, page_now: int, page_size: int, output: Optional[str]):
+    """获取用户的所有标签"""
+    from ctmysql.client import RDSClient
+    result = RDSClient(ctx.obj['client']).get_all_labels(
+        region_id=region_id, page_now=page_now, page_size=page_size)
+    fmt = _output(ctx, result, output)
+    if fmt != 'table':
+        return
+    ro = result.get('returnObj', {})
+    records = ro.get('pageRecords', [])
+    click.echo(f"用户标签 (共 {ro.get('total', 0)} 个)")
+    if records:
+        table_data = []
+        for r in records:
+            values = ', '.join(v.get('value', '') for v in r.get('data', []))
+            table_data.append({'Key': r.get('key', ''), 'Values': values})
+        click.echo(OutputFormatter.format_table(table_data))

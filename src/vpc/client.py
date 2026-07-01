@@ -1744,3 +1744,64 @@ class VPCClient:
 
         # TODO: 实现查询流日志列表的具体逻辑
         pass
+
+    # ==================== 标签查询 ====================
+
+    def _label_get(self, region_id: str, path: str, query_params: dict, desc: str) -> Dict[str, Any]:
+        """VPC 标签 GET 请求统一入口"""
+        url = f'https://{self.base_endpoint}{path}'
+        qp = {'regionID': region_id, **query_params}
+        headers = self.eop_auth.sign_request(method='GET', url=url, query_params=qp, body='', extra_headers={})
+        response = self.client.session.get(url, params=qp, headers=headers, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        if data.get('statusCode') != 800:
+            raise Exception(f"VPC标签API错误: {data.get('message', '未知错误')}")
+        logger.info(f"成功{desc}")
+        return data
+
+    def query_resources_by_label(self, region_id: str,
+                                 label_id: Optional[str] = None,
+                                 label_key: Optional[str] = None,
+                                 label_value: Optional[str] = None,
+                                 page_number: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """根据标签获取资源列表 - GET /v4/labels/query_resources_by_label"""
+        logger.info(f"根据标签获取资源列表: regionID={region_id}")
+        qp: Dict[str, Any] = {'pageNumber': page_number, 'pageSize': page_size}
+        if label_id: qp['labelID'] = label_id
+        if label_key: qp['labelKey'] = label_key
+        if label_value: qp['labelValue'] = label_value
+        return self._label_get(region_id, '/v4/labels/query_resources_by_label', qp, '根据标签获取资源列表')
+
+    def query_labels_by_resource(self, region_id: str, resource_type: str,
+                                 resource_id: str,
+                                 page_number: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """根据资源获取标签 - GET /v4/labels/query_labels_by_resource"""
+        logger.info(f"根据资源获取标签: resourceID={resource_id}, type={resource_type}")
+        qp = {'resourceType': resource_type, 'resourceID': resource_id,
+              'pageNumber': page_number, 'pageSize': page_size}
+        return self._label_get(region_id, '/v4/labels/query_labels_by_resource', qp, '根据资源获取标签')
+
+    def list_vpc_peer_labels(self, region_id: str, vpc_peer_id: str,
+                             page_number: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """获取对等链接绑定的标签 - GET /v4/vpc/vpcpeer/list-labels"""
+        qp = {'vpcPeerID': vpc_peer_id, 'pageNumber': page_number, 'pageSize': page_size}
+        return self._label_get(region_id, '/v4/vpc/vpcpeer/list-labels', qp, '获取对等链接标签')
+
+    def list_vpce_endpoint_labels(self, region_id: str, endpoint_id: str,
+                                  page_number: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """获取终端节点绑定的标签 - GET /v4/vpce/endpoint-list-label"""
+        qp = {'endpointID': endpoint_id, 'pageNumber': page_number, 'pageSize': page_size}
+        return self._label_get(region_id, '/v4/vpce/endpoint-list-label', qp, '获取终端节点标签')
+
+    def list_vpce_service_labels(self, region_id: str, endpoint_service_id: str,
+                                 page_number: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """获取终端节点服务绑定的标签 - GET /v4/vpce/service-list-label"""
+        qp = {'endpointServiceID': endpoint_service_id, 'pageNumber': page_number, 'pageSize': page_size}
+        return self._label_get(region_id, '/v4/vpce/service-list-label', qp, '获取终端节点服务标签')
+
+    def list_private_dns_labels(self, region_id: str, zone_id: str,
+                                page_no: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """获取内网DNS绑定的标签 - GET /v4/private-zone/list-labels"""
+        qp = {'zoneID': zone_id, 'pageNo': page_no, 'pageSize': page_size}
+        return self._label_get(region_id, '/v4/private-zone/list-labels', qp, '获取内网DNS标签')
