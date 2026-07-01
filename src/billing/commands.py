@@ -59,39 +59,18 @@ def format_output(data, output_format='table'):
 
 @click.group()
 def billing():
-    """账务中心管理"""
+    """账务中心管理 - 账单查询、消费汇总、流水明细"""
     pass
 
 
 # NOTE: balance 命令已禁用
 # 原因：POST /v1/bill/queryAccountBalance 返回 CTAPI_10000: API Not Found
-# EOP门户账单服务(sid=82)中未找到此API，路径可能有误
-# 如需恢复，请先确认正确的API路径
-# @billing.command()
-# @click.pass_context
-# @handle_error
-# def balance(ctx):
-#     """查询账户余额"""
-#     client = ctx.obj['client']
-#     billing_client = BillingClient(client)
-#
-#     result = billing_client.query_account_balance()
-#
-#     if result.get('returnCode') == '000000':
-#         data = {
-#             '账户总余额': result.get('balance', '0.00'),
-#             '现金余额': result.get('cashBalance', '0.00'),
-#             '信用余额': result.get('creditBalance', '0.00')
-#         }
-#         format_output(data, ctx.obj.get('output_format', 'table'))
-#     else:
-#         click.echo(f"查询失败: {result.get('returnMessage', '未知错误')}", err=True)
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--bill-type', help='账单类型')
 @click.option('--product-code', help='产品编码')
 @click.option('--contract-id', help='合同ID')
@@ -99,11 +78,7 @@ def billing():
 @click.pass_context
 @handle_error
 def cycle_product(ctx, bill_cycle, page, page_size, bill_type, product_code, contract_id, output):
-    """
-    查询包周期账单明细（按产品汇总）
-    
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202508
-    """
+    """包周期账单明细（按产品汇总）"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202508", err=True)
         import sys
@@ -199,9 +174,9 @@ def cycle_product(ctx, bill_cycle, page, page_size, bill_type, product_code, con
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--contract-id', help='合同号')
 @click.option('--project-id', help='项目ID')
 @click.option('--product-code', help='产品编码')
@@ -213,11 +188,7 @@ def cycle_product(ctx, bill_cycle, page, page_size, bill_type, product_code, con
 @handle_error
 def ondemand_flow(ctx, bill_cycle, page, page_size, contract_id, project_id,
                   product_code, bill_type, pay_method, order_id, output):
-    """
-    查询按需流水账单
-    
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202508
-    """
+    """按需流水账单"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202508", err=True)
         import sys
@@ -307,9 +278,9 @@ def ondemand_flow(ctx, bill_cycle, page, page_size, contract_id, project_id,
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--resource-id', help='资源ID')
 @click.option('--product-code', help='产品编码')
 @click.option('--contract-id', help='合同ID')
@@ -317,11 +288,7 @@ def ondemand_flow(ctx, bill_cycle, page, page_size, contract_id, project_id,
 @click.pass_context
 @handle_error
 def cycle_bill(ctx, bill_cycle, page, page_size, resource_id, product_code, contract_id, output):
-    """
-    查询包周期订单账单详情
-    
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202311
-    """
+    """包周期订单账单详情"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202311", err=True)
         import sys
@@ -407,20 +374,16 @@ def cycle_bill(ctx, bill_cycle, page, page_size, resource_id, product_code, cont
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--product-code', help='产品编码')
 @click.option('--resource-id', help='资源ID')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
 @click.pass_context
 @handle_error
 def bill_list(ctx, bill_cycle, page, page_size, product_code, resource_id, output):
-    """
-    账单明细资源+明细（按需）
-
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202212
-    """
+    """按需账单明细（资源+明细）"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202212", err=True)
         import sys
@@ -510,15 +473,11 @@ def bill_list(ctx, bill_cycle, page, page_size, product_code, resource_id, outpu
 
 
 @billing.command()
-@click.argument('bill_id')
+@click.argument('bill_id', metavar='BILL_ID')
 @click.pass_context
 @handle_error
 def bill_detail(ctx, bill_id):
-    """
-    查询账单详情
-    
-    BILL_ID: 账单ID
-    """
+    """账单详情（按账单ID）"""
     client = ctx.obj['client']
     billing_client = BillingClient(client)
     
@@ -532,41 +491,13 @@ def bill_detail(ctx, bill_id):
 
 
 @billing.command()
-@click.pass_context
-@handle_error
-def arrears(ctx):
-    """查询欠费信息"""
-    client = ctx.obj['client']
-    billing_client = BillingClient(client)
-    
-    result = billing_client.query_arrears_info()
-    
-    if result.get('returnCode') == '000000':
-        is_arrears = result.get('isArrears', False)
-        arrears_amount = result.get('arrearsAmount', '0.00')
-        
-        if is_arrears:
-            click.echo(f"⚠️  账户存在欠费: {arrears_amount} 元", err=True)
-            if ctx.obj.get('output_format') != 'table':
-                format_output(result, ctx.obj.get('output_format'))
-        else:
-            click.echo("✓ 账户无欠费")
-    else:
-        click.echo(f"查询失败: {result.get('returnMessage', '未知错误')}", err=True)
-
-
-@billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--contract-id', help='合同ID')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
 @click.pass_context
 @handle_error
 def bill_summary(ctx, bill_cycle, contract_id, output):
-    """
-    查询消费类型汇总
-    
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202311
-    """
+    """消费类型汇总"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202311", err=True)
         import sys
@@ -642,9 +573,9 @@ def bill_summary(ctx, bill_cycle, contract_id, output):
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--product-code', help='产品编码')
 @click.option('--bill-type', help='账单类型')
 @click.option('--contract-id', help='合同ID')
@@ -653,11 +584,7 @@ def bill_summary(ctx, bill_cycle, contract_id, output):
 @click.pass_context
 @handle_error
 def ondemand_product(ctx, bill_cycle, page, page_size, product_code, bill_type, contract_id, group_by_day, output):
-    """
-    查询按需账单明细（按产品汇总）
-    
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202212
-    """
+    """按需账单明细（按产品汇总）"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202212", err=True)
         import sys
@@ -751,9 +678,9 @@ def ondemand_product(ctx, bill_cycle, page, page_size, product_code, bill_type, 
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--product-code', help='产品编码')
 @click.option('--project-id', help='项目ID')
 @click.option('--bill-type', help='账单类型')
@@ -764,11 +691,7 @@ def ondemand_product(ctx, bill_cycle, page, page_size, product_code, bill_type, 
 @handle_error
 def cycle_flow(ctx, bill_cycle, page, page_size, product_code, project_id,
                bill_type, contract_id, order_id, output):
-    """
-    查询包周期流水账单
-    
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202212
-    """
+    """包周期流水账单"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202212", err=True)
         import sys
@@ -851,17 +774,13 @@ def cycle_flow(ctx, bill_cycle, page, page_size, product_code, project_id,
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--account-id', '-a', multiple=True, required=True, help='账户ID（可多次指定）')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None, help='输出格式')
 @click.pass_context
 @handle_error
 def account_bill(ctx, bill_cycle, account_id, output):
-    """
-    查询账户账单
-    
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202206
-    """
+    """账户账单（按账户ID）"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202206", err=True)
         import sys
@@ -937,9 +856,9 @@ def account_bill(ctx, bill_cycle, account_id, output):
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--product-code', help='产品编码')
 @click.option('--resource-id', help='资源实例ID')
 @click.option('--project-id', help='项目ID')
@@ -950,11 +869,7 @@ def account_bill(ctx, bill_cycle, account_id, output):
 @handle_error
 def ondemand_usage(ctx, bill_cycle, page, page_size, product_code, resource_id,
                   project_id, contract_id, group_by_day, output):
-    """
-    账单明细使用量类型+账期（按需）
-
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202212
-    """
+    """按需账单明细（使用量类型+账期）"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202212", err=True)
         import sys
@@ -1033,9 +948,9 @@ def ondemand_usage(ctx, bill_cycle, page, page_size, product_code, resource_id,
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--product-code', help='产品编码')
 @click.option('--resource-id', help='资源实例ID')
 @click.option('--project-id', help='项目ID')
@@ -1045,11 +960,7 @@ def ondemand_usage(ctx, bill_cycle, page, page_size, product_code, resource_id,
 @handle_error
 def ondemand_detail(ctx, bill_cycle, page, page_size, product_code, resource_id,
                     project_id, contract_id, output):
-    """
-    账单明细使用量类型+明细（按需）
-
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202212
-    """
+    """按需账单明细（使用量类型+明细）"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202212", err=True)
         import sys
@@ -1134,9 +1045,9 @@ def ondemand_detail(ctx, bill_cycle, page, page_size, product_code, resource_id,
 
 
 @billing.command()
-@click.argument('bill_cycle')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
 @click.option('--page', default=1, type=int, help='页码')
-@click.option('--page-size', default=10, type=int, help='每页数量')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
 @click.option('--product-code', help='产品编码')
 @click.option('--resource-id', help='资源ID')
 @click.option('--contract-id', help='合同ID')
@@ -1146,11 +1057,7 @@ def ondemand_detail(ctx, bill_cycle, page, page_size, product_code, resource_id,
 @handle_error
 def ondemand_resource_cycle(ctx, bill_cycle, page, page_size, product_code, resource_id,
                            contract_id, group_by_day, output):
-    """
-    账单明细资源+账期（按需）
-
-    BILL_CYCLE: 账期，格式：YYYYMM，如：202212
-    """
+    """按需账单明细（资源+账期）"""
     if not ValidationUtils.validate_bill_cycle(bill_cycle):
         click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202212", err=True)
         import sys

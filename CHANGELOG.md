@@ -4,6 +4,16 @@
 
 ---
 
+## v1.24.1 (2026-07-01)
+
+### 🔧 Billing 模块对齐最新 API 文档
+
+- **删除无效命令**：移除 `balance`（API 路径不存在）和 `arrears`（API 已下线）两个命令
+- **清理 11 个 mock 数据方法**：移除所有用于测试的模拟数据生成逻辑，仅保留真实 API 调用
+- **保留 11 个有效命令**，全部对齐最新 API 文档：`cycle-product` / `ondemand-flow` / `cycle-bill` / `bill-list` / `bill-detail` / `bill-summary` / `ondemand-product` / `cycle-flow` / `account-bill` / `ondemand-usage` / `ondemand-detail` / `ondemand-resource-cycle`
+
+---
+
 ## v1.24.0 (2026-06-30)
 
 ### 🆕 新增 CSSCN（云安全中心）模块
