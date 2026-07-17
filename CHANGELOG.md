@@ -4,6 +4,21 @@
 
 ---
 
+## v1.24.3 (2026-07-01)
+
+### 🚀 ECS 模块新增 6 个命令
+
+**新增 ECS 命令**：
+
+- `query-security-groups` — 查询用户安全组列表
+- `describe-security-group` — 查询安全组详情（含规则）
+- `list-flavor-family-instances` — 查询规格族下的实例列表
+- `list-dedicated-host-specs` — 查询专属宿主机支持的规格
+- `describe-metadata` — 查询云主机元数据
+- `describe-invocation-results` — 查询命令执行结果
+
+---
+
 ## v1.24.2 (2026-07-01)
 
 ### 🚀 多模块新增 13 个标签管理 API

@@ -4296,3 +4296,284 @@ class ECSClient:
             raise Exception(f"ECS API错误: {data.get('message', '未知错误')}")
         logger.info(f"成功更新专有宿主机标签")
         return data
+
+    def query_security_groups(self, region_id: str,
+                              vpc_id: Optional[str] = None,
+                              query_content: Optional[str] = None,
+                              project_id: Optional[str] = None,
+                              instance_id: Optional[str] = None,
+                              page_no: int = 1,
+                              page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询用户安全组列表 - GET /v4/ecs/vpc/query-security-groups
+
+        Args:
+            region_id: 资源池ID
+            vpc_id: VPC ID (可选)
+            query_content: 模糊匹配（id 或 name）(可选)
+            project_id: 企业项目ID (可选)
+            instance_id: 云主机ID (可选)
+            page_no: 页码，默认1
+            page_size: 每页数，最大50，默认10
+
+        Returns:
+            安全组列表
+        """
+        logger.info(f"查询安全组列表: regionId={region_id}")
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/vpc/query-security-groups'
+            query_params: Dict[str, Any] = {
+                'regionID': region_id,
+                'pageNo': page_no,
+                'pageSize': page_size,
+            }
+            if vpc_id:
+                query_params['vpcID'] = vpc_id
+            if query_content:
+                query_params['queryContent'] = query_content
+            if project_id:
+                query_params['projectID'] = project_id
+            if instance_id:
+                query_params['instanceID'] = instance_id
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params,
+                body='', extra_headers={}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {'statusCode': response.status_code, 'message': f'HTTP {response.status_code}', 'returnObj': None}
+            result = response.json()
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            return result
+        except Exception as e:
+            logger.error(f"查询安全组列表失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def describe_security_group_attribute(self, region_id: str,
+                                          security_group_id: str,
+                                          project_id: Optional[str] = None,
+                                          direction: Optional[str] = None) -> Dict[str, Any]:
+        """
+        查询用户安全组详情 - GET /v4/ecs/vpc/describe-security-group-attribute
+
+        Args:
+            region_id: 资源池ID
+            security_group_id: 安全组ID
+            project_id: 企业项目ID (可选)
+            direction: 方向 egress/ingress/all (可选，默认 all)
+
+        Returns:
+            安全组详情（含规则列表）
+        """
+        logger.info(f"查询安全组详情: regionId={region_id}, sgId={security_group_id}")
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/vpc/describe-security-group-attribute'
+            query_params: Dict[str, Any] = {
+                'regionID': region_id,
+                'securityGroupID': security_group_id,
+            }
+            if project_id:
+                query_params['projectID'] = project_id
+            if direction:
+                query_params['direction'] = direction
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params,
+                body='', extra_headers={}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {'statusCode': response.status_code, 'message': f'HTTP {response.status_code}', 'returnObj': None}
+            result = response.json()
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            return result
+        except Exception as e:
+            logger.error(f"查询安全组详情失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def list_instance_flavor_families(self, region_id: str,
+                                      flavor_family: str,
+                                      az_name: Optional[str] = None,
+                                      page_no: int = 1,
+                                      page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询指定规格族下的云主机信息 - POST /v4/ecs/flavor/list-by-families
+
+        Args:
+            region_id: 资源池ID
+            flavor_family: 规格族名称（如 s7）
+            az_name: 可用区名称 (可选)
+            page_no: 页码，默认1
+            page_size: 每页数，最大50，默认10
+
+        Returns:
+            云主机列表（按规格族筛选）
+        """
+        logger.info(f"查询规格族云主机: regionId={region_id}, family={flavor_family}")
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/flavor/list-by-families'
+            body_data: Dict[str, Any] = {
+                'regionID': region_id,
+                'flavorFamily': flavor_family,
+                'pageNo': page_no,
+                'pageSize': page_size,
+            }
+            if az_name:
+                body_data['azName'] = az_name
+
+            body = json.dumps(body_data)
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params=None,
+                body=body, extra_headers={}
+            )
+            response = self.client.session.post(url, data=body, headers=headers, timeout=30)
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {'statusCode': response.status_code, 'message': f'HTTP {response.status_code}', 'returnObj': None}
+            result = response.json()
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            return result
+        except Exception as e:
+            logger.error(f"查询规格族云主机失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def list_dedicated_host_flavor_list(self, region_id: str,
+                                        az_name: Optional[str] = None) -> Dict[str, Any]:
+        """
+        查询专有宿主机规格信息 - GET /v4/ecs/dedicated-host/flavor-list
+
+        Args:
+            region_id: 资源池ID
+            az_name: 可用区名称 (可选，不填返回所有可用区)
+
+        Returns:
+            宿主机规格列表
+        """
+        logger.info(f"查询专有宿主机规格: regionId={region_id}, azName={az_name or '全部'}")
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/dedicated-host/flavor-list'
+            query_params: Dict[str, Any] = {'regionID': region_id}
+            if az_name:
+                query_params['azName'] = az_name
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params,
+                body='', extra_headers={}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {'statusCode': response.status_code, 'message': f'HTTP {response.status_code}', 'returnObj': None}
+            result = response.json()
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            return result
+        except Exception as e:
+            logger.error(f"查询专有宿主机规格失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def describe_metadata(self, region_id: str,
+                          instance_id: str,
+                          metadata_key: Optional[str] = None) -> Dict[str, Any]:
+        """
+        云主机元数据查询 - GET /v4/ecs/metadata/details
+
+        Args:
+            region_id: 资源池ID
+            instance_id: 云主机ID
+            metadata_key: 元数据键 (可选，缺省返回所有)
+
+        Returns:
+            云主机元数据
+        """
+        logger.info(f"查询云主机元数据: regionId={region_id}, instanceId={instance_id}, key={metadata_key or '全部'}")
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/metadata/details'
+            query_params: Dict[str, Any] = {
+                'regionID': region_id,
+                'instanceID': instance_id,
+            }
+            if metadata_key:
+                query_params['metadataKey'] = metadata_key
+
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params,
+                body='', extra_headers={}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {'statusCode': response.status_code, 'message': f'HTTP {response.status_code}', 'returnObj': None}
+            result = response.json()
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            return result
+        except Exception as e:
+            logger.error(f"查询云主机元数据失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def describe_invocation_results(self, region_id: str,
+                                    command_id: Optional[str] = None,
+                                    invoked_id: Optional[str] = None,
+                                    page_no: int = 1,
+                                    page_size: int = 10) -> Dict[str, Any]:
+        """
+        云助手查询结果 - POST /v4/cloud-assistant/describe-invocation-results
+
+        Args:
+            region_id: 资源池ID
+            command_id: 命令ID (可选)
+            invoked_id: 命令执行ID (可选)
+            page_no: 页码，默认1
+            page_size: 每页数，最大100，默认10
+
+        Returns:
+            命令执行结果列表
+        """
+        logger.info(f"查询云助手执行结果: regionId={region_id}, commandId={command_id}, invokedId={invoked_id}")
+        try:
+            url = f'https://{self.base_endpoint}/v4/cloud-assistant/describe-invocation-results'
+            body_data: Dict[str, Any] = {
+                'regionID': region_id,
+                'pageNo': page_no,
+                'pageSize': page_size,
+            }
+            if command_id:
+                body_data['commandID'] = command_id
+            if invoked_id:
+                body_data['invokedID'] = invoked_id
+
+            body = json.dumps(body_data)
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params=None,
+                body=body, extra_headers={}
+            )
+            response = self.client.session.post(url, data=body, headers=headers, timeout=30)
+            if response.status_code != 200:
+                logger.warning(f"API调用失败 (HTTP {response.status_code}): {response.text}")
+                return {'statusCode': response.status_code, 'message': f'HTTP {response.status_code}', 'returnObj': None}
+            result = response.json()
+            if result.get('statusCode') != 800:
+                logger.warning(f"API返回错误: {result.get('message', '未知错误')}")
+            return result
+        except Exception as e:
+            logger.error(f"查询云助手执行结果失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}

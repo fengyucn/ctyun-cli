@@ -3281,3 +3281,284 @@ def dedicated_host_label(ctx, region_id: str, host_ids: str, action: str, label:
         click.echo(f"  标签: {label_str}")
     except Exception as e:
         click.echo(f"运行出错: {e}", err=True)
+
+
+@ecs.command('query-security-groups')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--vpc-id', help='VPC ID（过滤指定VPC下的安全组）')
+@click.option('--query-content', help='模糊匹配（安全组ID或名称）')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--instance-id', help='云主机ID（过滤该云主机关联的安全组）')
+@click.option('--page', default=1, type=int, help='页码，默认1')
+@click.option('--page-size', default=10, type=int, help='每页记录数，最大50，默认10')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_security_groups(ctx, region_id: str, vpc_id: Optional[str],
+                           query_content: Optional[str], project_id: Optional[str],
+                           instance_id: Optional[str], page: int, page_size: int,
+                           output: Optional[str]):
+    """查询用户安全组列表"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.query_security_groups(
+        region_id=region_id, vpc_id=vpc_id, query_content=query_content,
+        project_id=project_id, instance_id=instance_id,
+        page_no=page, page_size=page_size,
+    )
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    return_obj = result.get('returnObj', [])
+    if output in ('json', 'yaml'):
+        format_output(return_obj, output)
+        return
+    total = result.get('totalCount', 0)
+    click.echo(f"安全组列表 (共 {total} 个)")
+    click.echo("=" * 100)
+    if not return_obj:
+        click.echo("无安全组数据")
+        return
+    for idx, sg in enumerate(return_obj, 1):
+        click.echo(f"\n{idx}. 安全组ID: {sg.get('id', 'N/A')}")
+        click.echo(f"   名称: {sg.get('securityGroupName', 'N/A')}")
+        click.echo(f"   VPC: {sg.get('vpcName', 'N/A')} ({sg.get('vpcID', 'N/A')})")
+        click.echo(f"   描述: {sg.get('description', 'N/A')}")
+        click.echo(f"   关联云主机数: {sg.get('vmNum', 0)}")
+        click.echo(f"   是否默认: {'是' if sg.get('origin') == '1' else '否'}")
+        click.echo(f"   创建时间: {sg.get('creationTime', 'N/A')}")
+        rules = sg.get('securityGroupRuleList', [])
+        if rules:
+            click.echo(f"   规则数: {len(rules)}")
+
+
+@ecs.command('describe-security-group')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--security-group-id', required=True, help='安全组ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--direction', type=click.Choice(['egress', 'ingress', 'all']),
+              help='规则方向过滤，默认all')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def describe_security_group(ctx, region_id: str, security_group_id: str,
+                             project_id: Optional[str], direction: Optional[str],
+                             output: Optional[str]):
+    """查询用户安全组详情（含规则列表）"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.describe_security_group_attribute(
+        region_id=region_id, security_group_id=security_group_id,
+        project_id=project_id, direction=direction,
+    )
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    return_obj = result.get('returnObj', {})
+    if output in ('json', 'yaml'):
+        format_output(return_obj, output)
+        return
+    click.echo(f"安全组详情")
+    click.echo("=" * 100)
+    click.echo(f"ID: {return_obj.get('id', 'N/A')}")
+    click.echo(f"名称: {return_obj.get('securityGroupName', 'N/A')}")
+    click.echo(f"VPC: {return_obj.get('vpcName', 'N/A')} ({return_obj.get('vpcID', 'N/A')})")
+    click.echo(f"描述: {return_obj.get('description', 'N/A')}")
+    click.echo(f"关联云主机数: {return_obj.get('vmNum', 0)}")
+    click.echo(f"是否默认: {'是' if return_obj.get('origin') == '1' else '否'}")
+    click.echo(f"创建时间: {return_obj.get('creationTime', 'N/A')}")
+
+    rules = return_obj.get('securityGroupRuleList', [])
+    if rules:
+        click.echo(f"\n规则列表 (共 {len(rules)} 条):")
+        click.echo("-" * 100)
+        click.echo(f"{'方向':<10} {'协议':<8} {'端口/范围':<16} {'远端地址':<20} {'策略':<8} {'优先级':<6} {'描述'}")
+        click.echo("-" * 100)
+        for r in rules:
+            dir_text = '出方向' if r.get('direction') == 'egress' else '入方向'
+            proto = r.get('protocol', 'N/A')
+            port = r.get('range', 'N/A')
+            cidr = r.get('destCidrIp', 'N/A') or r.get('remoteSecurityGroupID', '')
+            action_text = '允许' if r.get('action') == 'accept' else '拒绝'
+            prio = r.get('priority', 'N/A')
+            desc = r.get('description', '')
+            click.echo(f"{dir_text:<10} {proto:<8} {port:<16} {cidr:<20} {action_text:<8} {prio:<6} {desc}")
+    else:
+        click.echo("\n无规则数据")
+
+
+@ecs.command('list-flavor-family-instances')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--flavor-family', required=True, help='规格族名称（如 s7）')
+@click.option('--az-name', help='可用区名称')
+@click.option('--page', default=1, type=int, help='页码，默认1')
+@click.option('--page-size', default=10, type=int, help='每页记录数，最大50，默认10')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_flavor_family_instances(ctx, region_id: str, flavor_family: str,
+                                  az_name: Optional[str], page: int, page_size: int,
+                                  output: Optional[str]):
+    """查询指定规格族下的云主机信息"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.list_instance_flavor_families(
+        region_id=region_id, flavor_family=flavor_family,
+        az_name=az_name, page_no=page, page_size=page_size,
+    )
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    return_obj = result.get('returnObj', {})
+    if output in ('json', 'yaml'):
+        format_output(return_obj, output)
+        return
+    click.echo(f"规格族 {flavor_family} 下的云主机列表 (共 {return_obj.get('totalCount', 0)} 台)")
+    click.echo("=" * 100)
+    instances = return_obj.get('results', [])
+    if not instances:
+        click.echo("无云主机数据")
+        return
+    for idx, ins in enumerate(instances, 1):
+        click.echo(f"\n{idx}. 云主机ID: {ins.get('instanceID', 'N/A')}")
+        click.echo(f"   名称: {ins.get('instanceName', 'N/A')}")
+        flavor = ins.get('flavor', {}) or {}
+        click.echo(f"   规格: {flavor.get('flavorName', 'N/A')} (ID: {flavor.get('flavorID', 'N/A')})")
+        click.echo(f"   vCPU/内存: {flavor.get('flavorCPU', 'N/A')} / {flavor.get('flavorRAM', 'N/A')} MB")
+        gpu_type = flavor.get('gpuType')
+        if gpu_type:
+            click.echo(f"   GPU: {gpu_type} x {flavor.get('gpuCount', 0)} ({flavor.get('gpuVendor', '')} {flavor.get('videoMemSize', 0)}GB)")
+
+
+@ecs.command('list-dedicated-host-specs')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--az-name', help='可用区名称（不填返回所有可用区）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def list_dedicated_host_specs(ctx, region_id: str, az_name: Optional[str],
+                                 output: Optional[str]):
+    """查询专有宿主机规格信息"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.list_dedicated_host_flavor_list(
+        region_id=region_id, az_name=az_name,
+    )
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    return_obj = result.get('returnObj', {})
+    if output in ('json', 'yaml'):
+        format_output(return_obj, output)
+        return
+    click.echo(f"专有宿主机规格列表 (共 {return_obj.get('totalCount', 0)} 个)")
+    click.echo("=" * 100)
+    flavors = return_obj.get('results', [])
+    if not flavors:
+        click.echo("无规格数据")
+        return
+    for idx, fl in enumerate(flavors, 1):
+        avail = fl.get('available')
+        avail_text = '✓ 可用' if avail else '✗ 售罄'
+        click.echo(f"\n{idx}. 规格名称: {fl.get('flavorName', 'N/A')}")
+        click.echo(f"   类型: {fl.get('flavorType', 'N/A')}")
+        click.echo(f"   CPU架构: {fl.get('cpuArch', 'N/A')}")
+        click.echo(f"   vCPU/内存: {fl.get('flavorCPU', 'N/A')} / {fl.get('flavorRAM', 'N/A')} GB")
+        click.echo(f"   状态: {avail_text}")
+        ecs_families = fl.get('ecsFlavor', [])
+        if ecs_families:
+            click.echo(f"   支持的云主机规格族: {', '.join(ecs_families)}")
+        az_list = fl.get('azFlavorList', [])
+        if az_list:
+            click.echo(f"   可用区分布:")
+            for az in az_list:
+                click.echo(f"     - {az.get('azName', 'N/A')}: {az.get('flavorID', 'N/A')}")
+
+
+@ecs.command('describe-metadata')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--instance-id', required=True, help='云主机ID')
+@click.option('--metadata-key', help='元数据键（不填返回全部）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def describe_metadata(ctx, region_id: str, instance_id: str,
+                       metadata_key: Optional[str], output: Optional[str]):
+    """查询云主机元数据"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.describe_metadata(
+        region_id=region_id, instance_id=instance_id, metadata_key=metadata_key,
+    )
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    return_obj = result.get('returnObj', {})
+    metadata = return_obj.get('metadata', {}) if isinstance(return_obj, dict) else {}
+    if output in ('json', 'yaml'):
+        format_output(metadata, output)
+        return
+    click.echo(f"云主机 {instance_id} 的元数据")
+    click.echo("=" * 100)
+    if not metadata:
+        click.echo("无元数据（metadata 为空）")
+        return
+    for k, v in metadata.items():
+        click.echo(f"  {k} = {v}")
+
+
+@ecs.command('describe-invocation-results')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--command-id', help='命令ID')
+@click.option('--invoked-id', help='命令执行ID')
+@click.option('--page', default=1, type=int, help='页码，默认1')
+@click.option('--page-size', default=10, type=int, help='每页行数，最大100，默认10')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def describe_invocation_results(ctx, region_id: str, command_id: Optional[str],
+                                 invoked_id: Optional[str], page: int, page_size: int,
+                                 output: Optional[str]):
+    """查询云助手命令执行结果"""
+    client = ctx.obj['client']
+    ecs_client = ECSClient(client)
+    result = ecs_client.describe_invocation_results(
+        region_id=region_id, command_id=command_id, invoked_id=invoked_id,
+        page_no=page, page_size=page_size,
+    )
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    return_obj = result.get('returnObj', {})
+    if output in ('json', 'yaml'):
+        format_output(return_obj, output)
+        return
+    click.echo(f"云助手执行结果 (共 {return_obj.get('totalCount', 0)} 条)")
+    click.echo("=" * 100)
+    results = return_obj.get('results', [])
+    if not results:
+        click.echo("无执行结果数据")
+        return
+    status_map = {
+        'Pending': '待执行', 'Running': '运行中',
+        'Success': '成功', 'Failed': '失败',
+        'Finished': '已完成', 'Error': '错误',
+    }
+    for idx, inv in enumerate(results, 1):
+        st = inv.get('invocationStatus', 'N/A')
+        click.echo(f"\n{idx}. 执行ID: {inv.get('invokedID', 'N/A')}")
+        click.echo(f"   命令ID: {inv.get('commandID', 'N/A')}")
+        click.echo(f"   云主机ID: {inv.get('instanceID', 'N/A')}")
+        click.echo(f"   状态: {status_map.get(st, st)}")
+        click.echo(f"   退出码: {inv.get('exitCode', 'N/A')}")
+        click.echo(f"   任务总状态: {status_map.get(inv.get('invocationRecordStatus', ''), inv.get('invocationRecordStatus', 'N/A'))}")
+        click.echo(f"   创建时间: {inv.get('createTime', 'N/A')}")
+        click.echo(f"   更新时间: {inv.get('updateTime', 'N/A')}")
+        err_info = inv.get('errorInfo')
+        if err_info:
+            click.echo(f"   错误信息: {err_info}")
+        out = inv.get('output')
+        if out:
+            preview = out if len(out) <= 500 else (out[:500] + '...')
+            click.echo(f"   输出:\n{preview}")
+

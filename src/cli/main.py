@@ -1224,7 +1224,10 @@ from ecs.commands import (format_output, update_ecs_label, query_dedicated_host_
                            list_dedicated_hosts, check_dedicated_host_demand,
                            list_dedicated_host_flavors,
                            list_ports, show_port,
-                           dedicated_host_label)
+                           dedicated_host_label,
+                           query_security_groups, describe_security_group,
+                           list_flavor_family_instances, list_dedicated_host_specs,
+                           describe_metadata, describe_invocation_results)
 ecs.add_command(update_ecs_label)
 ecs.add_command(query_dedicated_host_uuid)
 ecs.add_command(query_order_uuid)
@@ -1249,6 +1252,12 @@ ecs.add_command(list_dedicated_host_flavors)
 ecs.add_command(list_ports)
 ecs.add_command(show_port)
 ecs.add_command(dedicated_host_label)
+ecs.add_command(query_security_groups)
+ecs.add_command(describe_security_group)
+ecs.add_command(list_flavor_family_instances)
+ecs.add_command(list_dedicated_host_specs)
+ecs.add_command(describe_metadata)
+ecs.add_command(describe_invocation_results)
 
 
 if __name__ == '__main__':
