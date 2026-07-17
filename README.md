@@ -3,9 +3,9 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-407+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-393+-orange.svg)](docs/MODULES/README.md#命令统计)
-[![Modules](https://img.shields.io/badge/Modules-19+-blue.svg)](docs/MODULES/README.md)
+[![APIs](https://img.shields.io/badge/APIs-830+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-785+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![Modules](https://img.shields.io/badge/Modules-27+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
 
@@ -15,7 +15,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖407+个API，支持19大服务模块
+- 📊 **功能全面** - 覆盖830+个API，支持27大服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -79,29 +79,36 @@ ctyun-cli cce list-clusters
 
 | 服务模块 | 命令数 | API数 | 核心功能 | 文档 |
 |---------|--------|-------|----------|------|
-| **ECS (云服务器)** | 64 | 53 | 实例管理、快照备份、密钥对、订单查询、资源池查询、云助手、宿主机、网卡 | [详细文档](docs/MODULES/ecs.md) |
-| **Monitor (监控服务)** | 52 | 54 | 监控数据、告警管理、Top-N统计、事件管理 | [详细文档](docs/MODULES/monitor.md) |
-| **Redis (分布式缓存)** | 18 | 22 | 实例管理、性能监控、网络配置、完整创建功能 | [详细文档](docs/MODULES/redis.md) |
-| **Audit (云审计)** | 8 | 8 | 事件查询、资源池管理、跟踪任务管理 | [详细文档](docs/MODULES/audit.md) |
-| **IMS (镜像服务)** | 2 | 2 | 镜像查询、镜像详细信息 | [详细文档](docs/MODULES/ims.md) |
-| **Billing (计费查询)** | 15 | 14 | 账单查询、费用分析、消费统计 | [详细文档](docs/MODULES/billing.md) |
-| **Security (安全卫士)** | 6 | 13 | 安全扫描、漏洞管理、风险评估 | [详细文档](docs/MODULES/security.md) |
+| **ECS (云服务器)** | 71 | 74 | 实例管理、快照备份、密钥对、订单查询、资源池查询、云助手、宿主机、网卡、安全组 | [详细文档](docs/MODULES/ecs.md) |
+| **Monitor (监控服务)** | 82 | 74 | 监控数据、告警管理、Top-N统计、事件管理 | [详细文档](docs/MODULES/monitor.md) |
+| **LTS (云日志服务)** | 168 | 169 | 日志项目/单元、主机组、采集配置、检索、转储、加工、告警、仪表盘、快速查询 | - |
+| **CCE (容器引擎)** | 92 | 93 | Kubernetes集群、节点池、工作负载、配置管理、任务管理、命名空间 | [详细文档](docs/MODULES/cce.md) |
+| **Aone (边缘安全加速平台)** | 45 | 46 | 域名管理、证书管理、缓存刷新/预取、数据统计、安全防护（CC/WAF/DDoS） | - |
+| **APM (应用性能监控)** | 44 | 47 | 元数据、应用管理、链路追踪、性能分析、用量统计、告警、通知、Webhook | - |
+| **ZOS (对象存储)** | 39 | 40 | 桶管理、对象管理、IAM、标签操作 | - |
+| **ELB (弹性负载均衡)** | 34 | 33 | 负载均衡器、目标组、后端主机、访问控制、证书、网关负载均衡 | [详细文档](docs/MODULES/elb.md) |
 | **IAM (身份访问管理)** | 34 | 34 | 用户/用户组/权限/策略/委托/AK-SK/MFA/企业项目/身份供应商/敏感操作 | [详细文档](docs/MODULES/iam.md) |
+| **RDS (云数据库Redis)** | 33 | 36 | 实例管理、性能监控、网络配置、费用查询、运维管理 | [详细文档](docs/MODULES/redis.md) |
+| **VPC (私有网络)** | 23 | 26 | VPC网络、子网、路由表、安全组、弹性IP、标签管理 | [详细文档](docs/MODULES/vpc.md) |
+| **CDA (云专线)** | 20 | 6 | 专线网关、物理专线、VPC管理、健康检查、链路探测 | [详细文档](docs/MODULES/cda.md) |
+| **AIServer (AI服务器)** | 19 | 24 | AI服务器实例管理 | - |
+| **Billing (计费查询)** | 12 | 12 | 账单查询、费用分析、消费统计 | [详细文档](docs/MODULES/billing.md) |
+| **CSSCN (云安全中心)** | 10 | 13 | 资产查询、风险统计、漏洞、告警、病毒检测、配额 | - |
+| **CTMySQL (云数据库MySQL)** | 9 | 11 | 实例查询、标签管理、监控、询价 | - |
+| **CloudPC (云桌面)** | 9 | 16 | 云桌面实例管理 | - |
+| **Audit (云审计)** | 8 | 13 | 事件查询、资源池管理、跟踪任务管理 | [详细文档](docs/MODULES/audit.md) |
+| **DPS (数据迁移服务)** | 8 | 9 | 数据迁移任务管理 | - |
+| **Security (安全卫士)** | 6 | 22 | 安全扫描、漏洞管理、风险评估 | [详细文档](docs/MODULES/security.md) |
+| **EMR (翼MapReduce)** | 6 | 10 | 集群、节点组、Hive元数据管理 | [详细文档](docs/MODULES/emr.md) |
+| **Kafka (分布式消息服务)** | 5 | 7 | 实例列表、节点状态、弹性IP、配置查询、标签 | [详细文档](docs/MODULES/kafka.md) |
+| **CSS (云搜索服务)** | 3 | 5 | OpenSearch/Elasticsearch/Logstash 实例管理 | [详细文档](docs/MODULES/css.md) |
+| **IMS (镜像服务)** | 2 | 7 | 镜像查询、镜像详细信息 | [详细文档](docs/MODULES/ims.md) |
+| **OceanFS (海量文件服务)** | 2 | 2 | 海量文件存储管理 | - |
 | **EBS (弹性块存储)** | 1 | 1 | 块存储管理 | [详细文档](docs/MODULES/ebs.md) |
-| **CDA (云专线)** | 20 | 21 | 专线网关、物理专线、VPC管理、健康检查、链路探测 | [详细文档](docs/MODULES/cda.md) |
-| **VPC (私有网络)** | 15 | 15 | VPC网络、子网、路由表、安全组、弹性IP | [详细文档](docs/MODULES/vpc.md) |
-| **CCE (容器引擎)** | 79 | 92 | Kubernetes集群、节点池、工作负载、配置管理、任务管理、命名空间 | [详细文档](docs/MODULES/cce.md) |
-| **ELB (弹性负载均衡)** | 11 | 11 | 负载均衡器、目标组、后端主机管理 | [详细文档](docs/MODULES/elb.md) |
-| **Kafka (分布式消息服务)** | 4 | 5 | 实例列表、节点状态、弹性IP、配置查询 | [详细文档](docs/MODULES/kafka.md) |
-| **CSS (云搜索服务)** | 3 | 4 | OpenSearch/Elasticsearch/Logstash 实例管理 | [详细文档](docs/MODULES/css.md) |
-| **EMR (翼MapReduce)** | 6 | 9 | 集群、节点组、Hive元数据管理 | [详细文档](docs/MODULES/emr.md) |
 | **SFS (弹性文件服务)** | - | - | 弹性文件存储管理（实现中） | - |
-| **OceanFS (海量文件服务)** | - | - | 海量文件存储管理（实现中） | - |
-| **Aone (边缘安全加速平台)** | 45 | 45 | 域名管理、证书管理、缓存刷新/预取、数据统计、安全防护（CC/WAF/DDoS） | - |
-| **LTS (云日志服务)** | - | - | 日志采集、检索、投递、告警管理（实现中） | - |
-| **总计** | **393** | **407** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **总计** | **785** | **830** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：43,000+行代码，407+个API，393+个命令，19大服务模块**
+📊 **规模统计：61,000+行代码，830+个API，785+个命令，27大服务模块**
 
 ## 📚 完整文档
 
@@ -147,19 +154,19 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.25.0 (2026-07-01)
+**最新版本**: v1.25.0 (2026-07-17)
 - 🆕 **新增 APM（应用性能监控）模块**：44 个命令，涵盖元数据、应用管理、链路追踪、性能分析、用量统计、告警、通知、Webhook
 
-**v1.24.6** (2026-07-01)
+**v1.24.6** (2026-07-17)
 - 🚀 **ELB 模块新增 19 个命令**：访问控制、监控、SLA/证书、转发策略、健康检查、网关负载均衡、IP 监听
 
-**v1.24.5** (2026-07-01)
-- 🚀 **LTS 模块大幅扩展 + ZOS 模块新增命令**：LTS 新增 168 个命令（项目/单元/主机组/采集/检索/转储/加工/告警/仪表盘等），ZOS 新增 38 个命令（桶/对象/IAM/标签管理）
+**v1.24.5** (2026-07-17)
+- 🚀 **LTS 模块大幅扩展 + ZOS 模块新增命令**：LTS 新增 168 个命令（项目/单元/主机组/采集/检索/转储/加工/告警/仪表盘等），ZOS 新增 39 个命令（桶/对象/IAM/标签管理）
 
-**v1.24.4** (2026-07-01)
+**v1.24.4** (2026-07-17)
 - 🚀 **CCE 模块新增命令**：`query-cluster-id-by-order-id` 根据订单 ID 查询集群 ID
 
-**v1.24.3** (2026-07-01)
+**v1.24.3** (2026-07-17)
 - 🚀 **ECS 模块新增 6 个命令**：安全组查询/详情、规格族实例、专属宿主机规格、元数据、命令执行结果
 
 **v1.24.2** (2026-07-01)
