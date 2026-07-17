@@ -3156,3 +3156,53 @@ def list_namespaces(ctx, region_id: str, cluster_name: str,
             click.echo(wrapped_text)
         else:
             click.echo("未找到 Namespace")
+
+
+@cce.command('query-cluster-id-by-order-id')
+@click.option('--region-id', required=True, help='区域 ID')
+@click.option('--order-id', required=True, help='创建集群接口返回的订单ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def query_cluster_id_by_order_id(ctx, region_id: str, order_id: str, output: Optional[str]):
+    """
+    根据订单ID查询集群ID
+
+    示例:
+    \b
+    # 根据订单ID查询集群ID
+    cce query-cluster-id-by-order-id --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --order-id de18911236644665a33c354f19fcc31a
+
+    # JSON 格式输出
+    cce query-cluster-id-by-order-id --region-id bb9fdb42056f11eda1610242ac110002 \\
+      --order-id de18911236644665a33c354f19fcc31a --output json
+    """
+    client = ctx.obj['client']
+    output_format = output or ctx.obj['output']
+
+    cce_client = CCEClient(client)
+    result = cce_client.query_cluster_id_by_order_id(region_id, order_id)
+
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误：需要安装 PyYAML 库", err=True)
+            import sys
+            sys.exit(1)
+    else:
+        # table format
+        return_obj = result.get('returnObj', '')
+        click.echo(f"根据订单ID查询集群ID")
+        click.echo("=" * 80)
+        click.echo(f"订单ID: {order_id}")
+        click.echo(f"区域 ID: {region_id}")
+        click.echo()
+        if return_obj:
+            click.echo(f"集群ID: {return_obj}")
+        else:
+            click.echo("未找到对应的集群ID")

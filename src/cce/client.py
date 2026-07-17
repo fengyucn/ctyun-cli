@@ -3744,10 +3744,10 @@ class CCEClient:
 
         headers = self.eop_auth.sign_request(
             method='GET',
-            url=url,
-            content_type='application/json'
+            url=url
         )
         headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
 
         response = self.client.session.get(url, headers=headers, timeout=30)
 
@@ -3790,13 +3790,53 @@ class CCEClient:
         headers = self.eop_auth.sign_request(
             method='GET',
             url=url,
-            query_params=query_params if query_params else None,
-            content_type='application/json'
+            query_params=query_params if query_params else None
         )
         headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
 
-        response = self.client.session.get(url, params=query_params if query_params else None, 
+        response = self.client.session.get(url, params=query_params if query_params else None,
                                           headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def query_cluster_id_by_order_id(self, region_id: str, order_id: str) -> Dict[str, Any]:
+        """
+        根据订单ID查询集群ID
+
+        Args:
+            region_id: 资源池ID (必填)
+            order_id: 创建集群接口返回的orderId (必填)
+
+        Returns:
+            包含集群ID的响应结果，returnObj 为集群ID字符串
+        """
+        logger.info(f"根据订单ID查询集群ID: regionId={region_id}, orderId={order_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/queryClusterIdByOrderId'
+
+        query_params = {
+            'orderId': order_id
+        }
+
+        headers = self.eop_auth.sign_request(
+            method='GET',
+            url=url,
+            query_params=query_params
+        )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
 
         if response.status_code == 200:
             result = response.json()
