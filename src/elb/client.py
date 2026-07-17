@@ -853,3 +853,198 @@ class ELBClient:
         response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
         response.raise_for_status()
         return response.json()
+
+    # ==================== 辅助方法 ====================
+
+    def _get(self, path: str, query_params: Dict) -> Dict[str, Any]:
+        """通用GET请求"""
+        params = {k: v for k, v in query_params.items() if v is not None}
+        url = f'https://{self.base_endpoint}{path}'
+        headers = self.eop_auth.sign_request(
+            method='GET', url=url, query_params=params, body=None
+        )
+        logger.debug(f"GET {url} params={params}")
+        try:
+            response = self.client.session.get(
+                url, params=params, headers=headers, timeout=30, verify=False
+            )
+            if response.status_code != 200:
+                return {'statusCode': response.status_code, 'message': response.text}
+            return response.json()
+        except Exception as e:
+            logger.error(f"GET请求失败: {str(e)}")
+            return {'statusCode': 500, 'message': str(e)}
+
+    def _post(self, path: str, body_data: Dict) -> Dict[str, Any]:
+        """通用POST请求"""
+        url = f'https://{self.base_endpoint}{path}'
+        body = json.dumps(body_data)
+        headers = self.eop_auth.sign_request(
+            method='POST', url=url, query_params=None, body=body, extra_headers={}
+        )
+        logger.debug(f"POST {url} body={body}")
+        try:
+            response = self.client.session.post(
+                url, data=body, headers=headers, timeout=30, verify=False
+            )
+            if response.status_code != 200:
+                return {'statusCode': response.status_code, 'message': response.text}
+            return response.json()
+        except Exception as e:
+            logger.error(f"POST请求失败: {str(e)}")
+            return {'statusCode': 500, 'message': str(e)}
+
+    # ==================== 访问控制 ====================
+
+    def show_access_control(self, region_id: str, access_control_id: str) -> Dict[str, Any]:
+        """查看访问控制策略组详情 - GET /v4/elb/show-access-control"""
+        return self._get('/v4/elb/show-access-control', {
+            'regionID': region_id, 'accessControlID': access_control_id,
+        })
+
+    def list_access_controls(self, region_id: str,
+                             page_no: Optional[int] = None,
+                             page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看访问控制列表 - GET /v4/elb/list-access-control"""
+        return self._get('/v4/elb/list-access-control', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    # ==================== 监控(旧版) ====================
+
+    def query_legacy_history_monitor(self, region_id: str, device_ids: list,
+                                     metric_names: list, start_time: str, end_time: str,
+                                     period: int = 60, page_no: int = 1,
+                                     page_size: int = 10) -> Dict[str, Any]:
+        """查看负载均衡历史监控(旧版) - POST /v4/elb/query-history-monitor"""
+        return self._post('/v4/elb/query-history-monitor', {
+            'regionID': region_id, 'deviceIDs': device_ids,
+            'metricNames': metric_names, 'startTime': start_time, 'endTime': end_time,
+            'period': period, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    def query_legacy_realtime_monitor(self, region_id: str,
+                                      device_ids: Optional[list] = None,
+                                      page_no: int = 1,
+                                      page_size: int = 10) -> Dict[str, Any]:
+        """查看负载均衡实时监控(旧版) - POST /v4/elb/query-realtime-monitor"""
+        return self._post('/v4/elb/query-realtime-monitor', {
+            'regionID': region_id, 'deviceIDs': device_ids,
+            'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    # ==================== 规格/证书 ====================
+
+    def list_sla(self, region_id: str) -> Dict[str, Any]:
+        """查看规格列表 - GET /v4/elb/query-sla"""
+        return self._get('/v4/elb/query-sla', {'regionID': region_id})
+
+    def list_certificates(self, region_id: str,
+                          page_no: Optional[int] = None,
+                          page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看证书列表 - GET /v4/elb/list-certificate"""
+        return self._get('/v4/elb/list-certificate', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    def show_certificate(self, region_id: str, certificate_id: str) -> Dict[str, Any]:
+        """查看证书详情 - GET /v4/elb/show-certificate"""
+        return self._get('/v4/elb/show-certificate', {
+            'regionID': region_id, 'certificateID': certificate_id,
+        })
+
+    def list_domain_cert_links(self, region_id: str,
+                               page_no: Optional[int] = None,
+                               page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取多证书 - GET /v4/elb/list-domain-cert-links"""
+        return self._get('/v4/elb/list-domain-cert-links', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    # ==================== 转发规则 ====================
+
+    def list_rules(self, region_id: str,
+                   listener_id: Optional[str] = None,
+                   page_no: Optional[int] = None,
+                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看转发规则列表 - GET /v4/elb/list-rule"""
+        return self._get('/v4/elb/list-rule', {
+            'regionID': region_id, 'listenerID': listener_id,
+            'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    def show_rule(self, region_id: str, policy_id: str) -> Dict[str, Any]:
+        """查看转发规则详情 - GET /v4/elb/show-rule"""
+        return self._get('/v4/elb/show-rule', {
+            'regionID': region_id, 'policyID': policy_id,
+        })
+
+    # ==================== 健康检查 ====================
+
+    def list_health_checks(self, region_id: str,
+                           page_no: Optional[int] = None,
+                           page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取健康检查列表 - GET /v4/elb/list-health-check"""
+        return self._get('/v4/elb/list-health-check', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    # ==================== GWLB网关负载均衡 ====================
+
+    def list_gwlb(self, region_id: str,
+                 page_no: Optional[int] = None,
+                 page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看gwlb列表 - GET /v4/elb/gwlb-list"""
+        return self._get('/v4/elb/gwlb-list', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    def show_gwlb(self, region_id: str, gwlb_id: str) -> Dict[str, Any]:
+        """查看gwlb详情 - GET /v4/elb/gwlb-show"""
+        return self._get('/v4/elb/gwlb-show', {
+            'regionID': region_id, 'gwlbID': gwlb_id,
+        })
+
+    def gwlb_list_targets(self, region_id: str,
+                          page_no: Optional[int] = None,
+                          page_size: Optional[int] = None) -> Dict[str, Any]:
+        """gwlb查看target列表 - GET /v4/elb/gwlb-list-target"""
+        return self._get('/v4/elb/gwlb-list-target', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    def gwlb_show_target(self, region_id: str, target_id: str) -> Dict[str, Any]:
+        """gwlb查看target详情 - GET /v4/elb/gwlb-show-target"""
+        return self._get('/v4/elb/gwlb-show-target', {
+            'regionID': region_id, 'targetID': target_id,
+        })
+
+    def gwlb_list_target_groups(self, region_id: str,
+                                page_no: Optional[int] = None,
+                                page_size: Optional[int] = None) -> Dict[str, Any]:
+        """gwlb查看target_group列表 - GET /v4/elb/gwlb-list-target-group"""
+        return self._get('/v4/elb/gwlb-list-target-group', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    def gwlb_show_target_group(self, region_id: str, target_group_id: str) -> Dict[str, Any]:
+        """gwlb查看target_group详情 - GET /v4/elb/gwlb-show-target-group"""
+        return self._get('/v4/elb/gwlb-show-target-group', {
+            'regionID': region_id, 'targetGroupID': target_group_id,
+        })
+
+    # ==================== IP监听器 ====================
+
+    def list_ip_listeners(self, region_id: str,
+                          page_no: Optional[int] = None,
+                          page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看ip_listener列表 - GET /v4/elb/iplistener-list"""
+        return self._get('/v4/elb/iplistener-list', {
+            'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
+        })
+
+    def show_ip_listener(self, region_id: str, ip_listener_id: str) -> Dict[str, Any]:
+        """查看ip_listener详情 - GET /v4/elb/iplistener-show"""
+        return self._get('/v4/elb/iplistener-show', {
+            'regionID': region_id, 'ipListenerID': ip_listener_id,
+        })

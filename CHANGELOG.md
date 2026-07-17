@@ -4,6 +4,22 @@
 
 ---
 
+## v1.24.6 (2026-07-01)
+
+### 🚀 ELB 模块新增 19 个命令
+
+**新增 ELB 命令**：
+
+- **访问控制**（2个）：`show-access-control` / `list-access-controls`
+- **监控**（2个）：`legacy-history-monitor` / `legacy-realtime-monitor`
+- **SLA/证书**（4个）：`list-sla` / `list-certificates` / `show-certificate` / `list-domain-cert-links`
+- **转发策略**（2个）：`list-rules` / `show-rule`
+- **健康检查**（1个）：`list-health-checks`
+- **网关负载均衡**（5个）：`list-gwlb` / `show-gwlb` / `gwlb-list-targets` / `gwlb-show-target` / `gwlb-list-target-groups` / `gwlb-show-target-group`
+- **IP 监听**（2个）：`list-ip-listeners` / `show-ip-listener`
+
+---
+
 ## v1.24.5 (2026-07-01)
 
 ### 🚀 LTS 模块大幅扩展 + ZOS 模块新增命令

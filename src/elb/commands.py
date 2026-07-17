@@ -1484,3 +1484,287 @@ def list_labels(ctx, region_id: str, elb_id: str, output):
             click.echo(OutputFormatter.format_table(labels))
     else:
         click.echo(OutputFormatter.format_json(result))
+
+
+def format_elb_output(result, output_format='table'):
+    """格式化ELB查询结果输出"""
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result)); return
+    if output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False)); return
+    if result.get('statusCode') not in (200, 800, None):
+        msg = result.get('description') or result.get('message', '未知错误')
+        click.echo(f"查询失败: {msg}", err=True)
+        import sys; sys.exit(1)
+    return_obj = result.get('returnObj', {})
+    if return_obj is None:
+        click.echo("没有数据"); return
+    if isinstance(return_obj, list):
+        if return_obj:
+            click.echo(OutputFormatter.format_table(return_obj, list(return_obj[0].keys())))
+        else:
+            click.echo("没有数据")
+    elif isinstance(return_obj, dict):
+        if any(isinstance(v, (list, dict)) for v in return_obj.values()):
+            click.echo(OutputFormatter.format_json(return_obj))
+        else:
+            table_data = [[k, v] for k, v in return_obj.items()]
+            click.echo(OutputFormatter.format_table(table_data, ['字段', '值']))
+    else:
+        click.echo(return_obj)
+
+
+# ==================== 访问控制 ====================
+
+@elb.command('show-access-control')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--access-control-id', required=True, help='访问控制策略组ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def show_access_control(ctx, region_id, access_control_id, output):
+    """查看访问控制策略组详情"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).show_access_control(region_id, access_control_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('list-access-controls')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_access_controls(ctx, region_id, page_no, page_size, output):
+    """查看访问控制列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_access_controls(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+# ==================== 监控(旧版) ====================
+
+@elb.command('legacy-history-monitor')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='负载均衡ID列表(逗号分隔)')
+@click.option('--metric-names', required=True, help='监控指标(逗号分隔)')
+@click.option('--start-time', required=True, help='开始时间 YYYY-mm-dd HH:MM:SS')
+@click.option('--end-time', required=True, help='结束时间 YYYY-mm-dd HH:MM:SS')
+@click.option('--period', type=int, default=60, help='聚合周期(秒)，默认60')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def legacy_history_monitor(ctx, region_id, device_ids, metric_names,
+                           start_time, end_time, period, page_no, page_size, output):
+    """查看负载均衡历史监控(旧版)"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).query_legacy_history_monitor(
+        region_id, device_ids.split(','), metric_names.split(','),
+        start_time, end_time, period=period, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('legacy-realtime-monitor')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', help='负载均衡ID列表(逗号分隔)')
+@click.option('--page-no', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def legacy_realtime_monitor(ctx, region_id, device_ids, page_no, page_size, output):
+    """查看负载均衡实时监控(旧版)"""
+    from elb.client import ELBClient
+    ids = device_ids.split(',') if device_ids else None
+    result = ELBClient(ctx.obj['client']).query_legacy_realtime_monitor(
+        region_id, device_ids=ids, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+# ==================== 规格/证书 ====================
+
+@elb.command('list-sla')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_sla(ctx, region_id, output):
+    """查看规格列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_sla(region_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('list-certificates')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_certificates(ctx, region_id, page_no, page_size, output):
+    """查看证书列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_certificates(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('show-certificate')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--certificate-id', required=True, help='证书ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def show_certificate(ctx, region_id, certificate_id, output):
+    """查看证书详情"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).show_certificate(region_id, certificate_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('list-domain-cert-links')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_domain_cert_links(ctx, region_id, page_no, page_size, output):
+    """获取多证书"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_domain_cert_links(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+# ==================== 转发规则 ====================
+
+@elb.command('list-rules')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--listener-id', help='监听器ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_rules(ctx, region_id, listener_id, page_no, page_size, output):
+    """查看转发规则列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_rules(
+        region_id, listener_id=listener_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('show-rule')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--policy-id', required=True, help='策略ID(转发规则ID)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def show_rule(ctx, region_id, policy_id, output):
+    """查看转发规则详情"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).show_rule(region_id, policy_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+# ==================== 健康检查 ====================
+
+@elb.command('list-health-checks')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_health_checks(ctx, region_id, page_no, page_size, output):
+    """获取健康检查列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_health_checks(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+# ==================== GWLB网关负载均衡 ====================
+
+@elb.command('list-gwlb')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_gwlb(ctx, region_id, page_no, page_size, output):
+    """查看gwlb列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_gwlb(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('show-gwlb')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--gwlb-id', required=True, help='GWLB ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def show_gwlb(ctx, region_id, gwlb_id, output):
+    """查看gwlb详情"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).show_gwlb(region_id, gwlb_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('gwlb-list-targets')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def gwlb_list_targets(ctx, region_id, page_no, page_size, output):
+    """gwlb查看target列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).gwlb_list_targets(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('gwlb-show-target')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--target-id', required=True, help='Target ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def gwlb_show_target(ctx, region_id, target_id, output):
+    """gwlb查看target详情"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).gwlb_show_target(region_id, target_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('gwlb-list-target-groups')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def gwlb_list_target_groups(ctx, region_id, page_no, page_size, output):
+    """gwlb查看target_group列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).gwlb_list_target_groups(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('gwlb-show-target-group')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--target-group-id', required=True, help='Target Group ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def gwlb_show_target_group(ctx, region_id, target_group_id, output):
+    """gwlb查看target_group详情"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).gwlb_show_target_group(region_id, target_group_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+# ==================== IP监听器 ====================
+
+@elb.command('list-ip-listeners')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, default=None, help='页码')
+@click.option('--page-size', type=int, default=None, help='每页数量(1-50)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def list_ip_listeners(ctx, region_id, page_no, page_size, output):
+    """查看ip_listener列表"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).list_ip_listeners(
+        region_id, page_no=page_no, page_size=page_size)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
+
+@elb.command('show-ip-listener')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--ip-listener-id', required=True, help='IP Listener ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def show_ip_listener(ctx, region_id, ip_listener_id, output):
+    """查看ip_listener详情"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).show_ip_listener(region_id, ip_listener_id)
+    format_elb_output(result, output or ctx.obj.get('output', 'table'))
