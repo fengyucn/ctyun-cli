@@ -1166,6 +1166,9 @@ cli.add_command(aone)
 from lts.commands import lts
 cli.add_command(lts)
 
+from apm.commands import apm
+cli.add_command(apm)
+
 from kafka.commands import kafka
 cli.add_command(kafka)
 
