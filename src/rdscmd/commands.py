@@ -3424,3 +3424,1201 @@ def label_by_resources(ctx, region_id: str, instance_ids: str, output: str):
             resources = r.get('prodResourceIdList', [])
             res_str = ', '.join(ri.get('resourceId', '')[:16] for ri in resources)
             click.echo(f"  {r.get('key','')}={r.get('value','')}  ({r.get('resourceCount',0)}个资源) {res_str}")
+
+
+# ==================== 批量新增查询类命令（10个） ====================
+
+@redis_group.command('recycle-bin')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--page-index', type=int, default=1, help='页码，默认1')
+@click.option('--page-size', type=int, default=10, help='每页数量，默认10')
+@click.option('--instance-name', help='实例名称（模糊匹配）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def recycle_bin(ctx, region_id, page_index, page_size, instance_name, output):
+    """查询回收站实例列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_recycle_bin_instances(
+        region_id=region_id, page_index=page_index, page_size=page_size, instance_name=instance_name)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    instances = ro.get('instances', []) or ro.get('rows', [])
+    click.echo(f"回收站实例 (共 {ro.get('total', 0)} 个)")
+    for ins in instances:
+        click.echo(f"  {ins.get('prodInstId','')} | {ins.get('instanceName','')} | {ins.get('status','')}")
+
+
+@redis_group.command('running-statistics')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--include-failure', type=click.Choice(['true', 'false']), help='是否返回创建失败的实例数')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def running_statistics(ctx, region_id, include_failure, output):
+    """查询运行中实例的统计信息"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_running_instances_statistics(
+        region_id=region_id, include_failure=include_failure)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    if isinstance(ro, dict):
+        click.echo("运行中实例统计:")
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('quota')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def quota(ctx, region_id, output):
+    """查询租户配额"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_tenant_quota(region_id=region_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo("租户配额:")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('maintain-time')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def maintain_time(ctx, prod_inst_id, region_id, output):
+    """查询实例维护时间"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_instance_maintain_time(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"实例维护时间 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('backups')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--restore-name', help='备份恢复记录名')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def backups(ctx, prod_inst_id, region_id, restore_name, output):
+    """查询备份文件信息"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_backups(
+        region_id=region_id, prod_inst_id=prod_inst_id, restore_name=restore_name)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    records = ro.get('records', []) or ro.get('backups', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"备份文件 (共 {len(records) if isinstance(records, list) else 0} 条)")
+    if isinstance(records, list):
+        for r in records:
+            click.echo(f"  {r.get('restoreName','')} | {r.get('backupType','')} | {r.get('status','')}")
+
+
+@redis_group.command('backup-policy')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def backup_policy(ctx, prod_inst_id, region_id, output):
+    """查询自动备份策略"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_backup_policy(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"自动备份策略 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('backup-download-url')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--restore-name', required=True, help='备份名（从查询备份文件信息获取）')
+@click.option('--ip-type', type=click.Choice(['publicIp', 'privateIp']), required=True,
+              help='网络类型: publicIp 公网 / privateIp 私网')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def backup_download_url(ctx, prod_inst_id, restore_name, ip_type, region_id, output):
+    """获取备份文件下载链接"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_rdb_download_url(
+        region_id=region_id, prod_inst_id=prod_inst_id, restore_name=restore_name, ip_type=ip_type)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"备份下载链接 ({restore_name}):")
+    url = ro.get('downloadUrl') or ro.get('url') if isinstance(ro, dict) else None
+    if url:
+        click.echo(f"  URL: {url}")
+    elif isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('ssl')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def ssl(ctx, prod_inst_id, region_id, output):
+    """查询SSL信息"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_instance_ssl(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"SSL信息 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('security-ips')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def security_ips(ctx, prod_inst_id, region_id, output):
+    """查询指定实例的IP白名单分组"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_security_ips(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"IP白名单分组 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            click.echo(f"  {item}")
+
+
+@redis_group.command('slow-log')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-name', required=True, help='节点名称（多个用英文逗号拼接）')
+@click.option('--size', type=int, help='查询条数（1-1024）')
+@click.option('--min-cost', type=int, help='最小持续时间（微秒）')
+@click.option('--max-cost', type=int, help='最大持续时间（微秒）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def slow_log(ctx, prod_inst_id, node_name, size, min_cost, max_cost, region_id, output):
+    """查询慢日志"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_top_slow_logs(
+        region_id=region_id, prod_inst_id=prod_inst_id, node_name=node_name,
+        size=size, min_cost=min_cost, max_cost=max_cost)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    records = ro.get('records', []) or ro.get('slowLogs', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"慢日志 (共 {len(records) if isinstance(records, list) else 0} 条)")
+    if isinstance(records, list):
+        for r in records:
+            click.echo(f"  {r.get('time','')} | {r.get('command','')} | cost={r.get('cost','')}µs")
+
+
+# ==================== 批量新增查询类命令（第2批，5个） ====================
+
+@redis_group.command('experiments')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--page', type=int, help='页码（最小1）')
+@click.option('--size', type=int, help='每页大小（1-100）')
+@click.option('--action-code',
+              type=click.Choice(['memory-load', 'cpu-fullload', 'disk-burn', 'node-shutdown', 'network-loss']),
+              help='故障类型过滤')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def experiments(ctx, prod_inst_id, region_id, page, size, action_code, output):
+    """查询实例故障列表（混沌工程）"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_instance_experiments(
+        region_id=region_id, prod_inst_id=prod_inst_id, page=page, size=size, action_code=action_code)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('rows', []) or ro.get('experiments', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"实例故障列表 (共 {ro.get('total', len(rows) if isinstance(rows, list) else 0)} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            click.echo(f"  {r.get('actionCode','')} | {r.get('status','')} | {r.get('createTime','')}")
+
+
+@redis_group.command('can-expand')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--shard-mem-size', type=int, help='目标分片规格(G)，非经典版必填')
+@click.option('--shard-count', type=int, help='目标分片数，Cluster/Proxy系列必填')
+@click.option('--mem-size', type=int, help='目标总容量(G)，经典版必填')
+@click.option('--copies-count', type=int, help='目标副本数（1-10）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def can_expand(ctx, prod_inst_id, region_id, shard_mem_size, shard_count, mem_size, copies_count, output):
+    """查询实例是否可以扩容"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).check_instance_operate(
+        region_id=region_id, prod_inst_id=prod_inst_id, operate='upgrade',
+        shard_mem_size=shard_mem_size, shard_count=shard_count,
+        mem_size=mem_size, copies_count=copies_count)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"扩容检查 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('auto-renew')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def auto_renew(ctx, prod_inst_id, region_id, output):
+    """查询自动续费状态"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_instance_auto_renew_status(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"自动续费状态 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('data-flashback')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def data_flashback(ctx, prod_inst_id, region_id, output):
+    """查询数据闪回状态"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_data_flashback_status(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"数据闪回状态 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('rename-command')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def rename_command(ctx, prod_inst_id, region_id, output):
+    """查询危险命令重命名状态"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_rename_command_status(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"危险命令重命名状态 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            if isinstance(item, dict):
+                click.echo(f"  {item.get('commandName','')} -> {item.get('rename','')}")
+            else:
+                click.echo(f"  {item}")
+
+
+# ==================== 批量新增查询类命令（第3批，5个） ====================
+
+@redis_group.command('backup-tasks')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--restore-name', help='备份名（从手动备份数据 restoreName 获取）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def backup_tasks(ctx, prod_inst_id, region_id, restore_name, output):
+    """查询备份任务执行情况"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_backup_tasks(
+        region_id=region_id, prod_inst_id=prod_inst_id, restore_name=restore_name)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('records', []) or ro.get('tasks', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"备份任务执行情况 (共 {len(rows) if isinstance(rows, list) else 0} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            click.echo(f"  {r.get('restoreName','')} | {r.get('status','')} | {r.get('backupType','')}")
+
+
+@redis_group.command('client-map')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-name', required=True, help='节点名称（Proxy集群传proxyName，其他传Redis节点名）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def client_map(ctx, prod_inst_id, node_name, region_id, output):
+    """按照客户端IP统计客户端会话数量"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_client_map_by_ip(
+        region_id=region_id, prod_inst_id=prod_inst_id, node_name=node_name)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('clientMap', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"客户端IP会话统计 (共 {len(rows) if isinstance(rows, list) else 0} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('ip','')} | sessions={r.get('sessionCount', r.get('count',''))}")
+            else:
+                click.echo(f"  {r}")
+    elif isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('maintain-az')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def maintain_az(ctx, prod_inst_id, region_id, output):
+    """查询主节点可用区锁定设置"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_maintain_az(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"主节点可用区锁定设置 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('dedicated-cluster-instances')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--page-index', type=int, default=1, help='页码，默认1')
+@click.option('--page-size', type=int, default=10, help='每页大小，默认10')
+@click.option('--instance-name', help='实例名称（模糊搜索）')
+@click.option('--prod-inst-id', help='实例ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def dedicated_cluster_instances(ctx, region_id, page_index, page_size, instance_name, prod_inst_id, output):
+    """查询专属集群产品实例列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_dedicated_cluster_instances(
+        region_id=region_id, page_index=page_index, page_size=page_size,
+        instance_name=instance_name, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('instances', []) or ro.get('records', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"专属集群产品实例 (共 {ro.get('total', len(rows) if isinstance(rows, list) else 0)} 个)")
+    if isinstance(rows, list):
+        for r in rows:
+            click.echo(f"  {r.get('prodInstId','')} | {r.get('instanceName','')} | {r.get('status','')}")
+
+
+@redis_group.command('dbkey-count')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--groups', required=True, help='DB编号，多个分组用逗号间隔')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def dbkey_count(ctx, prod_inst_id, groups, region_id, output):
+    """查询dbkey的数量"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_db_key_count(
+        region_id=region_id, prod_inst_id=prod_inst_id, groups=groups)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"dbkey数量 ({prod_inst_id}, groups={groups}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            if isinstance(item, dict):
+                click.echo(f"  group={item.get('group','')} count={item.get('keyCount', item.get('count',''))}")
+            else:
+                click.echo(f"  {item}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+# ==================== 批量新增查询类命令（第4批，10个） ====================
+
+@redis_group.command('monitor-items-v2')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def monitor_items_v2(ctx, prod_inst_id, region_id, output):
+    """查询命令调用类族（节点监控类型）"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_node_monitor_items(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    data = ro.get('data', []) if isinstance(ro, dict) else (ro if isinstance(ro, list) else [])
+    click.echo(f"命令调用类族 (共 {len(data) if isinstance(data, list) else 0} 个)")
+    if isinstance(data, list):
+        for item in data:
+            click.echo(f"  {item}" if not isinstance(item, dict) else f"  {item.get('type','')} | {item.get('name','')}")
+
+
+@redis_group.command('node-monitor-values')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--type', 'type_', required=True, help='监控类型（从monitor-items-v2获取）')
+@click.option('--node-name', required=True, help='节点名称')
+@click.option('--start-time', required=True, help='开始时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--end-time', required=True, help='结束时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def node_monitor_values(ctx, prod_inst_id, type_, node_name, start_time, end_time, region_id, output):
+    """查询类簇的调用次数"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_node_monitor_values(
+        region_id=region_id, prod_inst_id=prod_inst_id, type_=type_,
+        node_name=node_name, start_time=start_time, end_time=end_time)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"类簇调用次数 ({prod_inst_id} / type={type_}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            click.echo(f"  {item}")
+
+
+@redis_group.command('slow-log-history')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-name', required=True, help='节点名称（多个逗号分隔）')
+@click.option('--start-time', required=True, help='开始时间（yyyy-MM-dd HH:mm:ss，14天内）')
+@click.option('--end-time', required=True, help='结束时间（yyyy-MM-dd HH:mm:ss，14天内）')
+@click.option('--page', type=int, help='页码，默认1')
+@click.option('--rows', type=int, help='每页行数（1-100）')
+@click.option('--min-cost', type=int, help='最小持续时间（微秒）')
+@click.option('--max-cost', type=int, help='最大持续时间（微秒）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def slow_log_history(ctx, prod_inst_id, node_name, start_time, end_time, page, rows,
+                     min_cost, max_cost, region_id, output):
+    """按时间段查询慢日志历史数据"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).find_history_slow_log(
+        region_id=region_id, prod_inst_id=prod_inst_id, node_name=node_name,
+        start_time=start_time, end_time=end_time, page=page, rows=rows,
+        min_cost=min_cost, max_cost=max_cost)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows_data = ro.get('rows', []) or ro.get('records', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"慢日志历史数据 (共 {ro.get('total', len(rows_data) if isinstance(rows_data, list) else 0)} 条)")
+    if isinstance(rows_data, list):
+        for r in rows_data:
+            click.echo(f"  {r.get('time','')} | {r.get('command','')} | cost={r.get('cost','')}µs")
+
+
+@redis_group.command('command-audit-status')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def command_audit_status(ctx, prod_inst_id, region_id, output):
+    """查询命令审计日志开启状态"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_command_audit_log_status(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"命令审计日志状态 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('node-command-list')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-name', required=True, help='节点名称')
+@click.option('--start-time', required=True, help='开始时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--end-time', required=True, help='结束时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def node_command_list(ctx, prod_inst_id, node_name, start_time, end_time, region_id, output):
+    """查询节点命令列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_node_command_list(
+        region_id=region_id, prod_inst_id=prod_inst_id, node_name=node_name,
+        start_time=start_time, end_time=end_time)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    data = ro.get('data', []) if isinstance(ro, dict) else (ro if isinstance(ro, list) else [])
+    click.echo(f"节点命令列表 (共 {len(data) if isinstance(data, list) else 0} 个)")
+    if isinstance(data, list):
+        for item in data:
+            click.echo(f"  {item}" if not isinstance(item, dict) else f"  {item.get('cmd','')} | {item.get('calls','')}")
+
+
+@redis_group.command('node-command-monitor')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-name', required=True, help='节点名称')
+@click.option('--start-time', required=True, help='开始时间（yyyy-MM-dd HH:mm:ss，30天内）')
+@click.option('--end-time', required=True, help='结束时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--type', 'type_', required=True, help='节点监控类型（从monitor-items列表获取）')
+@click.option('--cmd', help='指定命令监控（多个用|拼接）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def node_command_monitor(ctx, prod_inst_id, node_name, start_time, end_time, type_, cmd, region_id, output):
+    """查询节点命令监控历史数据"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_node_command_monitor_values(
+        region_id=region_id, prod_inst_id=prod_inst_id, node_name=node_name,
+        start_time=start_time, end_time=end_time, type_=type_, cmd=cmd)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"节点命令监控历史数据 ({prod_inst_id} / type={type_}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            click.echo(f"  {item}")
+
+
+@redis_group.command('instance-config-v3')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def instance_config_v3(ctx, prod_inst_id, region_id, output):
+    """查询实例配置参数(V3)"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_instance_config_v3(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    params = ro.get('parameters', []) or ro.get('config', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"实例配置参数 V3 ({prod_inst_id}):")
+    if isinstance(params, list):
+        for p in params:
+            if isinstance(p, dict):
+                click.echo(f"  {p.get('paramName','')} = {p.get('paramValue','')} | {p.get('description','')}")
+    elif isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('param-history')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--start-time', help='开始时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--end-time', help='结束时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--history-id', help='记录ID（查询单个记录）')
+@click.option('--page', type=int, help='页码')
+@click.option('--rows', type=int, help='行数')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def param_history(ctx, prod_inst_id, region_id, start_time, end_time, history_id, page, rows, output):
+    """查询配置参数修改历史"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_parameter_modification_history(
+        region_id=region_id, prod_inst_id=prod_inst_id, start_time=start_time,
+        end_time=end_time, history_id=history_id, page=page, rows=rows)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    records = ro.get('records', []) or ro.get('history', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"配置参数修改历史 (共 {len(records) if isinstance(records, list) else 0} 条)")
+    if isinstance(records, list):
+        for r in records:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('modifyTime','')} | {r.get('paramName','')} | {r.get('oldValue','')} -> {r.get('newValue','')}")
+
+
+@redis_group.command('templates')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--type', 'type_', type=click.Choice(['sys', 'custom']), required=True,
+              help='模板类型: sys 系统模板 / custom 自定义模板')
+@click.option('--page-num', type=int, help='页码，默认1')
+@click.option('--page-size', type=int, help='每页数量，默认10')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def templates(ctx, region_id, type_, page_num, page_size, output):
+    """查询参数模板列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_redis_templates(
+        region_id=region_id, type_=type_, page_num=page_num, page_size=page_size)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    templates_list = ro.get('templateList', []) or ro.get('templates', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"参数模板列表 type={type_} (共 {len(templates_list) if isinstance(templates_list, list) else 0} 个)")
+    if isinstance(templates_list, list):
+        for t in templates_list:
+            if isinstance(t, dict):
+                click.echo(f"  {t.get('id','')} | {t.get('templateName', t.get('name',''))} | {t.get('description','')}")
+
+
+@redis_group.command('template-detail')
+@click.option('--template-id', required=True, help='模板ID（从templates列表获取）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def template_detail(ctx, template_id, region_id, output):
+    """查询参数模板详情"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_redis_template_detail(
+        region_id=region_id, template_id=template_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"参数模板详情 ({template_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+# ==================== 批量新增查询类命令（第5批，10个） ====================
+
+@redis_group.command('auto-scan-conf')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def auto_scan_conf(ctx, prod_inst_id, region_id, output):
+    """查询过期key扫描配置"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_auto_scan_conf_setting(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"过期key扫描配置 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('scan-logs')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--page-index', type=int, default=1, help='页码')
+@click.option('--page-size', type=int, default=10, help='每页数量（1-100）')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def scan_logs(ctx, prod_inst_id, region_id, page_index, page_size, output):
+    """查询过期Key扫描记录"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_scan_logs(
+        region_id=region_id, prod_inst_id=prod_inst_id,
+        page_index=page_index, page_size=page_size)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('rows', []) or ro.get('records', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"过期Key扫描记录 (共 {ro.get('total', len(rows) if isinstance(rows, list) else 0)} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('scanTime','')} | {r.get('node','')} | {r.get('expiredCount','')}")
+
+
+@redis_group.command('big-and-hot-keys')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def big_and_hot_keys(ctx, prod_inst_id, region_id, output):
+    """查询Redis实例的热Key/大key"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_big_and_hot_keys(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"热Key/大key ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            if isinstance(item, dict):
+                click.echo(f"  type={item.get('keyType','')} | {item.get('key','')} | size={item.get('size', item.get('count',''))}")
+            else:
+                click.echo(f"  {item}")
+
+
+@redis_group.command('eviction-strategy')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def eviction_strategy(ctx, prod_inst_id, region_id, output):
+    """查询Redis实例的淘汰策略"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_instance_strategy(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"淘汰策略 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('hit-rate')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--node-name', required=True, help='节点名称')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def hit_rate(ctx, prod_inst_id, node_name, region_id, output):
+    """命中率分析查询"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_key_misslog(
+        region_id=region_id, prod_inst_id=prod_inst_id, node_name=node_name)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"命中率分析 ({prod_inst_id} / {node_name}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            if isinstance(item, dict):
+                click.echo(f"  {item.get('key','')} | hits={item.get('hits','')} | miss={item.get('miss','')}")
+            else:
+                click.echo(f"  {item}")
+
+
+@redis_group.command('diagnosis-tasks')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def diagnosis_tasks(ctx, prod_inst_id, region_id, output):
+    """查询实例诊断分析报告列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_analysis_instance_tasks(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('tasks', []) or ro.get('records', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"诊断分析报告列表 (共 {len(rows) if isinstance(rows, list) else 0} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('taskId','')} | {r.get('status','')} | {r.get('createTime','')}")
+
+
+@redis_group.command('big-key-tasks')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def big_key_tasks(ctx, prod_inst_id, region_id, output):
+    """查询大key分析任务列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_big_key_tasks(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('tasks', []) or ro.get('records', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"大key分析任务列表 (共 {len(rows) if isinstance(rows, list) else 0} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('taskId','')} | {r.get('status','')} | {r.get('createTime','')}")
+
+
+@redis_group.command('hot-key-tasks')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def hot_key_tasks(ctx, prod_inst_id, region_id, output):
+    """查询热key分析任务列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_hot_key_tasks(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('tasks', []) or ro.get('records', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"热key分析任务列表 (共 {len(rows) if isinstance(rows, list) else 0} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('taskId','')} | {r.get('status','')} | {r.get('createTime','')}")
+
+
+@redis_group.command('key-task-record')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def key_task_record(ctx, prod_inst_id, task_id, region_id, output):
+    """查询大key/热key任务结果"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_key_task_record(
+        region_id=region_id, prod_inst_id=prod_inst_id, task_id=task_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"大key/热key任务结果 (task={task_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif isinstance(ro, list):
+        for item in ro:
+            if isinstance(item, dict):
+                click.echo(f"  {item.get('key','')} | type={item.get('keyType','')} | size={item.get('size', item.get('count',''))}")
+            else:
+                click.echo(f"  {item}")
+
+
+@redis_group.command('big-key-policy')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def big_key_policy(ctx, prod_inst_id, region_id, output):
+    """查询大key自动分析配置"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_top_big_keys_policy(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"大key自动分析配置 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+# ==================== 批量新增查询类命令（第6批，10个） ====================
+
+@redis_group.command('hot-key-policy')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def hot_key_policy(ctx, prod_inst_id, region_id, output):
+    """查询热key自动分析配置"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_top_hot_keys_policy(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"热key自动分析配置 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('offline-key-analysis-list')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def offline_key_analysis_list(ctx, prod_inst_id, region_id, output):
+    """查询离线全量key分析报告列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_offline_key_analysis_task_list(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('tasks', []) or ro.get('records', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"离线全量key分析报告列表 (共 {len(rows) if isinstance(rows, list) else 0} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('taskId','')} | {r.get('status','')} | {r.get('createTime','')}")
+
+
+@redis_group.command('offline-key-analysis-info')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def offline_key_analysis_info(ctx, prod_inst_id, task_id, region_id, output):
+    """查询离线全量key分析报告详情"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).describe_offline_key_analysis_task_info(
+        region_id=region_id, prod_inst_id=prod_inst_id, task_id=task_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"离线全量key分析报告详情 (task={task_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('big-hot-key-history')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--start-time', required=True, help='开始时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--end-time', required=True, help='结束时间（yyyy-MM-dd HH:mm:ss）')
+@click.option('--node-name', help='节点名称')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def big_hot_key_history(ctx, prod_inst_id, start_time, end_time, node_name, region_id, output):
+    """按时间段查询大key热key历史数据"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).find_history_big_and_hot_key(
+        region_id=region_id, prod_inst_id=prod_inst_id,
+        start_time=start_time, end_time=end_time, node_name=node_name)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('rows', []) or ro.get('records', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"大key热key历史数据 (共 {len(rows) if isinstance(rows, list) else 0} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('time','')} | {r.get('key','')} | type={r.get('keyType','')}")
+
+
+@redis_group.command('port-modify-range')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def port_modify_range(ctx, prod_inst_id, region_id, output):
+    """查询实例端口的可修改范围"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_cache_port_modify_range(
+        region_id=region_id, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"实例端口可修改范围 ({prod_inst_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+    elif ro is not None:
+        click.echo(f"  returnObj: {ro}")
+
+
+@redis_group.command('export-task')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def export_task(ctx, task_id, region_id, output):
+    """查询实例列表导出任务详情"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).query_export_instance_task(
+        region_id=region_id, task_id=task_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"实例列表导出任务详情 (task={task_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('task-center-list')
+@click.option('--start-time', required=True, help='开始时间（yyyyMMdd）')
+@click.option('--end-time', required=True, help='结束时间（yyyyMMdd，最长31天）')
+@click.option('--status', type=click.Choice(['-1', '0', '1', '2', '3', '4']), required=True,
+              help='-1所有/0初始/1运行中/2成功/3失败/4取消')
+@click.option('--page-index', type=int, help='页码，默认1')
+@click.option('--page-size', type=int, help='每页条数（1-100），默认10')
+@click.option('--task-type-str', help='任务类型（多个逗号分隔）')
+@click.option('--prod-inst-id', help='实例ID过滤')
+@click.option('--start-time-desc', type=click.Choice([0, 1]), default=0, help='0自然序/1降序')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def task_center_list(ctx, start_time, end_time, status, page_index, page_size,
+                     task_type_str, prod_inst_id, start_time_desc, region_id, output):
+    """查询任务列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).list_task_center_tasks(
+        region_id=region_id, start_time=start_time, end_time=end_time,
+        status=int(status), start_time_desc=int(start_time_desc),
+        page_index=page_index, page_size=page_size,
+        task_type_str=task_type_str, prod_inst_id=prod_inst_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('rows', []) or ro.get('tasks', []) or ro.get('records', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"任务列表 (共 {ro.get('total', len(rows) if isinstance(rows, list) else 0)} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('taskId','')} | {r.get('taskType','')} | {r.get('status','')}")
+
+
+@redis_group.command('task-center-info')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def task_center_info(ctx, task_id, region_id, output):
+    """查询后台任务详细信息"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_task_center_task_info(
+        region_id=region_id, task_id=task_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"后台任务详细信息 (task={task_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('transfer-tasks')
+@click.option('--page-num', required=True, type=int, help='页码（>0）')
+@click.option('--page-size', required=True, type=int, help='每页数量（1-100）')
+@click.option('--status', type=click.Choice(['0', '1', '2', '3']), help='0所有/1运行中/2成功/3失败')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def transfer_tasks(ctx, page_num, page_size, status, region_id, output):
+    """查询数据迁移任务列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).list_transfer_tasks(
+        region_id=region_id, page_num=page_num, page_size=page_size,
+        status=int(status) if status else None)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    rows = ro.get('rows', []) or ro.get('tasks', []) or ro.get('records', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"数据迁移任务列表 (共 {ro.get('total', len(rows) if isinstance(rows, list) else 0)} 条)")
+    if isinstance(rows, list):
+        for r in rows:
+            if isinstance(r, dict):
+                click.echo(f"  {r.get('taskId','')} | {r.get('taskName','')} | {r.get('status','')}")
+
+
+@redis_group.command('transfer-task-info')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def transfer_task_info(ctx, task_id, region_id, output):
+    """查询迁移任务详情"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_transfer_task_info(
+        region_id=region_id, task_id=task_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"迁移任务详情 (task={task_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+# ==================== 批量新增查询类命令（第7批，2个 - 完成） ====================
+
+@redis_group.command('transfer-progress')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def transfer_progress(ctx, task_id, region_id, output):
+    """查询在线迁移进度明细"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_transfer_task_progress_detail(
+        region_id=region_id, task_id=task_id)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    click.echo(f"在线迁移进度明细 (task={task_id}):")
+    if isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")
+
+
+@redis_group.command('transfer-running-log')
+@click.option('--task-id', required=True, help='任务ID')
+@click.option('--search-date', required=True, help='查询日期（yyyy-MM-dd）')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
+@click.pass_context
+def transfer_running_log(ctx, task_id, search_date, region_id, output):
+    """查询迁移日志列表"""
+    from rdscmd.client import RedisClient
+    result = RedisClient(ctx.obj['client']).get_transfer_task_running_log(
+        region_id=region_id, task_id=task_id, search_date=search_date)
+    if output == 'json' or (result and result.get('error')):
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False)); return
+    ro = result.get('returnObj', {}) if result else {}
+    logs = ro.get('logs', []) or ro.get('records', []) or ro.get('rows', []) or (ro if isinstance(ro, list) else [])
+    click.echo(f"迁移日志列表 (task={task_id}, date={search_date}, 共 {len(logs) if isinstance(logs, list) else 0} 条)")
+    if isinstance(logs, list):
+        for log in logs:
+            if isinstance(log, dict):
+                click.echo(f"  {log.get('time','')} | {log.get('level','')} | {log.get('message','')}")
+            else:
+                click.echo(f"  {log}")
+    elif isinstance(ro, dict):
+        for k, v in ro.items():
+            click.echo(f"  {k}: {v}")

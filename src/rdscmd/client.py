@@ -2267,6 +2267,1060 @@ class RedisClient:
             logger.error(f"查询资源标签失败: {e}")
             return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
 
+    # ==================== 批量新增查询类 API（10个） ====================
+
+    def describe_recycle_bin_instances(self, region_id: str, page_index: int = 1,
+                                       page_size: int = 10,
+                                       instance_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询回收站实例列表 - GET /v2/instanceManageMgrServant/describeCycleBinInstances"""
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeCycleBinInstances'
+            query_params = {'pageIndex': str(page_index), 'pageSize': str(page_size)}
+            if instance_name:
+                query_params['instanceName'] = instance_name
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询回收站实例列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_running_instances_statistics(self, region_id: str,
+                                              include_failure: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询运行中实例的统计信息 - GET /v2/instanceManageMgrServant/statistic"""
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/statistic'
+            query_params = {}
+            if include_failure:
+                query_params['includeFailure'] = include_failure
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询运行中实例统计失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_tenant_quota(self, region_id: str) -> Optional[Dict[str, Any]]:
+        """查询租户配额 - GET /v2/quota/queryQuotaTotalAndUsed"""
+        try:
+            url = f'{self.service_endpoint}/v2/quota/queryQuotaTotalAndUsed'
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params={}, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询租户配额失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_instance_maintain_time(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询实例维护时间 - GET /v2/instanceManageMgrServant/describeInstanceMaintainTime"""
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeInstanceMaintainTime'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询实例维护时间失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_backups(self, region_id: str, prod_inst_id: str,
+                         restore_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询备份文件信息 - GET /v2/redisMgr/describeBackups"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisMgr/describeBackups'
+            query_params = {'prodInstId': prod_inst_id}
+            if restore_name:
+                query_params['restoreName'] = restore_name
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询备份文件信息失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_backup_policy(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询自动备份策略 - GET /v2/redisMgr/describeBackupPolicy"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisMgr/describeBackupPolicy'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询自动备份策略失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def get_rdb_download_url(self, region_id: str, prod_inst_id: str,
+                             restore_name: str, ip_type: str) -> Optional[Dict[str, Any]]:
+        """获取备份文件下载链接 - GET /v2/redisMgr/getRdbDownLoadUrl"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisMgr/getRdbDownLoadUrl'
+            query_params = {
+                'prodInstId': prod_inst_id,
+                'restoreName': restore_name,
+                'ipType': ip_type,
+            }
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"获取备份下载链接失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_instance_ssl(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询SSL信息 - GET /v2/securityMgrServant/describeInstanceSSL"""
+        try:
+            url = f'{self.service_endpoint}/v2/securityMgrServant/describeInstanceSSL'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询SSL信息失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_security_ips(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询指定实例的IP白名单分组 - GET /v2/securityMgrServant/describeSecurityIps"""
+        try:
+            url = f'{self.service_endpoint}/v2/securityMgrServant/describeSecurityIps'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询IP白名单分组失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_top_slow_logs(self, region_id: str, prod_inst_id: str, node_name: str,
+                               size: Optional[int] = None,
+                               min_cost: Optional[int] = None,
+                               max_cost: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """查询慢日志 - GET /v2/logMgr/describeTopSlowLogRecords"""
+        try:
+            url = f'{self.service_endpoint}/v2/logMgr/describeTopSlowLogRecords'
+            query_params = {'prodInstId': prod_inst_id, 'nodeName': node_name}
+            if size is not None:
+                query_params['size'] = str(size)
+            if min_cost is not None:
+                query_params['minCost'] = str(min_cost)
+            if max_cost is not None:
+                query_params['maxCost'] = str(max_cost)
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询慢日志失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    # ==================== 批量新增查询类 API（第2批，5个） ====================
+
+    def describe_instance_experiments(self, region_id: str, prod_inst_id: str,
+                                      page: Optional[int] = None,
+                                      size: Optional[int] = None,
+                                      action_code: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询实例故障列表 - GET /v2/inject/listInstanceExperiments"""
+        try:
+            url = f'{self.service_endpoint}/v2/inject/listInstanceExperiments'
+            query_params = {'prodInstId': prod_inst_id}
+            if page is not None:
+                query_params['page'] = str(page)
+            if size is not None:
+                query_params['size'] = str(size)
+            if action_code:
+                query_params['actionCode'] = action_code
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询实例故障列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def check_instance_operate(self, region_id: str, prod_inst_id: str,
+                               operate: str = 'upgrade',
+                               shard_mem_size: Optional[int] = None,
+                               shard_count: Optional[int] = None,
+                               mem_size: Optional[int] = None,
+                               copies_count: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """查询实例是否可以扩容 - POST /v2/check/checkInstanceOperate"""
+        try:
+            url = f'{self.service_endpoint}/v2/check/checkInstanceOperate'
+            request_body = {'operate': operate, 'prodInstId': prod_inst_id}
+            if shard_mem_size is not None:
+                request_body['shardMemSize'] = shard_mem_size
+            if shard_count is not None:
+                request_body['shardCount'] = shard_count
+            if mem_size is not None:
+                request_body['memSize'] = mem_size
+            if copies_count is not None:
+                request_body['copiesCount'] = copies_count
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={},
+                body=json.dumps(request_body),
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.post(url, json=request_body, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询实例是否可以扩容失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_instance_auto_renew_status(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """自动续费查询 - GET /v2/res/spuInst/queryInstAutoRenewStatus"""
+        try:
+            url = f'{self.service_endpoint}/v2/res/spuInst/queryInstAutoRenewStatus'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"自动续费查询失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_data_flashback_status(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询数据闪回状态 - GET /v2/redisMgr/queryDataFlashBack"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisMgr/queryDataFlashBack'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询数据闪回状态失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_rename_command_status(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询危险命令重命名状态 - GET /v2/securityMgrServant/queryRenameCommand"""
+        try:
+            url = f'{self.service_endpoint}/v2/securityMgrServant/queryRenameCommand'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询危险命令重命名状态失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    # ==================== 批量新增查询类 API（第3批，5个） ====================
+
+    def describe_backup_tasks(self, region_id: str, prod_inst_id: str,
+                              restore_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询备份任务执行情况 - GET /v2/redisMgr/describeBackupTasks"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisMgr/describeBackupTasks'
+            query_params = {'prodInstId': prod_inst_id}
+            if restore_name:
+                query_params['restoreName'] = restore_name
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询备份任务执行情况失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def get_client_map_by_ip(self, region_id: str, prod_inst_id: str,
+                             node_name: str) -> Optional[Dict[str, Any]]:
+        """按照客户端IP统计客户端会话数量 - GET /v2/resourceMonitor/getClientMap"""
+        try:
+            url = f'{self.service_endpoint}/v2/resourceMonitor/getClientMap'
+            query_params = {'prodInstId': prod_inst_id, 'nodeName': node_name}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"按客户端IP统计会话数量失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_maintain_az(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询主节点可用区锁定设置 - GET /v2/instanceManageMgrServant/queryMaintainAz"""
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/queryMaintainAz'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询主节点可用区锁定设置失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_dedicated_cluster_instances(self, region_id: str,
+                                             page_index: int = 1,
+                                             page_size: int = 10,
+                                             instance_name: Optional[str] = None,
+                                             prod_inst_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询专属集群产品实例列表 - GET /v2/instanceManageMgrServant/describeDedicatedClusterInstanceList"""
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeDedicatedClusterInstanceList'
+            query_params = {'pageIndex': str(page_index), 'pageSize': str(page_size)}
+            if instance_name:
+                query_params['instanceName'] = instance_name
+            if prod_inst_id:
+                query_params['prodInstId'] = prod_inst_id
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询专属集群产品实例列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_db_key_count(self, region_id: str, prod_inst_id: str,
+                              groups: str) -> Optional[Dict[str, Any]]:
+        """查询dbkey的数量 - GET /v2/instanceManageMgrServant/describeDbKeyCount"""
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/describeDbKeyCount'
+            query_params = {'prodInstId': prod_inst_id, 'groups': groups}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询dbkey数量失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    # ==================== 批量新增查询类 API（第4批，10个） ====================
+
+    def describe_node_monitor_items(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询命令调用类族 - GET /v2/monitorManageMgrServant/describeNodeMonitorItems"""
+        try:
+            url = f'{self.service_endpoint}/v2/monitorManageMgrServant/describeNodeMonitorItems'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询命令调用类族失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_node_monitor_values(self, region_id: str, prod_inst_id: str,
+                                     type_: str, node_name: str,
+                                     start_time: str, end_time: str) -> Optional[Dict[str, Any]]:
+        """查询类簇的调用次数 - GET /v2/monitorManageMgrServant/describeNodeMonitorValues"""
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/monitorManageMgrServant/describeNodeMonitorValues'
+            query_params = {
+                'prodInstId': prod_inst_id, 'type': type_,
+                'nodeName': node_name, 'startTime': start_time, 'endTime': end_time,
+            }
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询类簇调用次数失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def find_history_slow_log(self, region_id: str, prod_inst_id: str,
+                              node_name: str, start_time: str, end_time: str,
+                              page: Optional[int] = None,
+                              rows: Optional[int] = None,
+                              min_cost: Optional[int] = None,
+                              max_cost: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """按时间段查询慢日志历史数据 - GET /v2/resourceMonitor/findHistorySlowLog"""
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/resourceMonitor/findHistorySlowLog'
+            query_params = {
+                'prodInstId': prod_inst_id, 'nodeName': node_name,
+                'startTime': start_time, 'endTime': end_time,
+            }
+            if page is not None:
+                query_params['page'] = str(page)
+            if rows is not None:
+                query_params['rows'] = str(rows)
+            if min_cost is not None:
+                query_params['minCost'] = str(min_cost)
+            if max_cost is not None:
+                query_params['maxCost'] = str(max_cost)
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询慢日志历史数据失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_command_audit_log_status(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询命令审计日志开启状态 - GET /v2/logMgr/describeCommandAuditLog"""
+        try:
+            url = f'{self.service_endpoint}/v2/logMgr/describeCommandAuditLog'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询命令审计日志状态失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_node_command_list(self, region_id: str, prod_inst_id: str,
+                                   node_name: str, start_time: str, end_time: str) -> Optional[Dict[str, Any]]:
+        """查询节点命令列表 - GET /v2/resourceMonitor/describeNodeCommandList"""
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/resourceMonitor/describeNodeCommandList'
+            query_params = {
+                'prodInstId': prod_inst_id, 'nodeName': node_name,
+                'startTime': start_time, 'endTime': end_time,
+            }
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询节点命令列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_node_command_monitor_values(self, region_id: str, prod_inst_id: str,
+                                             node_name: str, start_time: str, end_time: str,
+                                             type_: str, cmd: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询节点命令监控历史数据 - GET /v2/resourceMonitor/describeNodeCommandMonitorValues"""
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/resourceMonitor/describeNodeCommandMonitorValues'
+            query_params = {
+                'prodInstId': prod_inst_id, 'nodeName': node_name,
+                'startTime': start_time, 'endTime': end_time, 'type': type_,
+            }
+            if cmd:
+                query_params['cmd'] = cmd
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询节点命令监控历史数据失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_instance_config_v3(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询实例配置参数(V3) - GET /v3/instanceParam/describeInstanceConfig"""
+        try:
+            url = f'{self.service_endpoint}/v3/instanceParam/describeInstanceConfig'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询实例配置参数V3失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_parameter_modification_history(self, region_id: str, prod_inst_id: str,
+                                                start_time: Optional[str] = None,
+                                                end_time: Optional[str] = None,
+                                                history_id: Optional[str] = None,
+                                                page: Optional[int] = None,
+                                                rows: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """查询配置参数修改历史 - GET /v2/instanceParam/describeParameterModificationHistory"""
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/instanceParam/describeParameterModificationHistory'
+            query_params = {'prodInstId': prod_inst_id}
+            if start_time:
+                query_params['startTime'] = start_time
+            if end_time:
+                query_params['endTime'] = end_time
+            if history_id:
+                query_params['historyId'] = history_id
+            if page is not None:
+                query_params['page'] = str(page)
+            if rows is not None:
+                query_params['rows'] = str(rows)
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询配置参数修改历史失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_redis_templates(self, region_id: str, type_: str,
+                                 page_num: Optional[int] = None,
+                                 page_size: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """查询参数模板列表 - GET /v2/redisTemplate/describeRedisTemplate"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisTemplate/describeRedisTemplate'
+            query_params = {'type': type_}
+            if page_num is not None:
+                query_params['pageNum'] = str(page_num)
+            if page_size is not None:
+                query_params['pageSize'] = str(page_size)
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询参数模板列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_redis_template_detail(self, region_id: str, template_id: str) -> Optional[Dict[str, Any]]:
+        """查询参数模板详情 - GET /v2/redisTemplate/describeRedisTemplateDetail"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisTemplate/describeRedisTemplateDetail'
+            query_params = {'templateId': template_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询参数模板详情失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    # ==================== 批量新增查询类 API（第5批，10个） ====================
+
+    def query_auto_scan_conf_setting(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询过期key扫描配置 - GET /v2/redisMgr/queryAutoScanConfSetting"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisMgr/queryAutoScanConfSetting'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询过期key扫描配置失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_scan_logs(self, region_id: str, prod_inst_id: str,
+                        page_index: int, page_size: int) -> Optional[Dict[str, Any]]:
+        """查询过期Key扫描记录 - GET /v2/redisDataMgr/queryScanLogs"""
+        try:
+            url = f'{self.service_endpoint}/v2/redisDataMgr/queryScanLogs'
+            query_params = {'prodInstId': prod_inst_id, 'pageIndex': str(page_index), 'pageSize': str(page_size)}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询过期key扫描记录失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_big_and_hot_keys(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询Redis实例的热Key/大key - GET /v2/keyAnalysisMgrServant/describeBigAndHotKeys"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeBigAndHotKeys'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询热Key/大key失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_instance_strategy(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询Redis实例的淘汰策略 - GET /v2/keyAnalysisMgrServant/describeInstanceStrategy"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeInstanceStrategy'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询淘汰策略失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def get_key_misslog(self, region_id: str, prod_inst_id: str,
+                        node_name: str) -> Optional[Dict[str, Any]]:
+        """命中率分析查询 - GET /v2/resourceMonitor/getKeyMisslog"""
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/resourceMonitor/getKeyMisslog'
+            query_params = {'prodInstId': prod_inst_id, 'nodeName': node_name}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询命中率分析失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_analysis_instance_tasks(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询实例诊断分析报告列表 - GET /v2/keyAnalysisMgrServant/queryAnalysisInstanceTasks"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/queryAnalysisInstanceTasks'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询诊断分析报告列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_big_key_tasks(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询大key分析任务列表 - GET /v2/keyAnalysisMgrServant/describeBigKeyTasks"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeBigKeyTasks'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询大key分析任务列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_hot_key_tasks(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询热key分析任务列表 - GET /v2/keyAnalysisMgrServant/describeHotKeyTasks"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeHotKeyTasks'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询热key分析任务列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_key_task_record(self, region_id: str, prod_inst_id: str,
+                                 task_id: str) -> Optional[Dict[str, Any]]:
+        """查询大key/热key任务结果 - GET /v2/keyAnalysisMgrServant/describeKeyTaskRecord"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeKeyTaskRecord'
+            query_params = {'prodInstId': prod_inst_id, 'taskId': task_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询大key/热key任务结果失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_top_big_keys_policy(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询大key自动分析配置 - GET /v2/keyAnalysisMgrServant/describeTopBigKeysPolicy"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeTopBigKeysPolicy'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询大key自动分析配置失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    # ==================== 批量新增查询类 API（第6批，10个） ====================
+
+    def describe_top_hot_keys_policy(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询热key自动分析配置 - GET /v2/keyAnalysisMgrServant/describeTopHotKeysPolicy"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeTopHotKeysPolicy'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询热key自动分析配置失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_offline_key_analysis_task_list(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询离线全量key分析报告列表 - GET /v2/keyAnalysisMgrServant/describeOffLineKeyAnalysisTaskList"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeOffLineKeyAnalysisTaskList'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询离线全量key分析报告列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_offline_key_analysis_task_info(self, region_id: str, prod_inst_id: str,
+                                                task_id: str) -> Optional[Dict[str, Any]]:
+        """查询离线全量key分析报告详情 - GET /v2/keyAnalysisMgrServant/describeOffLineKeyAnalysisTaskInfo"""
+        try:
+            url = f'{self.service_endpoint}/v2/keyAnalysisMgrServant/describeOffLineKeyAnalysisTaskInfo'
+            query_params = {'prodInstId': prod_inst_id, 'taskId': task_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询离线全量key分析报告详情失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def find_history_big_and_hot_key(self, region_id: str, prod_inst_id: str,
+                                     start_time: str, end_time: str,
+                                     node_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """按时间段查询大key热key历史数据 - GET /v2/resourceMonitor/findHistoryBigAndHotKey"""
+        try:
+            from urllib.parse import urlencode, quote
+            url = f'{self.service_endpoint}/v2/resourceMonitor/findHistoryBigAndHotKey'
+            query_params = {'prodInstId': prod_inst_id, 'startTime': start_time, 'endTime': end_time}
+            if node_name:
+                query_params['nodeName'] = node_name
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            encoded_qs = urlencode(query_params, quote_via=quote)
+            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询大key热key历史数据失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def get_cache_port_modify_range(self, region_id: str, prod_inst_id: str) -> Optional[Dict[str, Any]]:
+        """查询实例端口的可修改范围 - GET /v2/component/getCachePortModifyRange"""
+        try:
+            url = f'{self.service_endpoint}/v2/component/getCachePortModifyRange'
+            query_params = {'prodInstId': prod_inst_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询实例端口可修改范围失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_export_instance_task(self, region_id: str, task_id: str) -> Optional[Dict[str, Any]]:
+        """查询实例列表导出任务详情 - GET /v2/instanceManageMgrServant/queryExportInstanceTask"""
+        try:
+            url = f'{self.service_endpoint}/v2/instanceManageMgrServant/queryExportInstanceTask'
+            query_params = {'taskId': task_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询实例列表导出任务详情失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def list_task_center_tasks(self, region_id: str, start_time: str, end_time: str,
+                               status: int, start_time_desc: int = 0,
+                               page_index: Optional[int] = None,
+                               page_size: Optional[int] = None,
+                               task_type_str: Optional[str] = None,
+                               prod_inst_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """查询任务列表 - POST /v2/taskCenter/listTasks"""
+        try:
+            url = f'{self.service_endpoint}/v2/taskCenter/listTasks'
+            condition = {'status': status, 'startTimeDesc': start_time_desc}
+            if task_type_str:
+                condition['taskTypeStr'] = task_type_str
+            if prod_inst_id:
+                condition['prodInstId'] = prod_inst_id
+            request_body = {
+                'startTime': start_time, 'endTime': end_time, 'condition': condition,
+            }
+            if page_index is not None:
+                request_body['pageIndex'] = page_index
+            if page_size is not None:
+                request_body['pageSize'] = page_size
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={},
+                body=json.dumps(request_body),
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.post(url, json=request_body, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询任务列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def get_task_center_task_info(self, region_id: str, task_id: str) -> Optional[Dict[str, Any]]:
+        """查询后台任务详细信息 - GET /v2/taskCenter/getTaskInfo"""
+        try:
+            url = f'{self.service_endpoint}/v2/taskCenter/getTaskInfo'
+            query_params = {'taskId': task_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询后台任务详细信息失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def list_transfer_tasks(self, region_id: str, page_num: int, page_size: int,
+                            status: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """查询数据迁移任务列表 - GET /v2/transfer/listTaskInfo"""
+        try:
+            url = f'{self.service_endpoint}/v2/transfer/listTaskInfo'
+            query_params = {'pageNum': str(page_num), 'pageSize': str(page_size)}
+            if status is not None:
+                query_params['status'] = str(status)
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询数据迁移任务列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def get_transfer_task_info(self, region_id: str, task_id: str) -> Optional[Dict[str, Any]]:
+        """查询迁移任务详情 - GET /v2/transfer/getTaskInfo"""
+        try:
+            url = f'{self.service_endpoint}/v2/transfer/getTaskInfo'
+            query_params = {'taskId': task_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询迁移任务详情失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    # ==================== 批量新增查询类 API（第7批，2个 - 完成） ====================
+
+    def get_transfer_task_progress_detail(self, region_id: str, task_id: str) -> Optional[Dict[str, Any]]:
+        """查询在线迁移进度明细 - GET /v2/transfer/getTaskProgressDetailInfo"""
+        try:
+            url = f'{self.service_endpoint}/v2/transfer/getTaskProgressDetailInfo'
+            query_params = {'taskId': task_id}
+            headers = self.eop_auth.sign_request(
+                method='GET', url=url, query_params=query_params, body='',
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询在线迁移进度明细失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def get_transfer_task_running_log(self, region_id: str, task_id: str,
+                                      search_date: str) -> Optional[Dict[str, Any]]:
+        """查询迁移日志列表 - POST /v2/transfer/uploadSyncRunningLog"""
+        try:
+            url = f'{self.service_endpoint}/v2/transfer/uploadSyncRunningLog'
+            request_body = {'taskId': task_id, 'searchDate': search_date}
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={},
+                body=json.dumps(request_body),
+                extra_headers={'regionId': region_id}
+            )
+            response = self.client.session.post(url, json=request_body, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"查询迁移日志列表失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
     def _create_error_response(self, status_code: int, response_text: str) -> Dict[str, Any]:
         """创建标准错误响应"""
         return {
