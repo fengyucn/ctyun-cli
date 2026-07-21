@@ -1691,8 +1691,53 @@ class VPCClient:
         """
         logger.info(f"查询NAT网关列表: regionId={region_id}, vpcId={vpc_id}, natGatewayId={nat_gateway_id}, natGatewayName={nat_gateway_name}, status={status}, subnetId={subnet_id}")
 
-        # TODO: 实现查询NAT网关列表的具体逻辑
-        pass
+        query_params = {'regionID': region_id}
+        if vpc_id: query_params['vpcID'] = vpc_id
+        if nat_gateway_id: query_params['natGatewayID'] = nat_gateway_id
+        if nat_gateway_name: query_params['natGatewayName'] = nat_gateway_name
+        if status: query_params['status'] = status
+        if subnet_id: query_params['subnetID'] = subnet_id
+        return self._simple_get('/v4/vpc/describe-nat-gateways', query_params, '查询NAT网关列表')
+
+    def show_nat_gateway(self, region_id: str, nat_gateway_id: str) -> Dict[str, Any]:
+        """查询NAT网关详情 - GET /v4/vpc/get-nat-gateway-attribute"""
+        logger.info(f"查询NAT网关详情: natGatewayID={nat_gateway_id}")
+        return self._simple_get('/v4/vpc/get-nat-gateway-attribute',
+                                {'regionID': region_id, 'natGatewayID': nat_gateway_id},
+                                '查询NAT网关详情')
+
+    def list_snats(self, region_id: str,
+                   nat_gateway_id: Optional[str] = None,
+                   s_nat_id: Optional[str] = None,
+                   subnet_id: Optional[str] = None,
+                   page_number: Optional[int] = None,
+                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看SNAT列表 - GET /v4/vpc/list-snats"""
+        qp = {'regionID': region_id}
+        if nat_gateway_id: qp['natGatewayID'] = nat_gateway_id
+        if s_nat_id: qp['sNatID'] = s_nat_id
+        if subnet_id: qp['subnetID'] = subnet_id
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vpc/list-snats', qp, '查看SNAT列表')
+
+    def show_snat(self, region_id: str, s_nat_id: str) -> Dict[str, Any]:
+        """查看SNAT详情 - GET /v4/vpc/show-snat"""
+        return self._simple_get('/v4/vpc/show-snat',
+                                {'regionID': region_id, 'sNatID': s_nat_id},
+                                '查看SNAT详情')
+
+    def list_dnats(self, region_id: str, nat_gateway_id: str) -> Dict[str, Any]:
+        """查询DNAT列表 - GET /v4/vpc/describe-dnat-entries"""
+        return self._simple_get('/v4/vpc/describe-dnat-entries',
+                                {'regionID': region_id, 'natGatewayID': nat_gateway_id},
+                                '查询DNAT列表')
+
+    def show_dnat(self, region_id: str, nat_gateway_id: str, d_nat_id: str) -> Dict[str, Any]:
+        """查询DNAT详情 - GET /v4/vpc/detail-dnat-entries"""
+        return self._simple_get('/v4/vpc/detail-dnat-entries',
+                                {'regionID': region_id, 'natGatewayID': nat_gateway_id, 'dNatID': d_nat_id},
+                                '查询DNAT详情')
 
     # ==================== VPC对等连接查询 ====================
 
@@ -1715,8 +1760,18 @@ class VPCClient:
         """
         logger.info(f"查询VPC对等连接列表: regionId={region_id}, vpcId={vpc_id}, peeringConnectionId={peering_connection_id}, peeringConnectionName={peering_connection_name}, status={status}")
 
-        # TODO: 实现查询VPC对等连接列表的具体逻辑
-        pass
+        qp = {'regionID': region_id}
+        if vpc_id: qp['vpcID'] = vpc_id
+        if peering_connection_id: qp['vpcPeerConnectionID'] = peering_connection_id
+        if peering_connection_name: qp['vpcPeerConnectionName'] = peering_connection_name
+        if status: qp['status'] = status
+        return self._simple_get('/v4/vpc/list-vpc-peer-connection', qp, '查询VPC对等连接列表')
+
+    def show_vpc_peering_connection(self, region_id: str, peering_connection_id: str) -> Dict[str, Any]:
+        """查询对等连接详情 - GET /v4/vpc/get-vpc-peer-connection-attribute"""
+        return self._simple_get('/v4/vpc/get-vpc-peer-connection-attribute',
+                                {'regionID': region_id, 'vpcPeerConnectionID': peering_connection_id},
+                                '查询对等连接详情')
 
     # ==================== 流日志查询 ====================
 
@@ -1742,8 +1797,144 @@ class VPCClient:
         """
         logger.info(f"查询流日志列表: regionId={region_id}, resourceType={resource_type}, resourceId={resource_id}, flowLogId={flow_log_id}, logGroupName={log_group_name}, trafficType={traffic_type}, status={status}")
 
-        # TODO: 实现查询流日志列表的具体逻辑
-        pass
+        qp = {'regionID': region_id}
+        if resource_type: qp['resourceType'] = resource_type
+        if resource_id: qp['resourceID'] = resource_id
+        if flow_log_id: qp['flowLogID'] = flow_log_id
+        if log_group_name: qp['logGroupName'] = log_group_name
+        if traffic_type: qp['trafficType'] = traffic_type
+        if status: qp['status'] = status
+        return self._simple_get('/v4/log/list-vpc-accesslog', qp, '查询流日志列表')
+
+    # ==================== 路由表/安全组/网卡/EIP 列表查询 ====================
+
+    def new_list_route_tables(self, region_id: str,
+                              vpc_id: Optional[str] = None,
+                              query_content: Optional[str] = None,
+                              route_table_id: Optional[str] = None,
+                              type_: Optional[int] = None,
+                              page_no: Optional[int] = None,
+                              page_number: Optional[int] = None,
+                              page_size: Optional[int] = None) -> Dict[str, Any]:
+        """新查询路由表列表 - GET /v4/vpc/route-table/new-list"""
+        qp = {'regionID': region_id}
+        if vpc_id: qp['vpcID'] = vpc_id
+        if query_content: qp['queryContent'] = query_content
+        if route_table_id: qp['routeTableID'] = route_table_id
+        if type_ is not None: qp['type'] = type_
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vpc/route-table/new-list', qp, '新查询路由表列表')
+
+    def list_route_table_rules(self, region_id: str, route_table_id: str,
+                               page_no: Optional[int] = None,
+                               page_number: Optional[int] = None,
+                               page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询路由表规则列表 - GET /v4/vpc/route-table/list-rules"""
+        qp = {'regionID': region_id, 'routeTableID': route_table_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vpc/route-table/list-rules', qp, '查询路由表规则列表')
+
+    def new_list_route_table_rules(self, region_id: str, route_table_id: str,
+                                   page_no: Optional[int] = None,
+                                   page_number: Optional[int] = None,
+                                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """新查询路由表规则列表 - GET /v4/vpc/route-table/new-list-rules"""
+        qp = {'regionID': region_id, 'routeTableID': route_table_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vpc/route-table/new-list-rules', qp, '新查询路由表规则列表')
+
+    def list_security_group_rules(self, region_id: str,
+                                  security_group_id: Optional[str] = None,
+                                  remote_security_group_id: Optional[str] = None,
+                                  security_group_rule_ids: Optional[str] = None,
+                                  page_no: Optional[int] = None,
+                                  page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取安全组规则列表 - GET /v4/vpc/describe-security-group-rules"""
+        qp = {'regionID': region_id}
+        if security_group_id: qp['securityGroupID'] = security_group_id
+        if remote_security_group_id: qp['remoteSecurityGroupID'] = remote_security_group_id
+        if security_group_rule_ids: qp['securityGroupRuleIDs'] = security_group_rule_ids
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vpc/describe-security-group-rules', qp, '获取安全组规则列表')
+
+    def list_security_group_vms(self, region_id: str, security_group_id: str,
+                                page_no: Optional[int] = None,
+                                page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取安全组绑定机器列表 - GET /v4/vpc/get-sg-associate-vms"""
+        qp = {'regionID': region_id, 'securityGroupID': security_group_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vpc/get-sg-associate-vms', qp, '获取安全组绑定机器列表')
+
+    def list_ports(self, region_id: str,
+                   vpc_id: Optional[str] = None,
+                   device_id: Optional[str] = None,
+                   subnet_id: Optional[str] = None,
+                   page_no: Optional[int] = None,
+                   page_number: Optional[int] = None,
+                   page_size: Optional[int] = None,
+                   next_token: Optional[str] = None,
+                   max_results: Optional[int] = None) -> Dict[str, Any]:
+        """查询网卡列表 - GET /v4/ports/list"""
+        qp = {'regionID': region_id}
+        if vpc_id: qp['vpcID'] = vpc_id
+        if device_id: qp['deviceID'] = device_id
+        if subnet_id: qp['subnetID'] = subnet_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        if next_token: qp['nextToken'] = next_token
+        if max_results is not None: qp['maxResults'] = max_results
+        return self._simple_get('/v4/ports/list', qp, '查询网卡列表')
+
+    def new_list_ports(self, region_id: str,
+                       vpc_id: Optional[str] = None,
+                       device_id: Optional[str] = None,
+                       subnet_id: Optional[str] = None,
+                       page_no: Optional[int] = None,
+                       page_number: Optional[int] = None,
+                       page_size: Optional[int] = None,
+                       next_token: Optional[str] = None,
+                       max_results: Optional[int] = None) -> Dict[str, Any]:
+        """新查询网卡列表 - GET /v4/ports/new-list"""
+        qp = {'regionID': region_id}
+        if vpc_id: qp['vpcID'] = vpc_id
+        if device_id: qp['deviceID'] = device_id
+        if subnet_id: qp['subnetID'] = subnet_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        if next_token: qp['nextToken'] = next_token
+        if max_results is not None: qp['maxResults'] = max_results
+        return self._simple_get('/v4/ports/new-list', qp, '新查询网卡列表')
+
+    # ==================== 通用请求辅助 ====================
+
+    def _simple_get(self, path: str, query_params: Dict[str, Any], desc: str) -> Dict[str, Any]:
+        """通用 GET 请求（自动过滤 None）"""
+        url = f'https://{self.base_endpoint}{path}'
+        qp = {k: v for k, v in query_params.items() if v is not None}
+        try:
+            headers = self.eop_auth.sign_request(method='GET', url=url, query_params=qp, body='', extra_headers={})
+            logger.debug(f"请求URL: {url} | 参数: {qp}")
+            response = self.client.session.get(url, params=qp, headers=headers, timeout=30)
+            if response.status_code != 200:
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}: {response.text}',
+                    'returnObj': None,
+                }
+            return response.json()
+        except Exception as e:
+            logger.error(f"{desc}失败: {e}")
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
 
     # ==================== 标签查询 ====================
 

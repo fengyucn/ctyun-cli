@@ -4,6 +4,19 @@
 
 ---
 
+## v1.26.2 (2026-07-21)
+
+### 🚀 VPC（私有网络）模块新增 13 个命令
+
+- **NAT 网关**（1个）：`nat-gateway show`
+- **SNAT/DNAT**（4个）：`snat list/show` / `dnat list/show`
+- **对等连接**（1个）：`peering show`
+- **路由表**（3个）：`route-table new-list/rules/new-rules`
+- **安全组**（2个）：`security-group rules/vms`
+- **端口**（2个）：`port list/new-list`
+
+---
+
 ## v1.26.1 (2026-07-21)
 
 ### 🚀 EBS（弹性块存储）模块新增 6 个命令

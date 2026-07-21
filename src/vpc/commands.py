@@ -813,6 +813,99 @@ def describe_vpc_peering_connections(ctx, region_id: str, vpc_id: Optional[str],
     )
     format_output(result, ctx.obj['output'])
 
+# ==================== NAT/SNAT/DNAT 详情查询命令 ====================
+
+@nat_gateway.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--nat-gateway-id', required=True, help='NAT网关ID')
+@click.pass_context
+@handle_error
+def show_nat_gateway(ctx, region_id: str, nat_gateway_id: str):
+    """查询NAT网关详情"""
+    client = get_vpc_client(ctx)
+    result = client.show_nat_gateway(region_id=region_id, nat_gateway_id=nat_gateway_id)
+    format_output(result, ctx.obj['output'])
+
+
+@nat_gateway.group()
+def snat():
+    """SNAT规则查询"""
+    pass
+
+
+@snat.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--nat-gateway-id', help='NAT网关ID')
+@click.option('--snat-id', help='SNAT规则ID')
+@click.option('--subnet-id', help='子网ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def list_snats(ctx, region_id: str, nat_gateway_id: Optional[str], snat_id: Optional[str],
+               subnet_id: Optional[str], page_number: Optional[int], page_size: Optional[int]):
+    """查看SNAT列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_snats(region_id=region_id, nat_gateway_id=nat_gateway_id,
+                               s_nat_id=snat_id, subnet_id=subnet_id,
+                               page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@snat.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--snat-id', required=True, help='SNAT规则ID')
+@click.pass_context
+@handle_error
+def show_snat(ctx, region_id: str, snat_id: str):
+    """查看SNAT详情"""
+    client = get_vpc_client(ctx)
+    result = client.show_snat(region_id=region_id, s_nat_id=snat_id)
+    format_output(result, ctx.obj['output'])
+
+
+@nat_gateway.group()
+def dnat():
+    """DNAT规则查询"""
+    pass
+
+
+@dnat.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--nat-gateway-id', required=True, help='NAT网关ID')
+@click.pass_context
+@handle_error
+def list_dnats(ctx, region_id: str, nat_gateway_id: str):
+    """查询DNAT列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_dnats(region_id=region_id, nat_gateway_id=nat_gateway_id)
+    format_output(result, ctx.obj['output'])
+
+
+@dnat.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--nat-gateway-id', required=True, help='NAT网关ID')
+@click.option('--dnat-id', required=True, help='DNAT规则ID')
+@click.pass_context
+@handle_error
+def show_dnat(ctx, region_id: str, nat_gateway_id: str, dnat_id: str):
+    """查询DNAT详情"""
+    client = get_vpc_client(ctx)
+    result = client.show_dnat(region_id=region_id, nat_gateway_id=nat_gateway_id, d_nat_id=dnat_id)
+    format_output(result, ctx.obj['output'])
+
+
+@peering.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--peering-connection-id', required=True, help='对等连接ID')
+@click.pass_context
+@handle_error
+def show_vpc_peering_connection_cmd(ctx, region_id: str, peering_connection_id: str):
+    """查询对等连接详情"""
+    client = get_vpc_client(ctx)
+    result = client.show_vpc_peering_connection(region_id=region_id, peering_connection_id=peering_connection_id)
+    format_output(result, ctx.obj['output'])
+
 
 # ==================== 流日志管理命令 ====================
 
@@ -820,6 +913,152 @@ def describe_vpc_peering_connections(ctx, region_id: str, vpc_id: Optional[str],
 def flow_log():
     """流日志查询"""
     pass
+
+
+# ==================== 路由表/安全组/网卡 列表查询命令 ====================
+
+@route_table.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='VPC ID')
+@click.option('--query-content', help='对路由表名字/描述/ID进行模糊查询')
+@click.option('--route-table-id', help='路由表ID')
+@click.option('--type', 'type_', type=click.Choice(['0', '2']), help='路由表类型：0-子网路由表 2-网关路由表')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def new_list_route_tables(ctx, region_id: str, vpc_id: Optional[str], query_content: Optional[str],
+                          route_table_id: Optional[str], type_: Optional[str],
+                          page_no: Optional[int], page_size: Optional[int]):
+    """新查询路由表列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_route_tables(
+        region_id=region_id, vpc_id=vpc_id, query_content=query_content,
+        route_table_id=route_table_id,
+        type_=int(type_) if type_ is not None else None,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@route_table.command('rules')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--route-table-id', required=True, help='路由表ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def list_route_table_rules_cmd(ctx, region_id: str, route_table_id: str,
+                               page_no: Optional[int], page_size: Optional[int]):
+    """查询路由表规则列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_route_table_rules(region_id=region_id, route_table_id=route_table_id,
+                                           page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@route_table.command('new-rules')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--route-table-id', required=True, help='路由表ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def new_list_route_table_rules_cmd(ctx, region_id: str, route_table_id: str,
+                                   page_no: Optional[int], page_size: Optional[int]):
+    """新查询路由表规则列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_route_table_rules(region_id=region_id, route_table_id=route_table_id,
+                                               page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@security_group.command('rules')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--security-group-id', help='安全组ID')
+@click.option('--remote-security-group-id', help='远端安全组ID')
+@click.option('--security-group-rule-ids', help='安全组规则ID，逗号分隔（最多20个）')
+@click.option('--page-no', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def list_security_group_rules_cmd(ctx, region_id: str, security_group_id: Optional[str],
+                                  remote_security_group_id: Optional[str],
+                                  security_group_rule_ids: Optional[str],
+                                  page_no: Optional[int], page_size: Optional[int]):
+    """获取安全组规则列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_security_group_rules(
+        region_id=region_id, security_group_id=security_group_id,
+        remote_security_group_id=remote_security_group_id,
+        security_group_rule_ids=security_group_rule_ids,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@security_group.command('vms')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--security-group-id', required=True, help='安全组ID')
+@click.option('--page-no', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def list_security_group_vms_cmd(ctx, region_id: str, security_group_id: str,
+                                page_no: Optional[int], page_size: Optional[int]):
+    """获取安全组绑定机器列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_security_group_vms(region_id=region_id, security_group_id=security_group_id,
+                                            page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def port():
+    """网卡查询"""
+    pass
+
+
+@port.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='所属VPC ID')
+@click.option('--device-id', help='关联设备ID')
+@click.option('--subnet-id', help='所属子网ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.option('--next-token', help='下一页游标')
+@click.option('--max-results', type=int, help='最大数量')
+@click.pass_context
+@handle_error
+def list_ports_cmd(ctx, region_id: str, vpc_id: Optional[str], device_id: Optional[str],
+                   subnet_id: Optional[str], page_no: Optional[int], page_size: Optional[int],
+                   next_token: Optional[str], max_results: Optional[int]):
+    """查询网卡列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_ports(region_id=region_id, vpc_id=vpc_id, device_id=device_id,
+                               subnet_id=subnet_id, page_no=page_no, page_size=page_size,
+                               next_token=next_token, max_results=max_results)
+    format_output(result, ctx.obj['output'])
+
+
+@port.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='所属VPC ID')
+@click.option('--device-id', help='关联设备ID')
+@click.option('--subnet-id', help='所属子网ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.option('--next-token', help='下一页游标')
+@click.option('--max-results', type=int, help='最大数量')
+@click.pass_context
+@handle_error
+def new_list_ports_cmd(ctx, region_id: str, vpc_id: Optional[str], device_id: Optional[str],
+                       subnet_id: Optional[str], page_no: Optional[int], page_size: Optional[int],
+                       next_token: Optional[str], max_results: Optional[int]):
+    """新查询网卡列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_ports(region_id=region_id, vpc_id=vpc_id, device_id=device_id,
+                                   subnet_id=subnet_id, page_no=page_no, page_size=page_size,
+                                   next_token=next_token, max_results=max_results)
+    format_output(result, ctx.obj['output'])
 
 
 @flow_log.command('list')
