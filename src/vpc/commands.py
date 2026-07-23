@@ -1863,3 +1863,258 @@ def havip_list(ctx, region_id: str, project_id: Optional[str], filter):
     result = client.list_havips(region_id=region_id, project_id=project_id,
                                 filters=filters if filters else None)
     format_output(result, ctx.obj['output'])
+
+
+# ==================== 网络诊断 / DHCP-VPC绑定 / IPv6 / IPv4网关 命令 ====================
+
+@vpc.group()
+def diagnose():
+    """网络诊断查询"""
+    pass
+
+
+@diagnose.command('instances')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--resource-id', help='资源ID')
+@click.option('--resource-type', type=click.Choice(['eip', 'natgw', 'elb']), help='资源类型')
+@click.option('--diagnosis-record-id', help='实例诊断记录ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def diagnose_instances(ctx, region_id: str, resource_id: Optional[str], resource_type: Optional[str],
+                       diagnosis_record_id: Optional[str], page_number: Optional[int], page_size: Optional[int]):
+    """获取实例诊断列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_instance_diagnoses(
+        region_id=region_id, resource_id=resource_id, resource_type=resource_type,
+        diagnosis_record_id=diagnosis_record_id, page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@diagnose.command('records')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--resource-id', help='资源ID')
+@click.option('--resource-type', type=click.Choice(['eip', 'natgw', 'elb']), help='资源类型')
+@click.option('--diagnosis-record-id', help='实例诊断记录ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def diagnose_records(ctx, region_id: str, resource_id: Optional[str], resource_type: Optional[str],
+                     diagnosis_record_id: Optional[str], page_number: Optional[int], page_size: Optional[int]):
+    """获取实例诊断记录列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_instance_diagnosis_records(
+        region_id=region_id, resource_id=resource_id, resource_type=resource_type,
+        diagnosis_record_id=diagnosis_record_id, page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@diagnose.command('paths')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--network-path-id', help='网络路径ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def diagnose_paths(ctx, region_id: str, network_path_id: Optional[str],
+                   page_number: Optional[int], page_size: Optional[int]):
+    """获取网络路径列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_network_paths(region_id=region_id, network_path_id=network_path_id,
+                                       page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@diagnose.command('analyses')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--network-path-id', help='网络路径ID')
+@click.option('--analysis-id', help='路径分析ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def diagnose_analyses(ctx, region_id: str, network_path_id: Optional[str], analysis_id: Optional[str],
+                      page_number: Optional[int], page_size: Optional[int]):
+    """获取网络路径分析列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_network_path_analyses(
+        region_id=region_id, network_path_id=network_path_id, analysis_id=analysis_id,
+        page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@diagnose.command('reports')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--analysis-id', required=True, help='路径分析ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def diagnose_reports(ctx, region_id: str, analysis_id: str,
+                     page_number: Optional[int], page_size: Optional[int]):
+    """获取网络路径分析报告列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_network_path_reports(
+        region_id=region_id, analysis_id=analysis_id,
+        page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def dhcp():
+    """DHCP 与 VPC 绑定关系查询"""
+    pass
+
+
+@dhcp.command('bound-vpcs')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--dhcp-option-sets-id', required=True, help='DHCP 集合ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def dhcp_bound_vpcs(ctx, region_id: str, dhcp_option_sets_id: str,
+                    page_no: Optional[int], page_size: Optional[int]):
+    """获取DHCP绑定的VPC列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_dhcp_bound_vpcs(
+        region_id=region_id, dhcp_option_sets_id=dhcp_option_sets_id,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@dhcp.command('unbound-vpcs')
+@click.option('--region-id', required=True, help='区域ID')
+@click.pass_context
+@handle_error
+def dhcp_unbound_vpcs(ctx, region_id: str):
+    """获取未绑定DHCP的VPC列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_dhcp_unbound_vpcs(region_id=region_id)
+    format_output(result, ctx.obj['output'])
+
+
+@dns.command('vpcs')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--zone-id', required=True, help='zoneID')
+@click.pass_context
+@handle_error
+def dns_vpcs(ctx, region_id: str, zone_id: str):
+    """获取zone绑定的VPC列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_zone_bound_vpcs(region_id=region_id, zone_id=zone_id)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def ipv6():
+    """IPv6 网关/地址/带宽查询"""
+    pass
+
+
+@ipv6.command('gateways')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def ipv6_gateways(ctx, region_id: str, project_id: Optional[str],
+                  page_no: Optional[int], page_size: Optional[int]):
+    """查询IPv6网关列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_ipv6_gateways(region_id=region_id, project_id=project_id,
+                                       page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@ipv6.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='VPC ID')
+@click.option('--subnet-id', help='子网ID')
+@click.option('--ip-address', help='IPv6地址')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（1-50）')
+@click.pass_context
+@handle_error
+def ipv6_list(ctx, region_id: str, vpc_id: Optional[str], subnet_id: Optional[str],
+              ip_address: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """查询IPv6地址列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_ipv6_addresses(region_id=region_id, vpc_id=vpc_id, subnet_id=subnet_id,
+                                        ip_address=ip_address, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@ipv6.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='VPC ID')
+@click.option('--subnet-id', help='子网ID')
+@click.option('--ip-address', help='IPv6地址')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（1-50）')
+@click.pass_context
+@handle_error
+def ipv6_new_list(ctx, region_id: str, vpc_id: Optional[str], subnet_id: Optional[str],
+                  ip_address: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """新查询IPv6地址列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_ipv6_addresses(region_id=region_id, vpc_id=vpc_id, subnet_id=subnet_id,
+                                            ip_address=ip_address, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@ipv6.command('bw-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--query-content', help='模糊查询（名称/带宽ID）')
+@click.option('--bandwidth-id', help='IPv6带宽ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def ipv6_bw_list(ctx, region_id: str, query_content: Optional[str], bandwidth_id: Optional[str],
+                 page_no: Optional[int], page_size: Optional[int]):
+    """查看IPv6带宽列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_ipv6_bandwidths(region_id=region_id, query_content=query_content,
+                                         bandwidth_id=bandwidth_id,
+                                         page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@ipv6.command('bw-new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--query-content', help='模糊查询（名称/带宽ID）')
+@click.option('--bandwidth-id', help='IPv6带宽ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def ipv6_bw_new_list(ctx, region_id: str, query_content: Optional[str], bandwidth_id: Optional[str],
+                     page_no: Optional[int], page_size: Optional[int]):
+    """新查看IPv6带宽列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_ipv6_bandwidths(region_id=region_id, query_content=query_content,
+                                             bandwidth_id=bandwidth_id,
+                                             page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def ipv4_gw():
+    """IPv4 网关查询"""
+    pass
+
+
+@ipv4_gw.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', help='VPC ID')
+@click.pass_context
+@handle_error
+def ipv4_gw_list(ctx, region_id: str, vpc_id: Optional[str]):
+    """获取IPv4网关列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_ipv4_gateways(region_id=region_id, vpc_id=vpc_id)
+    format_output(result, ctx.obj['output'])

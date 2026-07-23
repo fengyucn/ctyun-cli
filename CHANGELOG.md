@@ -4,6 +4,18 @@
 
 ---
 
+## v1.27.2 (2026-07-23)
+
+### 🚀 VPC（私有网络）模块新增 14 个命令
+
+- **网络诊断**（5个）：`diagnose instances/records/paths/analyses/reports`
+- **DHCP**（2个）：`dhcp bound-vpcs/unbound-vpcs`
+- **私有DNS**（1个）：`dns vpcs`
+- **IPv6**（5个）：`ipv6 gateways/list/new-list/bw-list/bw-new-list`
+- **IPv4网关**（1个）：`ipv4-gw list`
+
+---
+
 ## v1.27.1 (2026-07-23)
 
 ### 🚀 VPC（私有网络）模块新增 14 个命令

@@ -1915,6 +1915,177 @@ class VPCClient:
         if max_results is not None: qp['maxResults'] = max_results
         return self._simple_get('/v4/ports/new-list', qp, '新查询网卡列表')
 
+    # ==================== 网络诊断 / DHCP-VPC绑定 / IPv6 / IPv4网关 列表查询 ====================
+
+    def list_instance_diagnoses(self, region_id: str,
+                                resource_id: Optional[str] = None,
+                                resource_type: Optional[str] = None,
+                                diagnosis_record_id: Optional[str] = None,
+                                page_number: Optional[int] = None,
+                                page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取实例诊断列表 - GET /v4/vnia/list-instance-diagnosis"""
+        qp = {'regionID': region_id}
+        if resource_id: qp['resourceID'] = resource_id
+        if resource_type: qp['resourceType'] = resource_type
+        if diagnosis_record_id: qp['diagnosisRecordID'] = diagnosis_record_id
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vnia/list-instance-diagnosis', qp, '获取实例诊断列表')
+
+    def list_instance_diagnosis_records(self, region_id: str,
+                                        resource_id: Optional[str] = None,
+                                        resource_type: Optional[str] = None,
+                                        diagnosis_record_id: Optional[str] = None,
+                                        page_number: Optional[int] = None,
+                                        page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取实例诊断记录列表 - GET /v4/vnia/list-instance-diagnosis-record"""
+        qp = {'regionID': region_id}
+        if resource_id: qp['resourceID'] = resource_id
+        if resource_type: qp['resourceType'] = resource_type
+        if diagnosis_record_id: qp['diagnosisRecordID'] = diagnosis_record_id
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vnia/list-instance-diagnosis-record', qp, '获取实例诊断记录列表')
+
+    def list_network_paths(self, region_id: str,
+                           network_path_id: Optional[str] = None,
+                           page_number: Optional[int] = None,
+                           page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取网络路径列表 - GET /v4/vnia/list-network-path"""
+        qp = {'regionID': region_id}
+        if network_path_id: qp['networkPathID'] = network_path_id
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vnia/list-network-path', qp, '获取网络路径列表')
+
+    def list_network_path_analyses(self, region_id: str,
+                                   network_path_id: Optional[str] = None,
+                                   analysis_id: Optional[str] = None,
+                                   page_number: Optional[int] = None,
+                                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取网络路径分析列表 - GET /v4/vnia/list-network-path-analysis"""
+        qp = {'regionID': region_id}
+        if network_path_id: qp['networkPathID'] = network_path_id
+        if analysis_id: qp['analysisID'] = analysis_id
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vnia/list-network-path-analysis', qp, '获取网络路径分析列表')
+
+    def list_network_path_reports(self, region_id: str, analysis_id: str,
+                                  page_number: Optional[int] = None,
+                                  page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取网络路径分析报告列表 - GET /v4/vnia/list-network-path-report"""
+        qp = {'regionID': region_id, 'analysisID': analysis_id}
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vnia/list-network-path-report', qp, '获取网络路径分析报告列表')
+
+    def list_dhcp_bound_vpcs(self, region_id: str, dhcp_option_sets_id: str,
+                             page_no: Optional[int] = None,
+                             page_number: Optional[int] = None,
+                             page_size: Optional[int] = None) -> Dict[str, Any]:
+        """获取绑定的vpc列表 - GET /v4/dhcpoptionsets/dhcp_list_vpc"""
+        qp = {'regionID': region_id, 'dhcpOptionSetsID': dhcp_option_sets_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/dhcpoptionsets/dhcp_list_vpc', qp, '获取DHCP绑定的VPC列表')
+
+    def list_dhcp_unbound_vpcs(self, region_id: str) -> Dict[str, Any]:
+        """获取未绑定dhcp的vpc列表 - GET /v4/dhcpoptionsets/dhcp_list_unbind_vpc"""
+        return self._simple_get('/v4/dhcpoptionsets/dhcp_list_unbind_vpc',
+                                {'regionID': region_id}, '获取未绑定DHCP的VPC列表')
+
+    def list_zone_bound_vpcs(self, region_id: str, zone_id: str) -> Dict[str, Any]:
+        """获取zone绑定的VPC列表 - GET /v4/private-zone/list-vpcs"""
+        return self._simple_get('/v4/private-zone/list-vpcs',
+                                {'regionID': region_id, 'zoneID': zone_id},
+                                '获取zone绑定的VPC列表')
+
+    def list_ipv6_gateways(self, region_id: str,
+                           project_id: Optional[str] = None,
+                           page_no: Optional[int] = None,
+                           page_number: Optional[int] = None,
+                           page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询ipv6网关列表 - GET /v4/vpc/list-ipv6-gateway"""
+        qp = {'regionID': region_id}
+        if project_id: qp['projectID'] = project_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/vpc/list-ipv6-gateway', qp, '查询IPv6网关列表')
+
+    def list_ipv6_addresses(self, region_id: str,
+                            vpc_id: Optional[str] = None,
+                            subnet_id: Optional[str] = None,
+                            ip_address: Optional[str] = None,
+                            page_no: Optional[int] = None,
+                            page: Optional[int] = None,
+                            page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询IPv6列表 - GET /v4/ipv6/ipv6-list"""
+        qp = {'regionID': region_id}
+        if vpc_id: qp['vpcID'] = vpc_id
+        if subnet_id: qp['subnetID'] = subnet_id
+        if ip_address: qp['ipAddress'] = ip_address
+        if page_no is not None: qp['pageNo'] = page_no
+        if page is not None: qp['page'] = page
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/ipv6/ipv6-list', qp, '查询IPv6列表')
+
+    def new_list_ipv6_addresses(self, region_id: str,
+                                vpc_id: Optional[str] = None,
+                                subnet_id: Optional[str] = None,
+                                ip_address: Optional[str] = None,
+                                page_no: Optional[int] = None,
+                                page: Optional[int] = None,
+                                page_size: Optional[int] = None) -> Dict[str, Any]:
+        """新查询IPv6列表 - GET /v4/ipv6/new-ipv6-list"""
+        qp = {'regionID': region_id}
+        if vpc_id: qp['vpcID'] = vpc_id
+        if subnet_id: qp['subnetID'] = subnet_id
+        if ip_address: qp['ipAddress'] = ip_address
+        if page_no is not None: qp['pageNo'] = page_no
+        if page is not None: qp['page'] = page
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/ipv6/new-ipv6-list', qp, '新查询IPv6列表')
+
+    def list_ipv6_bandwidths(self, region_id: str,
+                             query_content: Optional[str] = None,
+                             bandwidth_id: Optional[str] = None,
+                             page_no: Optional[int] = None,
+                             page_number: Optional[int] = None,
+                             page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看IPv6带宽列表 - GET /v4/ipv6_bandwidth/list"""
+        qp = {'regionID': region_id}
+        if query_content: qp['queryContent'] = query_content
+        if bandwidth_id: qp['bandwidthID'] = bandwidth_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/ipv6_bandwidth/list', qp, '查看IPv6带宽列表')
+
+    def new_list_ipv6_bandwidths(self, region_id: str,
+                                 query_content: Optional[str] = None,
+                                 bandwidth_id: Optional[str] = None,
+                                 page_no: Optional[int] = None,
+                                 page_number: Optional[int] = None,
+                                 page_size: Optional[int] = None) -> Dict[str, Any]:
+        """新查看IPv6带宽列表 - GET /v4/ipv6_bandwidth/new-list"""
+        qp = {'regionID': region_id}
+        if query_content: qp['queryContent'] = query_content
+        if bandwidth_id: qp['bandwidthID'] = bandwidth_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/ipv6_bandwidth/new-list', qp, '新查看IPv6带宽列表')
+
+    def list_ipv4_gateways(self, region_id: str,
+                           vpc_id: Optional[str] = None) -> Dict[str, Any]:
+        """获取IPv4网关列表 - GET /v4/vpc/ipv4-gw/list"""
+        qp = {'regionID': region_id}
+        if vpc_id: qp['vpcID'] = vpc_id
+        return self._simple_get('/v4/vpc/ipv4-gw/list', qp, '获取IPv4网关列表')
+
     # ==================== 网络 ACL / 前缀列表 / 流量控制 / GWLB / L2GW / havip 列表查询 ====================
 
     def list_acls(self, region_id: str,
