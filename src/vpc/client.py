@@ -1915,6 +1915,288 @@ class VPCClient:
         if max_results is not None: qp['maxResults'] = max_results
         return self._simple_get('/v4/ports/new-list', qp, '新查询网卡列表')
 
+    # ==================== VPC终端节点 / 内网DNS 列表查询 ====================
+
+    def list_vpce_endpoints(self, region_id: str,
+                            page_no: Optional[int] = None,
+                            page: Optional[int] = None,
+                            page_size: Optional[int] = None,
+                            project_id: Optional[str] = None,
+                            endpoint_name: Optional[str] = None,
+                            query_content: Optional[str] = None,
+                            endpoint_service_id: Optional[str] = None,
+                            endpoint_id: Optional[str] = None) -> Dict[str, Any]:
+        """查看终端节点列表 - GET /v4/vpce/list-endpoint"""
+        qp = {'regionID': region_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page is not None: qp['page'] = page
+        if page_size is not None: qp['pageSize'] = page_size
+        if project_id: qp['projectID'] = project_id
+        if endpoint_name: qp['endpointName'] = endpoint_name
+        if query_content: qp['queryContent'] = query_content
+        if endpoint_service_id: qp['endpointServiceID'] = endpoint_service_id
+        if endpoint_id: qp['endpointID'] = endpoint_id
+        return self._simple_get('/v4/vpce/list-endpoint', qp, '查看终端节点列表')
+
+    def new_list_vpce_endpoints(self, region_id: str,
+                                page_no: Optional[int] = None,
+                                page: Optional[int] = None,
+                                page_size: Optional[int] = None,
+                                project_id: Optional[str] = None,
+                                endpoint_name: Optional[str] = None,
+                                query_content: Optional[str] = None,
+                                endpoint_service_id: Optional[str] = None,
+                                endpoint_id: Optional[str] = None) -> Dict[str, Any]:
+        """新查看终端节点列表 - GET /v4/vpce/new-list-endpoint"""
+        qp = {'regionID': region_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page is not None: qp['page'] = page
+        if page_size is not None: qp['pageSize'] = page_size
+        if project_id: qp['projectID'] = project_id
+        if endpoint_name: qp['endpointName'] = endpoint_name
+        if query_content: qp['queryContent'] = query_content
+        if endpoint_service_id: qp['endpointServiceID'] = endpoint_service_id
+        if endpoint_id: qp['endpointID'] = endpoint_id
+        return self._simple_get('/v4/vpce/new-list-endpoint', qp, '新查看终端节点列表')
+
+    def list_vpce_services(self, region_id: str,
+                           page_no: Optional[int] = None,
+                           page: Optional[int] = None,
+                           page_size: Optional[int] = None,
+                           id_: Optional[str] = None,
+                           endpoint_service_name: Optional[str] = None,
+                           query_content: Optional[str] = None) -> Dict[str, Any]:
+        """查看终端节点服务列表 - GET /v4/vpce/list-endpoint-service"""
+        qp = {'regionID': region_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page is not None: qp['page'] = page
+        if page_size is not None: qp['pageSize'] = page_size
+        if id_: qp['id'] = id_
+        if endpoint_service_name: qp['endpointServiceName'] = endpoint_service_name
+        if query_content: qp['queryContent'] = query_content
+        return self._simple_get('/v4/vpce/list-endpoint-service', qp, '查看终端节点服务列表')
+
+    def new_list_vpce_services(self, region_id: str,
+                               page_no: Optional[int] = None,
+                               page: Optional[int] = None,
+                               page_size: Optional[int] = None,
+                               id_: Optional[str] = None,
+                               endpoint_service_name: Optional[str] = None,
+                               query_content: Optional[str] = None) -> Dict[str, Any]:
+        """新查看终端节点服务列表 - GET /v4/vpce/new-list-endpoint-service"""
+        qp = {'regionID': region_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page is not None: qp['page'] = page
+        if page_size is not None: qp['pageSize'] = page_size
+        if id_: qp['id'] = id_
+        if endpoint_service_name: qp['endpointServiceName'] = endpoint_service_name
+        if query_content: qp['queryContent'] = query_content
+        return self._simple_get('/v4/vpce/new-list-endpoint-service', qp, '新查看终端节点服务列表')
+
+    def list_vpce_backends(self, region_id: str, endpoint_service_id: str) -> Dict[str, Any]:
+        """查看终端节点服务后端列表 - GET /v4/vpce/list-backends"""
+        return self._simple_get('/v4/vpce/list-backends',
+                                {'regionID': region_id, 'endpointServiceID': endpoint_service_id},
+                                '查看终端节点服务后端列表')
+
+    def list_private_zones(self, region_id: str,
+                           zone_id: Optional[str] = None,
+                           zone_name: Optional[str] = None,
+                           page_no: Optional[int] = None,
+                           page_number: Optional[int] = None,
+                           page_size: Optional[int] = None,
+                           client_token: Optional[str] = None) -> Dict[str, Any]:
+        """查询内网DNS列表 - GET /v4/private-zone/list"""
+        qp = {'regionID': region_id}
+        if zone_id: qp['zoneID'] = zone_id
+        if zone_name: qp['zoneName'] = zone_name
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        if client_token: qp['clientToken'] = client_token
+        return self._simple_get('/v4/private-zone/list', qp, '查询内网DNS列表')
+
+    def new_list_private_zones(self, region_id: str,
+                               zone_id: Optional[str] = None,
+                               zone_name: Optional[str] = None,
+                               page_no: Optional[int] = None,
+                               page_number: Optional[int] = None,
+                               page_size: Optional[int] = None,
+                               client_token: Optional[str] = None) -> Dict[str, Any]:
+        """新内网DNS列表 - GET /v4/private-zone/new-list"""
+        qp = {'regionID': region_id}
+        if zone_id: qp['zoneID'] = zone_id
+        if zone_name: qp['zoneName'] = zone_name
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        if client_token: qp['clientToken'] = client_token
+        return self._simple_get('/v4/private-zone/new-list', qp, '新内网DNS列表')
+
+    def list_private_zone_records(self, region_id: str,
+                                  zone_id: Optional[str] = None,
+                                  zone_record_name: Optional[str] = None,
+                                  zone_record_id: Optional[str] = None,
+                                  page_no: Optional[int] = None,
+                                  page_number: Optional[int] = None,
+                                  page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询内网DNS记录列表 - GET /v4/private-zone-record/list"""
+        qp = {'regionID': region_id}
+        if zone_id: qp['zoneID'] = zone_id
+        if zone_record_name: qp['zoneRecordName'] = zone_record_name
+        if zone_record_id: qp['zoneRecordID'] = zone_record_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/private-zone-record/list', qp, '查询内网DNS记录列表')
+
+    def new_list_private_zone_records(self, region_id: str,
+                                      zone_id: Optional[str] = None,
+                                      zone_record_name: Optional[str] = None,
+                                      zone_record_id: Optional[str] = None,
+                                      page_no: Optional[int] = None,
+                                      page_number: Optional[int] = None,
+                                      page_size: Optional[int] = None) -> Dict[str, Any]:
+        """新内网dns记录列表 - GET /v4/private-zone-record/new-list"""
+        qp = {'regionID': region_id}
+        if zone_id: qp['zoneID'] = zone_id
+        if zone_record_name: qp['zoneRecordName'] = zone_record_name
+        if zone_record_id: qp['zoneRecordID'] = zone_record_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/private-zone-record/new-list', qp, '新内网DNS记录列表')
+
+    # ==================== EIP监控 / 共享带宽 / 流量包 查询 ====================
+
+    def _simple_post(self, path: str, body: Dict[str, Any], desc: str) -> Dict[str, Any]:
+        """通用 POST 请求（自动过滤 None）"""
+        url = f'https://{self.base_endpoint}{path}'
+        bd = {k: v for k, v in body.items() if v is not None}
+        try:
+            import json as _json
+            headers = self.eop_auth.sign_request(method='POST', url=url, query_params={},
+                                                 body=_json.dumps(bd), extra_headers={})
+            logger.debug(f"POST {url} | body={bd}")
+            response = self.client.session.post(url, json=bd, headers=headers, timeout=30)
+            if response.status_code != 200:
+                return {'statusCode': response.status_code,
+                        'message': f'HTTP {response.status_code}: {response.text}',
+                        'returnObj': None}
+            return response.json()
+        except Exception as e:
+            logger.error(f"{desc}失败: {e}")
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def query_eip_realtime_monitor(self, region_id: str,
+                                   device_ids: Optional[list] = None,
+                                   page_no: Optional[int] = None,
+                                   page_number: Optional[int] = None,
+                                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询弹性IP实时监控 - POST /v4/eip/query-realtime-monitor"""
+        body = {'regionID': region_id}
+        if device_ids: body['deviceIDs'] = device_ids
+        if page_no is not None: body['pageNo'] = page_no
+        if page_number is not None: body['pageNumber'] = page_number
+        if page_size is not None: body['pageSize'] = page_size
+        return self._simple_post('/v4/eip/query-realtime-monitor', body, '查询EIP实时监控')
+
+    def query_eip_realtime_monitor_new(self, region_id: str,
+                                       device_ids: Optional[list] = None,
+                                       page_no: Optional[int] = None,
+                                       page_number: Optional[int] = None,
+                                       page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看弹性IP实时监控（新）- POST /v4/eip/new-query-realtime-monitor"""
+        body = {'regionID': region_id}
+        if device_ids: body['deviceIDs'] = device_ids
+        if page_no is not None: body['pageNo'] = page_no
+        if page_number is not None: body['pageNumber'] = page_number
+        if page_size is not None: body['pageSize'] = page_size
+        return self._simple_post('/v4/eip/new-query-realtime-monitor', body, '查询EIP实时监控(新)')
+
+    def query_eip_history_monitor(self, region_id: str,
+                                  device_ids: list, metric_names: list,
+                                  start_time: str, end_time: str,
+                                  period: Optional[int] = None,
+                                  page_no: Optional[int] = None,
+                                  page_number: Optional[int] = None,
+                                  page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询弹性IP历史监控数据 - POST /v4/eip/query-history-monitor"""
+        body = {'regionID': region_id, 'deviceIDs': device_ids,
+                'metricNames': metric_names, 'startTime': start_time, 'endTime': end_time}
+        if period is not None: body['period'] = period
+        if page_no is not None: body['pageNo'] = page_no
+        if page_number is not None: body['pageNumber'] = page_number
+        if page_size is not None: body['pageSize'] = page_size
+        return self._simple_post('/v4/eip/query-history-monitor', body, '查询EIP历史监控')
+
+    def query_eip_history_monitor_new(self, region_id: str,
+                                      device_ids: list, metric_names: list,
+                                      start_time: str, end_time: str,
+                                      period: Optional[int] = None,
+                                      page_no: Optional[int] = None,
+                                      page_number: Optional[int] = None,
+                                      page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看弹性IP历史监控（新）- POST /v4/eip/new-query-history-monitor"""
+        body = {'regionID': region_id, 'deviceIDs': device_ids,
+                'metricNames': metric_names, 'startTime': start_time, 'endTime': end_time}
+        if period is not None: body['period'] = period
+        if page_no is not None: body['pageNo'] = page_no
+        if page_number is not None: body['pageNumber'] = page_number
+        if page_size is not None: body['pageSize'] = page_size
+        return self._simple_post('/v4/eip/new-query-history-monitor', body, '查询EIP历史监控(新)')
+
+    def show_shared_bandwidth(self, region_id: str, bandwidth_id: str) -> Dict[str, Any]:
+        """查询共享带宽详情 - GET /v4/bandwidth/describe"""
+        return self._simple_get('/v4/bandwidth/describe',
+                                {'regionID': region_id, 'bandwidthID': bandwidth_id},
+                                '查询共享带宽详情')
+
+    def new_list_shared_bandwidths(self, region_id: str,
+                                   query_content: Optional[str] = None,
+                                   project_id: Optional[str] = None,
+                                   page_no: Optional[int] = None,
+                                   page_number: Optional[int] = None,
+                                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """新查询共享带宽列表 - GET /v4/bandwidth/new-list"""
+        qp = {'regionID': region_id}
+        if query_content: qp['queryContent'] = query_content
+        if project_id: qp['projectID'] = project_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/bandwidth/new-list', qp, '新查询共享带宽列表')
+
+    def list_flow_packages(self, region_id: str) -> Dict[str, Any]:
+        """查询共享流量包列表 - GET /v4/flow_package/list"""
+        return self._simple_get('/v4/flow_package/list', {'regionID': region_id}, '查询共享流量包列表')
+
+    def show_flow_package(self, region_id: str, sdp_id: str) -> Dict[str, Any]:
+        """查询共享流量包详情 - GET /v4/flow_package/show"""
+        return self._simple_get('/v4/flow_package/show',
+                                {'regionID': region_id, 'sdpID': sdp_id},
+                                '查询共享流量包详情')
+
+    def get_flow_package_metric(self, region_id: str, sdp_id: str,
+                                start_time: str, end_time: str) -> Dict[str, Any]:
+        """获取共享流量包监控 - POST /v4/flow_package/metric"""
+        body = {'regionID': region_id, 'sdpID': sdp_id,
+                'startTime': start_time, 'endTime': end_time}
+        return self._simple_post('/v4/flow_package/metric', body, '获取共享流量包监控')
+
+    def get_eip_filing_status(self, region_id: str, eip_id: str) -> Dict[str, Any]:
+        """查看端口备案状态 - GET /v4/eip/get-filing-status"""
+        return self._simple_get('/v4/eip/get-filing-status',
+                                {'regionID': region_id, 'eipID': eip_id},
+                                '查看端口备案状态')
+
+    def check_eip_address(self, region_id: str, eip_address: str,
+                          client_token: Optional[str] = None) -> Dict[str, Any]:
+        """检查EIP是否可用 - GET /v4/eip/check-address"""
+        qp = {'regionID': region_id, 'eipAddress': eip_address}
+        if client_token: qp['clientToken'] = client_token
+        return self._simple_get('/v4/eip/check-address', qp, '检查EIP是否可用')
+
     # ==================== 通用请求辅助 ====================
 
     def _simple_get(self, path: str, query_params: Dict[str, Any], desc: str) -> Dict[str, Any]:

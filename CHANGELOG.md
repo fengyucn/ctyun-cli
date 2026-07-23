@@ -4,6 +4,20 @@
 
 ---
 
+## v1.27.0 (2026-07-23)
+
+### 🚀 VPC（私有网络）模块新增 20 个命令
+
+- **弹性公网IP**（6个）：实时监控/历史监控（新旧版）、备案状态、地址校验
+- **带宽**（2个）：`bandwidth show/new-list`
+- **流量包**（3个）：`flow-package list/show/metric`
+- **终端节点**（2个）：`vpce list/new-list`
+- **终端节点服务**（3个）：`service list/new-list/backends`
+- **私有DNS**（2个）：`dns list/new-list`
+- **DNS记录**（2个）：`record list/new-list`
+
+---
+
 ## v1.26.2 (2026-07-21)
 
 ### 🚀 VPC（私有网络）模块新增 13 个命令

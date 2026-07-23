@@ -1202,3 +1202,393 @@ def label_private_dns(ctx, region_id, zone_id, page_no, page_size):
     result = VPCClient(ctx.obj['client']).list_private_dns_labels(
         region_id=region_id, zone_id=zone_id, page_no=page_no, page_size=page_size)
     _label_output(ctx, result)
+
+# ==================== EIP监控/共享带宽/流量包 命令 ====================
+
+@eip.command('realtime-monitor')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', help='EIP地址列表，逗号分隔（例：192.2.3.3,192.2.3.4）')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（1-50）')
+@click.pass_context
+@handle_error
+def eip_realtime_monitor(ctx, region_id: str, device_ids: Optional[str],
+                         page_no: Optional[int], page_size: Optional[int]):
+    """查询EIP实时监控（旧版）"""
+    client = get_vpc_client(ctx)
+    result = client.query_eip_realtime_monitor(
+        region_id=region_id,
+        device_ids=device_ids.split(',') if device_ids else None,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@eip.command('new-realtime-monitor')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', help='EIP地址列表，逗号分隔')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（1-50）')
+@click.pass_context
+@handle_error
+def eip_new_realtime_monitor(ctx, region_id: str, device_ids: Optional[str],
+                             page_no: Optional[int], page_size: Optional[int]):
+    """查询EIP实时监控（新版）"""
+    client = get_vpc_client(ctx)
+    result = client.query_eip_realtime_monitor_new(
+        region_id=region_id,
+        device_ids=device_ids.split(',') if device_ids else None,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@eip.command('history-monitor')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='EIP地址列表，逗号分隔')
+@click.option('--metric-names', required=True, help='监控指标，逗号分隔（如：ingress_throughput）')
+@click.option('--start-time', required=True, help='开始时间（YYYY-mm-dd HH:MM:SS）')
+@click.option('--end-time', required=True, help='结束时间（YYYY-mm-dd HH:MM:SS）')
+@click.option('--period', type=int, help='聚合周期（秒），最小300')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（1-50）')
+@click.pass_context
+@handle_error
+def eip_history_monitor(ctx, region_id: str, device_ids: str, metric_names: str,
+                        start_time: str, end_time: str, period: Optional[int],
+                        page_no: Optional[int], page_size: Optional[int]):
+    """查询EIP历史监控数据（旧版）"""
+    client = get_vpc_client(ctx)
+    result = client.query_eip_history_monitor(
+        region_id=region_id, device_ids=device_ids.split(','),
+        metric_names=metric_names.split(','), start_time=start_time, end_time=end_time,
+        period=period, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@eip.command('new-history-monitor')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--device-ids', required=True, help='EIP地址列表，逗号分隔')
+@click.option('--metric-names', required=True, help='监控指标，逗号分隔')
+@click.option('--start-time', required=True, help='开始时间（YYYY-mm-dd HH:MM:SS）')
+@click.option('--end-time', required=True, help='结束时间（YYYY-mm-dd HH:MM:SS）')
+@click.option('--period', type=int, help='聚合周期（秒），默认60')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（1-50）')
+@click.pass_context
+@handle_error
+def eip_new_history_monitor(ctx, region_id: str, device_ids: str, metric_names: str,
+                            start_time: str, end_time: str, period: Optional[int],
+                            page_no: Optional[int], page_size: Optional[int]):
+    """查询EIP历史监控数据（新版）"""
+    client = get_vpc_client(ctx)
+    result = client.query_eip_history_monitor_new(
+        region_id=region_id, device_ids=device_ids.split(','),
+        metric_names=metric_names.split(','), start_time=start_time, end_time=end_time,
+        period=period, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@eip.command('filing-status')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--eip-id', required=True, help='弹性公网IP ID')
+@click.pass_context
+@handle_error
+def eip_filing_status(ctx, region_id: str, eip_id: str):
+    """查看端口备案状态"""
+    client = get_vpc_client(ctx)
+    result = client.get_eip_filing_status(region_id=region_id, eip_id=eip_id)
+    format_output(result, ctx.obj['output'])
+
+
+@eip.command('check-address')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--eip-address', required=True, help='弹性公网IP地址')
+@click.pass_context
+@handle_error
+def eip_check_address(ctx, region_id: str, eip_address: str):
+    """检查EIP地址是否可用"""
+    client = get_vpc_client(ctx)
+    result = client.check_eip_address(region_id=region_id, eip_address=eip_address)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def bandwidth():
+    """共享带宽查询"""
+    pass
+
+
+@bandwidth.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--bandwidth-id', required=True, help='共享带宽ID')
+@click.pass_context
+@handle_error
+def bandwidth_show(ctx, region_id: str, bandwidth_id: str):
+    """查询共享带宽详情"""
+    client = get_vpc_client(ctx)
+    result = client.show_shared_bandwidth(region_id=region_id, bandwidth_id=bandwidth_id)
+    format_output(result, ctx.obj['output'])
+
+
+@bandwidth.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--query-content', help='模糊查询（名称/带宽ID）')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def bandwidth_new_list(ctx, region_id: str, query_content: Optional[str],
+                       project_id: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """新查询共享带宽列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_shared_bandwidths(
+        region_id=region_id, query_content=query_content, project_id=project_id,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def flow_package():
+    """共享流量包查询"""
+    pass
+
+
+@flow_package.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.pass_context
+@handle_error
+def flow_package_list(ctx, region_id: str):
+    """查询共享流量包列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_flow_packages(region_id=region_id)
+    format_output(result, ctx.obj['output'])
+
+
+@flow_package.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--sdp-id', required=True, help='流量包记录标识')
+@click.pass_context
+@handle_error
+def flow_package_show(ctx, region_id: str, sdp_id: str):
+    """查询共享流量包详情"""
+    client = get_vpc_client(ctx)
+    result = client.show_flow_package(region_id=region_id, sdp_id=sdp_id)
+    format_output(result, ctx.obj['output'])
+
+
+@flow_package.command('metric')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--sdp-id', required=True, help='流量包记录标识')
+@click.option('--start-time', required=True, help='开始时间（YYYY-mm-dd HH:MM:SS）')
+@click.option('--end-time', required=True, help='结束时间（YYYY-mm-dd HH:MM:SS）')
+@click.pass_context
+@handle_error
+def flow_package_metric(ctx, region_id: str, sdp_id: str, start_time: str, end_time: str):
+    """获取共享流量包监控"""
+    client = get_vpc_client(ctx)
+    result = client.get_flow_package_metric(
+        region_id=region_id, sdp_id=sdp_id, start_time=start_time, end_time=end_time)
+    format_output(result, ctx.obj['output'])
+
+
+# ==================== VPC 终端节点 / 内网DNS 查询命令 ====================
+
+@vpc.group()
+def vpce():
+    """VPC 终端节点查询"""
+    pass
+
+
+@vpce.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--endpoint-name', help='终端节点名（精确匹配）')
+@click.option('--query-content', help='终端节点名模糊匹配')
+@click.option('--endpoint-service-id', help='终端节点服务ID')
+@click.option('--endpoint-id', help='终端节点ID')
+@click.pass_context
+@handle_error
+def vpce_list(ctx, region_id: str, page_no: Optional[int], page_size: Optional[int],
+              project_id: Optional[str], endpoint_name: Optional[str],
+              query_content: Optional[str], endpoint_service_id: Optional[str],
+              endpoint_id: Optional[str]):
+    """查看终端节点列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_vpce_endpoints(
+        region_id=region_id, page_no=page_no, page_size=page_size,
+        project_id=project_id, endpoint_name=endpoint_name,
+        query_content=query_content, endpoint_service_id=endpoint_service_id,
+        endpoint_id=endpoint_id)
+    format_output(result, ctx.obj['output'])
+
+
+@vpce.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--endpoint-name', help='终端节点名（精确匹配）')
+@click.option('--query-content', help='终端节点名模糊匹配')
+@click.option('--endpoint-service-id', help='终端节点服务ID')
+@click.option('--endpoint-id', help='终端节点ID')
+@click.pass_context
+@handle_error
+def vpce_new_list(ctx, region_id: str, page_no: Optional[int], page_size: Optional[int],
+                  project_id: Optional[str], endpoint_name: Optional[str],
+                  query_content: Optional[str], endpoint_service_id: Optional[str],
+                  endpoint_id: Optional[str]):
+    """新查看终端节点列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_vpce_endpoints(
+        region_id=region_id, page_no=page_no, page_size=page_size,
+        project_id=project_id, endpoint_name=endpoint_name,
+        query_content=query_content, endpoint_service_id=endpoint_service_id,
+        endpoint_id=endpoint_id)
+    format_output(result, ctx.obj['output'])
+
+
+@vpce.group()
+def service():
+    """VPC 终端节点服务查询"""
+    pass
+
+
+@service.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量')
+@click.option('--id', 'id_', help='终端节点服务ID')
+@click.option('--endpoint-service-name', help='终端节点服务名称（精确匹配）')
+@click.option('--query-content', help='终端节点服务名称模糊匹配')
+@click.pass_context
+@handle_error
+def vpce_service_list(ctx, region_id: str, page_no: Optional[int], page_size: Optional[int],
+                      id_: Optional[str], endpoint_service_name: Optional[str],
+                      query_content: Optional[str]):
+    """查看终端节点服务列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_vpce_services(
+        region_id=region_id, page_no=page_no, page_size=page_size,
+        id_=id_, endpoint_service_name=endpoint_service_name, query_content=query_content)
+    format_output(result, ctx.obj['output'])
+
+
+@service.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量')
+@click.option('--id', 'id_', help='终端节点服务ID')
+@click.option('--endpoint-service-name', help='终端节点服务名称（精确匹配）')
+@click.option('--query-content', help='终端节点服务名称模糊匹配')
+@click.pass_context
+@handle_error
+def vpce_service_new_list(ctx, region_id: str, page_no: Optional[int], page_size: Optional[int],
+                          id_: Optional[str], endpoint_service_name: Optional[str],
+                          query_content: Optional[str]):
+    """新查看终端节点服务列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_vpce_services(
+        region_id=region_id, page_no=page_no, page_size=page_size,
+        id_=id_, endpoint_service_name=endpoint_service_name, query_content=query_content)
+    format_output(result, ctx.obj['output'])
+
+
+@service.command('backends')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--endpoint-service-id', required=True, help='终端节点服务ID')
+@click.pass_context
+@handle_error
+def vpce_service_backends(ctx, region_id: str, endpoint_service_id: str):
+    """查看终端节点服务后端列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_vpce_backends(
+        region_id=region_id, endpoint_service_id=endpoint_service_id)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def dns():
+    """内网DNS查询"""
+    pass
+
+
+@dns.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--zone-id', help='zoneID')
+@click.option('--zone-name', help='zone名称')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大200）')
+@click.pass_context
+@handle_error
+def dns_list(ctx, region_id: str, zone_id: Optional[str], zone_name: Optional[str],
+             page_no: Optional[int], page_size: Optional[int]):
+    """查询内网DNS列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_private_zones(
+        region_id=region_id, zone_id=zone_id, zone_name=zone_name,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@dns.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--zone-id', help='zoneID')
+@click.option('--zone-name', help='zone名称')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大200）')
+@click.pass_context
+@handle_error
+def dns_new_list(ctx, region_id: str, zone_id: Optional[str], zone_name: Optional[str],
+                 page_no: Optional[int], page_size: Optional[int]):
+    """新内网DNS列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_private_zones(
+        region_id=region_id, zone_id=zone_id, zone_name=zone_name,
+        page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@dns.group()
+def record():
+    """内网DNS记录查询"""
+    pass
+
+
+@record.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--zone-id', help='zoneID')
+@click.option('--zone-record-name', help='DNS记录集名称')
+@click.option('--zone-record-id', help='zoneRecordID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def dns_record_list(ctx, region_id: str, zone_id: Optional[str], zone_record_name: Optional[str],
+                    zone_record_id: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """查询内网DNS记录列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_private_zone_records(
+        region_id=region_id, zone_id=zone_id, zone_record_name=zone_record_name,
+        zone_record_id=zone_record_id, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@record.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--zone-id', help='zoneID')
+@click.option('--zone-record-name', help='DNS记录集名称')
+@click.option('--zone-record-id', help='zoneRecordID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大200）')
+@click.pass_context
+@handle_error
+def dns_record_new_list(ctx, region_id: str, zone_id: Optional[str], zone_record_name: Optional[str],
+                        zone_record_id: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """新内网DNS记录列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_private_zone_records(
+        region_id=region_id, zone_id=zone_id, zone_record_name=zone_record_name,
+        zone_record_id=zone_record_id, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
