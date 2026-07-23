@@ -4,6 +4,19 @@
 
 ---
 
+## v1.27.1 (2026-07-23)
+
+### 🚀 VPC（私有网络）模块新增 14 个命令
+
+- **网络ACL**（3个）：`acl list/new-list/rules`
+- **前缀列表**（3个）：`prefix-list list/show/associations`
+- **流日志**（3个）：`flow filter-rules/filters/sessions`
+- **网关负载均衡**（2个）：`gwlb list/ip-listener-list`
+- **二层网关**（2个）：`l2gw list/connection-list`
+- **高可用VIP**（1个）：`havip list`
+
+---
+
 ## v1.27.0 (2026-07-23)
 
 ### 🚀 VPC（私有网络）模块新增 20 个命令

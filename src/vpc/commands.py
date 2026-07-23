@@ -1592,3 +1592,274 @@ def dns_record_new_list(ctx, region_id: str, zone_id: Optional[str], zone_record
         region_id=region_id, zone_id=zone_id, zone_record_name=zone_record_name,
         zone_record_id=zone_record_id, page_no=page_no, page_size=page_size)
     format_output(result, ctx.obj['output'])
+
+
+# ==================== 网络 ACL / 前缀列表 / 流量 / GWLB / L2GW / havip 命令 ====================
+
+@vpc.group()
+def acl():
+    """网络 ACL 查询"""
+    pass
+
+
+@acl.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--acl-id', help='aclID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--name', help='acl名称')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def acl_list(ctx, region_id: str, acl_id: Optional[str], project_id: Optional[str],
+             name: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """查看ACL列表信息"""
+    client = get_vpc_client(ctx)
+    result = client.list_acls(region_id=region_id, acl_id=acl_id, project_id=project_id,
+                              name=name, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@acl.command('new-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--acl-id', help='aclID')
+@click.option('--name', help='acl名称')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def acl_new_list(ctx, region_id: str, acl_id: Optional[str], name: Optional[str],
+                 page_no: Optional[int], page_size: Optional[int]):
+    """新查看ACL列表"""
+    client = get_vpc_client(ctx)
+    result = client.new_list_acls(region_id=region_id, acl_id=acl_id, name=name,
+                                  page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@acl.command('rules')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--acl-id', required=True, help='aclID')
+@click.pass_context
+@handle_error
+def acl_rules(ctx, region_id: str, acl_id: str):
+    """查看ACL规则列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_acl_rules(region_id=region_id, acl_id=acl_id)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def prefix_list():
+    """前缀列表查询"""
+    pass
+
+
+@prefix_list.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--prefix-list-id', help='prefixlistID')
+@click.option('--query-content', help='模糊查询关键字')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def prefix_list_list(ctx, region_id: str, prefix_list_id: Optional[str],
+                     query_content: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """查询前缀列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_prefix_lists(region_id=region_id, prefix_list_id=prefix_list_id,
+                                      query_content=query_content, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@prefix_list.command('show')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--prefix-list-id', required=True, help='prefixlistID')
+@click.pass_context
+@handle_error
+def prefix_list_show(ctx, region_id: str, prefix_list_id: str):
+    """查询前缀列表详情"""
+    client = get_vpc_client(ctx)
+    result = client.show_prefix_list(region_id=region_id, prefix_list_id=prefix_list_id)
+    format_output(result, ctx.obj['output'])
+
+
+@prefix_list.command('associations')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--prefix-list-id', required=True, help='prefixlistID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def prefix_list_associations(ctx, region_id: str, prefix_list_id: str,
+                             page_no: Optional[int], page_size: Optional[int]):
+    """查询前缀列表关联资源"""
+    client = get_vpc_client(ctx)
+    result = client.get_prefix_list_associations(region_id=region_id, prefix_list_id=prefix_list_id,
+                                                 page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def flow():
+    """流量控制查询"""
+    pass
+
+
+@flow.command('filter-rules')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--mirror-filter-id', required=True, help='过滤条件ID')
+@click.option('--direction', type=click.Choice(['in', 'out']), required=True, help='方向：in/out')
+@click.option('--query-content', help='模糊过滤内容')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def flow_filter_rules(ctx, region_id: str, mirror_filter_id: str, direction: str,
+                      query_content: Optional[str], page_no: Optional[int], page_size: Optional[int]):
+    """查看过滤规则列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_flow_filter_rules(region_id=region_id, mirror_filter_id=mirror_filter_id,
+                                           direction=direction, query_content=query_content,
+                                           page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@flow.command('filters')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--query-content', help='按名字模糊过滤')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def flow_filters(ctx, region_id: str, query_content: Optional[str],
+                 page_no: Optional[int], page_size: Optional[int]):
+    """查看过滤条件列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_flow_filters(region_id=region_id, query_content=query_content,
+                                      page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@flow.command('sessions')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--mirror-filter-id', help='过滤条件ID')
+@click.option('--query-content', help='按名字模糊过滤')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def flow_sessions(ctx, region_id: str, mirror_filter_id: Optional[str], query_content: Optional[str],
+                  page_no: Optional[int], page_size: Optional[int]):
+    """查看流量会话列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_flow_sessions(region_id=region_id, mirror_filter_id=mirror_filter_id,
+                                       query_content=query_content, page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def gwlb():
+    """网关负载均衡 GWLB 查询"""
+    pass
+
+
+@gwlb.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--gw-lb-id', help='GWLB ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def gwlb_list(ctx, region_id: str, project_id: Optional[str], gw_lb_id: Optional[str],
+              page_number: Optional[int], page_size: Optional[int]):
+    """查看GWLB列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_gwlbs(region_id=region_id, project_id=project_id, gw_lb_id=gw_lb_id,
+                               page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@gwlb.command('ip-listener-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--ip-listener-id', help='监听器ID')
+@click.option('--page-number', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def gwlb_ip_listener_list(ctx, region_id: str, ip_listener_id: Optional[str],
+                          page_number: Optional[int], page_size: Optional[int]):
+    """查看IP监听器列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_ip_listeners(region_id=region_id, ip_listener_id=ip_listener_id,
+                                      page_number=page_number, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def l2gw():
+    """二层网关 L2GW 查询"""
+    pass
+
+
+@l2gw.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--l2gw-id', help='l2gw ID')
+@click.option('--query-content', help='名称模糊查询')
+@click.option('--page-no', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def l2gw_list(ctx, region_id: str, l2gw_id: Optional[str], query_content: Optional[str],
+              page_no: Optional[int], page_size: Optional[int]):
+    """查询L2GW列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_l2gws(region_id=region_id, l2gw_id=l2gw_id, query_content=query_content,
+                               page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@l2gw.command('connection-list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--l2gw-id', help='l2gw ID（3.0资源池必填）')
+@click.option('--l2-connection-id', help='l2gw_connection ID')
+@click.option('--page-no', type=int, help='页码（推荐使用）')
+@click.option('--page-size', type=int, help='每页数量（最大50）')
+@click.pass_context
+@handle_error
+def l2gw_connection_list(ctx, region_id: str, l2gw_id: Optional[str],
+                         l2_connection_id: Optional[str],
+                         page_no: Optional[int], page_size: Optional[int]):
+    """查询L2GW connection列表"""
+    client = get_vpc_client(ctx)
+    result = client.list_l2gw_connections(region_id=region_id, l2gw_id=l2gw_id,
+                                          l2_connection_id=l2_connection_id,
+                                          page_no=page_no, page_size=page_size)
+    format_output(result, ctx.obj['output'])
+
+
+@vpc.group()
+def havip():
+    """高可用虚拟IP HaVip 查询"""
+    pass
+
+
+@havip.command('list')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--filter', multiple=True,
+              help='筛选条件，格式 key=value（key 支持 haVipID/vpcID/subnetID），可多次指定')
+@click.pass_context
+@handle_error
+def havip_list(ctx, region_id: str, project_id: Optional[str], filter):
+    """查看HaVip列表"""
+    filters = []
+    for f in filter:
+        if '=' in f:
+            k, v = f.split('=', 1)
+            filters.append({'key': k.strip(), 'value': v.strip()})
+    client = get_vpc_client(ctx)
+    result = client.list_havips(region_id=region_id, project_id=project_id,
+                                filters=filters if filters else None)
+    format_output(result, ctx.obj['output'])

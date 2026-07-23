@@ -1915,6 +1915,182 @@ class VPCClient:
         if max_results is not None: qp['maxResults'] = max_results
         return self._simple_get('/v4/ports/new-list', qp, '新查询网卡列表')
 
+    # ==================== 网络 ACL / 前缀列表 / 流量控制 / GWLB / L2GW / havip 列表查询 ====================
+
+    def list_acls(self, region_id: str,
+                  acl_id: Optional[str] = None,
+                  project_id: Optional[str] = None,
+                  name: Optional[str] = None,
+                  page_no: Optional[int] = None,
+                  page_number: Optional[int] = None,
+                  page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看Acl列表信息 - GET /v4/acl/list"""
+        qp = {'regionID': region_id}
+        if acl_id: qp['aclID'] = acl_id
+        if project_id: qp['projectID'] = project_id
+        if name: qp['name'] = name
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/acl/list', qp, '查看Acl列表信息')
+
+    def new_list_acls(self, region_id: str,
+                      acl_id: Optional[str] = None,
+                      name: Optional[str] = None,
+                      page_no: Optional[int] = None,
+                      page_number: Optional[int] = None,
+                      page_size: Optional[int] = None) -> Dict[str, Any]:
+        """新acl列表 - GET /v4/acl/new-list"""
+        qp = {'regionID': region_id}
+        if acl_id: qp['aclID'] = acl_id
+        if name: qp['name'] = name
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/acl/new-list', qp, '新acl列表')
+
+    def list_acl_rules(self, region_id: str, acl_id: str) -> Dict[str, Any]:
+        """查看Acl规则列表 - GET /v4/acl-rule/list"""
+        return self._simple_get('/v4/acl-rule/list',
+                                {'regionID': region_id, 'aclID': acl_id},
+                                '查看Acl规则列表')
+
+    def list_prefix_lists(self, region_id: str,
+                          prefix_list_id: Optional[str] = None,
+                          query_content: Optional[str] = None,
+                          page_no: Optional[int] = None,
+                          page_number: Optional[int] = None,
+                          page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询前缀列表 - GET /v4/prefixlist/query"""
+        qp = {'regionID': region_id}
+        if prefix_list_id: qp['prefixListID'] = prefix_list_id
+        if query_content: qp['queryContent'] = query_content
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/prefixlist/query', qp, '查询前缀列表')
+
+    def show_prefix_list(self, region_id: str, prefix_list_id: str) -> Dict[str, Any]:
+        """查询前缀列表详情 - GET /v4/prefixlist/show"""
+        return self._simple_get('/v4/prefixlist/show',
+                                {'regionID': region_id, 'prefixListID': prefix_list_id},
+                                '查询前缀列表详情')
+
+    def get_prefix_list_associations(self, region_id: str, prefix_list_id: str,
+                                     page_no: Optional[int] = None,
+                                     page_number: Optional[int] = None,
+                                     page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询前缀列表关联资源 - GET /v4/prefixlist/get_associations"""
+        qp = {'regionID': region_id, 'prefixListID': prefix_list_id}
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/prefixlist/get_associations', qp, '查询前缀列表关联资源')
+
+    def list_flow_filter_rules(self, region_id: str, mirror_filter_id: str, direction: str,
+                               query_content: Optional[str] = None,
+                               page_no: Optional[int] = None,
+                               page_number: Optional[int] = None,
+                               page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看过滤规则列表 - GET /v4/mirrorflow/list-filter-rule"""
+        qp = {'regionID': region_id, 'mirrorFilterID': mirror_filter_id, 'direction': direction}
+        if query_content: qp['queryContent'] = query_content
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/mirrorflow/list-filter-rule', qp, '查看过滤规则列表')
+
+    def list_flow_filters(self, region_id: str,
+                          query_content: Optional[str] = None,
+                          page_no: Optional[int] = None,
+                          page_number: Optional[int] = None,
+                          page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看过滤条件列表 - GET /v4/mirrorflow/list-filter"""
+        qp = {'regionID': region_id}
+        if query_content: qp['queryContent'] = query_content
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/mirrorflow/list-filter', qp, '查看过滤条件列表')
+
+    def list_flow_sessions(self, region_id: str,
+                           mirror_filter_id: Optional[str] = None,
+                           query_content: Optional[str] = None,
+                           page_no: Optional[int] = None,
+                           page_number: Optional[int] = None,
+                           page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看流量会话列表 - GET /v4/flowsession/list"""
+        qp = {'regionID': region_id}
+        if mirror_filter_id: qp['mirrorFilterID'] = mirror_filter_id
+        if query_content: qp['queryContent'] = query_content
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/flowsession/list', qp, '查看流量会话列表')
+
+    def list_gwlbs(self, region_id: str,
+                   project_id: Optional[str] = None,
+                   gw_lb_id: Optional[str] = None,
+                   page_number: Optional[int] = None,
+                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看gwlb列表 - GET /v4/gwlb/list"""
+        qp = {'regionID': region_id}
+        if project_id: qp['projectID'] = project_id
+        if gw_lb_id: qp['gwLbID'] = gw_lb_id
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/gwlb/list', qp, '查看gwlb列表')
+
+    def list_ip_listeners(self, region_id: str,
+                          ip_listener_id: Optional[str] = None,
+                          page_number: Optional[int] = None,
+                          page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查看ip_listener列表 - GET /v4/iplistener/list"""
+        qp = {'regionID': region_id}
+        if ip_listener_id: qp['ipListenerID'] = ip_listener_id
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/iplistener/list', qp, '查看ip_listener列表')
+
+    def list_l2gws(self, region_id: str,
+                   l2gw_id: Optional[str] = None,
+                   query_content: Optional[str] = None,
+                   page_no: Optional[int] = None,
+                   page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询l2gw列表 - GET /v4/l2gw/query"""
+        qp = {'regionID': region_id}
+        if l2gw_id: qp['l2gwID'] = l2gw_id
+        if query_content: qp['queryContent'] = query_content
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/l2gw/query', qp, '查询l2gw列表')
+
+    def list_l2gw_connections(self, region_id: str,
+                              l2gw_id: Optional[str] = None,
+                              l2_connection_id: Optional[str] = None,
+                              page_no: Optional[int] = None,
+                              page_number: Optional[int] = None,
+                              page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询l2gw_connection列表 - GET /v4/l2gw_connection/query"""
+        qp = {'regionID': region_id}
+        if l2gw_id: qp['l2gwID'] = l2gw_id
+        if l2_connection_id: qp['l2ConnectionID'] = l2_connection_id
+        if page_no is not None: qp['pageNo'] = page_no
+        if page_number is not None: qp['pageNumber'] = page_number
+        if page_size is not None: qp['pageSize'] = page_size
+        return self._simple_get('/v4/l2gw_connection/query', qp, '查询l2gw_connection列表')
+
+    def list_havips(self, region_id: str,
+                    project_id: Optional[str] = None,
+                    filters: Optional[list] = None,
+                    client_token: Optional[str] = None) -> Dict[str, Any]:
+        """查看havip列表 - POST /v4/vpc/havip/list"""
+        import uuid
+        body = {'regionID': region_id, 'clientToken': client_token or str(uuid.uuid4())}
+        if project_id: body['projectID'] = project_id
+        if filters: body['filters'] = filters
+        return self._simple_post('/v4/vpc/havip/list', body, '查看havip列表')
+
     # ==================== VPC终端节点 / 内网DNS 列表查询 ====================
 
     def list_vpce_endpoints(self, region_id: str,
