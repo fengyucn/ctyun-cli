@@ -108,7 +108,7 @@ def _display_instances_table(result: dict):
     click.echo("-" * 130)
 
     for inst in data:
-        inst_id = inst.get("prodInstId", "N/A")[:34]
+        inst_id = inst.get("prodInstId", "N/A")
         name = inst.get("instanceName", "N/A")[:18]
         status = inst.get("status", 0)
         status_name = _INSTANCE_STATUS_MAP.get(status, f"未知({status})")

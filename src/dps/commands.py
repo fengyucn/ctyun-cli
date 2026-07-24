@@ -304,7 +304,7 @@ def describe(ctx, region_id: str, az_name: str, instance_uuid: str, output: Opti
     click.echo(f"  {'公网IP':<12}: {inst.get('publicIP', '') or '无'}")
     click.echo(f"  {'内网IPv6':<12}: {inst.get('privateIPv6', '') or '无'}")
     click.echo(f"  {'VPC':<12}: {inst.get('vpcName', '')} ({inst.get('vpcID', '')[:20]})")
-    click.echo(f"  {'子网':<12}: {inst.get('subnetID', '')[:30]}")
+    click.echo(f"  {'子网':<12}: {inst.get('subnetID', '')}")
     click.echo(f"  {'vCPU':<12}: {flavor.get('vcpus', '')}")
     click.echo(f"  {'内存(GB)':<12}: {flavor.get('memSize', '')}")
     click.echo(f"  {'网卡数':<12}: {flavor.get('nicAmount', '')}")

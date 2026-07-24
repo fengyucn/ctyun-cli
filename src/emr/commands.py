@@ -112,7 +112,7 @@ def _display_clusters_table(result: dict):
     click.echo("-" * 125)
 
     for inst in records:
-        inst_id = inst.get("id", "N/A")[:34]
+        inst_id = inst.get("id", "N/A")
         name = inst.get("clusterName", "N/A")[:20]
         state = inst.get("clusterState", "N/A")[:8]
         type_name = inst.get("clusterType", "N/A")[:8]
