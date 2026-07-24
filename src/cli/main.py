@@ -1230,7 +1230,9 @@ from ecs.commands import (format_output, update_ecs_label, query_dedicated_host_
                            dedicated_host_label,
                            query_security_groups, describe_security_group,
                            list_flavor_family_instances, list_dedicated_host_specs,
-                           describe_metadata, describe_invocation_results)
+                           describe_metadata, describe_invocation_results,
+                           get_availability_zones_details,
+                           console)
 ecs.add_command(update_ecs_label)
 ecs.add_command(query_dedicated_host_uuid)
 ecs.add_command(query_order_uuid)
@@ -1261,6 +1263,8 @@ ecs.add_command(list_flavor_family_instances)
 ecs.add_command(list_dedicated_host_specs)
 ecs.add_command(describe_metadata)
 ecs.add_command(describe_invocation_results)
+ecs.add_command(get_availability_zones_details)
+ecs.add_command(console)
 
 
 if __name__ == '__main__':

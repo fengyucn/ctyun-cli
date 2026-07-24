@@ -1932,6 +1932,59 @@ class ECSClient:
                 'returnObj': None
             }
 
+    def get_instance_console(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """
+        查询云主机的WEB管理终端地址（VNC）
+
+        Args:
+            region_id: 资源池ID
+            instance_id: 云主机ID
+
+        Returns:
+            VNC终端地址信息
+        """
+        logger.info(f"查询VNC终端: regionId={region_id}, instanceId={instance_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/ecs/vnc/details'
+
+            query_params = {
+                'regionID': region_id,
+                'instanceID': instance_id
+            }
+
+            headers = self.eop_auth.sign_request(
+                method='GET',
+                url=url,
+                query_params=query_params,
+                body='',
+                extra_headers={}
+            )
+
+            response = self.client.session.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=30
+            )
+
+            if response.status_code != 200:
+                return {
+                    'statusCode': response.status_code,
+                    'message': f'HTTP {response.status_code}',
+                    'returnObj': None
+                }
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"查询VNC终端失败: {e}")
+            return {
+                'statusCode': 500,
+                'message': str(e),
+                'returnObj': None
+            }
+
     def get_region_summary(self, region_id: str) -> Dict[str, Any]:
         """
         查询资源池概况信息

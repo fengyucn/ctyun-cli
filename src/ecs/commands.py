@@ -325,19 +325,6 @@ def list_old(ctx, page: int, page_size: int, status: Optional[str], instance_typ
 
 
 @ecs.command()
-@click.argument('instance_id')
-@click.pass_context
-@handle_error
-def show(ctx, instance_id: str):
-    """显示云服务器实例详情"""
-    client = ctx.obj['client']
-    ecs_client = ECSClient(client)
-
-    instance = ecs_client.get_instance(instance_id)
-    format_output(instance, ctx.obj['output'])
-
-
-@ecs.command()
 @click.option('--name', required=True, help='实例名称')
 @click.option('--instance-type', required=True, help='实例规格')
 @click.option('--image-id', required=True, help='镜像ID')
@@ -475,30 +462,23 @@ def resize(ctx, instance_id: str, instance_type: str):
 
 
 @ecs.command()
-@click.pass_context
-@handle_error
-def instance_types(ctx):
-    """列出可用的实例规格"""
-    client = ctx.obj['client']
-    ecs_client = ECSClient(client)
-
-    result = ecs_client.list_instance_types()
-    format_output(result.get('instanceTypes', []), ctx.obj['output'])
-
-
-@ecs.command()
+@click.option('--region-id', required=True, help='资源池ID')
 @click.argument('instance_id')
 @click.pass_context
 @handle_error
-def console(ctx, instance_id: str):
-    """获取云服务器实例控制台URL"""
+def console(ctx, region_id: str, instance_id: str):
+    """获取云服务器实例控制台URL（VNC）"""
     client = ctx.obj['client']
     ecs_client = ECSClient(client)
 
-    result = ecs_client.get_instance_console(instance_id)
-    console_url = result.get('consoleUrl')
-    if console_url:
-        click.echo(f"控制台URL: {console_url}")
+    result = ecs_client.get_instance_console(region_id=region_id, instance_id=instance_id)
+    if result.get('statusCode') != 800:
+        click.echo(f"查询失败: {result.get('message', '未知错误')}")
+        return
+    ro = result.get('returnObj', {}) or {}
+    vnc_url = ro.get('vncUrl') or ro.get('consoleUrl')
+    if vnc_url:
+        click.echo(f"控制台URL: {vnc_url}")
     else:
         click.echo("无法获取控制台URL")
     format_output(result, ctx.obj['output'])
@@ -1583,48 +1563,6 @@ def get_affinity_group_details(ctx, region_id: str, instance_id: str, output: Op
                 click.echo(f"策略类型: {return_obj.get('policyTypeName', 'N/A')}")
             else:
                 click.echo("\n该云主机未加入任何云主机组")
-                
-    except Exception as e:
-        click.echo(f"运行出错: {e}", err=True)
-        import traceback
-        traceback.print_exc()
-
-
-@ecs.command()
-@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
-@click.pass_context
-@handle_error
-def get_regions_details(ctx, output: Optional[str]):
-    """查询账户启用的资源池信息"""
-    try:
-        
-        
-        client = ctx.obj['client']
-        ecs_client = ECSClient(client)
-        
-        result = ecs_client.get_regions_details()
-        
-        if result.get('statusCode') != 800:
-            click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
-            return
-        
-        return_obj = result.get('returnObj', {})
-        regions = return_obj.get('regionList', [])
-        
-        if output and output in ['json', 'yaml']:
-            format_output(regions, output)
-        else:
-            click.echo(f"账户启用的资源池 (共 {len(regions)} 个)")
-            click.echo("=" * 100)
-            
-            if regions:
-                for idx, region in enumerate(regions, 1):
-                    click.echo(f"\n资源池 {idx}:")
-                    click.echo(f"  资源池ID: {region.get('regionID', 'N/A')}")
-                    click.echo(f"  资源池UUID: {region.get('regionUUID', 'N/A')}")
-                    click.echo(f"  资源池名称: {region.get('regionName', 'N/A')}")
-            else:
-                click.echo("\n无资源池数据")
                 
     except Exception as e:
         click.echo(f"运行出错: {e}", err=True)

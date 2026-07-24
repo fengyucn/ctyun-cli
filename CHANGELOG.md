@@ -4,6 +4,16 @@
 
 ---
 
+## v1.27.5 (2026-07-24)
+
+### 🔧 ECS 模块清理与修复
+
+- 移除 3 个旧版 mock 命令：`show` / `instance-types` / `get-regions-details`
+- 修复 `console` 命令：新增 `--region-id` 参数，对接真实 VNC URL API
+- 启用 `get-availability-zones-details` 命令（查询可用区详情）
+
+---
+
 ## v1.27.4 (2026-07-24)
 
 ### 🐛 Bug 修复
