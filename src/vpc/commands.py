@@ -695,10 +695,13 @@ def eip():
 @click.option('--eip-address', help='弹性公网IP地址过滤')
 @click.option('--status', help='弹性公网IP状态过滤')
 @click.option('--instance-id', help='绑定的实例ID过滤')
+@click.option('--page', type=int, default=1, help='页码，默认1')
+@click.option('--page-size', type=int, default=10, help='每页数量(1-50)，默认10')
 @click.pass_context
 @handle_error
 def describe_eips(ctx, region_id: str, eip_id: Optional[str], eip_address: Optional[str],
-                  status: Optional[str], instance_id: Optional[str]):
+                  status: Optional[str], instance_id: Optional[str],
+                  page: int, page_size: int):
     """
     查询弹性公网IP列表
     """
@@ -708,7 +711,9 @@ def describe_eips(ctx, region_id: str, eip_id: Optional[str], eip_address: Optio
         eip_id=eip_id,
         eip_address=eip_address,
         status=status,
-        instance_id=instance_id
+        instance_id=instance_id,
+        page=page,
+        page_size=page_size
     )
     format_output(result, ctx.obj['output'])
 
