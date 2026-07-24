@@ -1217,8 +1217,14 @@ cli.add_command(audit)
 from ims.commands import ims
 cli.add_command(ims)
 
+from ec.commands import ec
+cli.add_command(ec)
+
+from mse.commands import mse
+cli.add_command(mse)
+
 # 将 ecs/commands.py 中定义的命令注册到当前 ecs group
-from ecs.commands import (format_output, update_ecs_label, query_dedicated_host_uuid, query_order_uuid,
+from ecs.commands import (format_output, handle_error, update_ecs_label, query_dedicated_host_uuid, query_order_uuid,
                            cpu_history, mem_history, network_history, disk_history,
                            cpu_latest, mem_latest, network_latest, disk_latest,
                            get_region_summary, get_region_products, check_region_demand,
@@ -1265,6 +1271,108 @@ ecs.add_command(describe_metadata)
 ecs.add_command(describe_invocation_results)
 ecs.add_command(get_availability_zones_details)
 ecs.add_command(console)
+
+
+# ==================== ECS 询价命令（新 URI） ====================
+
+@ecs.command('new-order-price')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--resource-type', required=True,
+              type=click.Choice(['VM', 'EBS', 'IP', 'IP_POOL', 'NAT', 'BMS', 'PGELB', 'CBR_VM', 'CBR_VBS']),
+              help='资源类型')
+@click.option('--count', type=int, default=1, help='订购数量')
+@click.option('--on-demand', is_flag=True, help='是否按需（不传则包周期）')
+@click.option('--cycle-type', type=click.Choice(['MONTH', 'YEAR']), help='订购周期类型')
+@click.option('--cycle-count', type=int, help='订购周期大小')
+@click.option('--flavor-name', help='云主机规格（VM必填）')
+@click.option('--image-uuid', help='镜像UUID（VM必填）')
+@click.option('--sys-disk-type', type=click.Choice(['SAS', 'SATA', 'SSD', 'FAST-SSD']), help='系统盘类型')
+@click.option('--sys-disk-size', type=int, help='系统盘大小(GB 40-2048)')
+@click.option('--bandwidth', type=int, help='带宽(Mbps 1-2000)')
+@click.option('--disk-type', type=click.Choice(['SAS', 'SATA', 'SSD', 'FAST-SSD']), help='磁盘类型（EBS必填）')
+@click.option('--disk-size', type=int, help='磁盘大小(GB 5-2000)')
+@click.option('--disk-mode', type=click.Choice(['VBD', 'ISCSI', 'FCSAN']), help='磁盘模式（EBS必填）')
+@click.option('--nat-type', type=click.Choice(['small', 'medium', 'large', 'xlarge']), help='NAT规格')
+@click.option('--ip-pool-bandwidth', type=int, help='共享带宽大小(Mbps 5-2000)')
+@click.option('--device-type', help='物理机规格（BMS必填）')
+@click.option('--elb-type', type=click.Choice(['standardI', 'standardII', 'enhancedI', 'enhancedII', 'higherI']), help='ELB类型')
+@click.option('--cbr-value', type=int, help='存储库大小(GB 100-1024000)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def new_order_price(ctx, **kwargs):
+    """新订单询价（POST /v4/order/new-query-price）"""
+    from ecs.client import ECSClient
+    ecs_client = ECSClient(ctx.obj['client'])
+    result = ecs_client.new_order_query_price(**{k: v for k, v in kwargs.items() if k != 'output'})
+    format_output(result, kwargs.get('output') or 'table')
+
+
+@ecs.command('upgrade-order-price')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--resource-id', required=True, help='资源ID')
+@click.option('--resource-type', required=True,
+              type=click.Choice(['VM', 'EBS', 'IP', 'IP_POOL', 'NAT', 'PGELB', 'CBR_VM', 'CBR_VBS']),
+              help='资源类型')
+@click.option('--flavor-name', help='云主机规格（VM必填）')
+@click.option('--bandwidth', type=int, help='带宽(Mbps)')
+@click.option('--disk-size', type=int, help='磁盘大小(GB)')
+@click.option('--nat-type', type=click.Choice(['small', 'medium', 'large', 'xlarge']), help='NAT规格')
+@click.option('--ip-pool-bandwidth', type=int, help='共享带宽大小(Mbps)')
+@click.option('--elb-type', type=click.Choice(['standardI', 'standardII', 'enhancedI', 'enhancedII', 'higherI']), help='ELB类型')
+@click.option('--cbr-value', type=int, help='存储库大小(GB)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def upgrade_order_price(ctx, **kwargs):
+    """订单升级询价（POST /v4/upgrade-order/query-price）"""
+    from ecs.client import ECSClient
+    ecs_client = ECSClient(ctx.obj['client'])
+    result = ecs_client.upgrade_order_query_price(**{k: v for k, v in kwargs.items() if k != 'output'})
+    format_output(result, kwargs.get('output') or 'table')
+
+
+@ecs.command('renew-order-price')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--resource-id', required=True, help='资源ID')
+@click.option('--resource-type', required=True,
+              type=click.Choice(['VM', 'EBS', 'IP', 'IP_POOL', 'NAT', 'BMS', 'PGELB', 'CBR_VM', 'CBR_VBS']),
+              help='资源类型')
+@click.option('--cycle-type', required=True, type=click.Choice(['MONTH', 'YEAR']), help='订购周期类型')
+@click.option('--cycle-count', required=True, type=int, help='订购周期大小(MONTH:1-36, YEAR:1-3)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def renew_order_price_cmd(ctx, **kwargs):
+    """订单续订询价（POST /v4/renew-order/query-price）"""
+    from ecs.client import ECSClient
+    ecs_client = ECSClient(ctx.obj['client'])
+    result = ecs_client.renew_order_query_price(**{k: v for k, v in kwargs.items() if k != 'output'})
+    format_output(result, kwargs.get('output') or 'table')
+
+
+@ecs.command('upgrade-by-uuid-price')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--resource-uuid', required=True, help='资源UUID')
+@click.option('--resource-type', required=True,
+              type=click.Choice(['VM', 'EBS', 'IP', 'IP_POOL', 'NAT', 'PGELB', 'CBR_VM', 'CBR_VBS']),
+              help='资源类型')
+@click.option('--flavor-name', help='云主机规格（VM必填）')
+@click.option('--bandwidth', type=int, help='带宽(Mbps)')
+@click.option('--disk-size', type=int, help='磁盘大小(GB)')
+@click.option('--nat-type', type=click.Choice(['small', 'medium', 'large', 'xlarge']), help='NAT规格')
+@click.option('--ip-pool-bandwidth', type=int, help='共享带宽大小(Mbps)')
+@click.option('--elb-type', type=click.Choice(['standardI', 'standardII', 'enhancedI', 'enhancedII', 'higherI']), help='ELB类型')
+@click.option('--cbr-value', type=int, help='存储库大小(GB)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def upgrade_by_uuid_price(ctx, **kwargs):
+    """资源UUID升级询价（POST /v4/order/upgrade-query-price）"""
+    from ecs.client import ECSClient
+    ecs_client = ECSClient(ctx.obj['client'])
+    result = ecs_client.order_upgrade_query_price(**{k: v for k, v in kwargs.items() if k != 'output'})
+    format_output(result, kwargs.get('output') or 'table')
 
 
 if __name__ == '__main__':

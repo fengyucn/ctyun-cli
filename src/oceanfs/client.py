@@ -114,3 +114,29 @@ class OceanFSClient:
         except Exception as e:
             logger.error(f"扩容文件系统询价失败: {str(e)}")
             raise
+
+    def _post_price(self, path: str, body: Dict[str, Any], desc: str) -> Dict[str, Any]:
+        import json as _json
+        url = f'https://{self.base_endpoint}{path}'
+        body_str = _json.dumps(body)
+        try:
+            headers = self.eop_auth.sign_request(method='POST', url=url, query_params={}, body=body_str, extra_headers={})
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
+            if response.status_code != 200:
+                return {'statusCode': response.status_code, 'message': f'HTTP {response.status_code}', 'returnObj': None}
+            return response.json()
+        except Exception as e:
+            logger.error(f"{desc}失败: {e}")
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def create_price(self, region_id: str, order_num: int, sfs_size: int,
+                     sfs_type: str, on_demand: bool = True,
+                     cycle_type: Optional[str] = None,
+                     cycle_cnt: Optional[int] = None) -> Dict[str, Any]:
+        """订购文件系统询价 - POST /v4/oceanfs/new-order/query-prices"""
+        body = {'regionID': region_id, 'orderNum': order_num, 'sfsSize': sfs_size,
+                'sfsType': sfs_type, 'onDemand': on_demand}
+        if not on_demand:
+            if cycle_type: body['cycleType'] = cycle_type
+            if cycle_cnt is not None: body['cycleCnt'] = cycle_cnt
+        return self._post_price('/v4/oceanfs/new-order/query-prices', body, 'OceanFS订购询价')

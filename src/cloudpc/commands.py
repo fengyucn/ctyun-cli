@@ -676,3 +676,101 @@ def _display_orgs_summary(result):
     click.echo(f"\n🏢 部门摘要")
     click.echo("=" * 50)
     click.echo(f"✅ 查询成功 | 📋 总数: {total}")
+
+
+# ==================== CloudPC 询价命令（6个） ====================
+
+@cloudpc.command('volume-price')
+@click.option('--bill-mode', required=True, type=click.Choice(['Cycle']), help='订购类型')
+@click.option('--disk-type', required=True, type=click.Choice(['uhio', 'hio', 'cio']), help='磁盘类型')
+@click.option('--count', required=True, type=int, help='数量(1-50)')
+@click.option('--volume-size', required=True, type=int, help='云硬盘大小(GB >=10)')
+@click.option('--encryption', required=True, type=click.Choice(['true', 'false']), help='是否加密')
+@click.option('--cycle-type', type=click.Choice(['Month']), help='周期类型')
+@click.option('--cycle-cnt', type=int, help='周期数(1-36)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def cloudpc_volume_price(ctx, bill_mode, disk_type, count, volume_size, encryption,
+                         cycle_type, cycle_cnt, output):
+    """云硬盘创建询价"""
+    from cloudpc.client import CloudPCClient
+    result = CloudPCClient(ctx.obj['client']).describe_cloud_volume_price(
+        bill_mode=bill_mode, disk_type=disk_type, count=count,
+        volume_size=volume_size, encryption=(encryption == 'true'),
+        cycle_type=cycle_type, cycle_cnt=cycle_cnt)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@cloudpc.command('ecs-price')
+@click.option('--bill-mode', required=True, type=click.Choice(['Cycle']), help='订购类型')
+@click.option('--os-type', required=True, type=click.Choice(['Windows', 'Linux']), help='操作系统')
+@click.option('--template-oid', required=True, help='规格模板ID')
+@click.option('--image-oid', required=True, help='镜像ID')
+@click.option('--subnet-oid', required=True, help='子网ID')
+@click.option('--security-group-oid', required=True, help='安全组ID')
+@click.option('--sys-disk-type', required=True, type=click.Choice(['uhio']), help='系统盘类型')
+@click.option('--sys-disk-size', required=True, type=int, help='系统盘大小(GB)')
+@click.option('--instance-num', required=True, type=int, help='实例数量')
+@click.option('--cycle-type', type=click.Choice(['Month']), help='周期类型')
+@click.option('--cycle-cnt', type=int, help='周期数(1-36)')
+@click.option('--processor-type', type=click.Choice(['kp', 'hg']), help='处理器类型(kp鲲鹏/hg海光)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def cloudpc_ecs_price(ctx, **kw):
+    """云电脑创建询价"""
+    from cloudpc.client import CloudPCClient
+    result = CloudPCClient(ctx.obj['client']).describe_ecs_price(**{k.replace('-','_'):v for k,v in kw.items() if v is not None and k != 'output'})
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@cloudpc.command('expand-price')
+@click.option('--cycle-type', required=True, type=click.Choice(['Month']), help='周期类型')
+@click.option('--cycle-cnt', required=True, type=int, help='周期数(1-36)')
+@click.option('--volume-oid', required=True, help='云硬盘ID')
+@click.option('--volume-size', required=True, type=int, help='扩容后大小(GB)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def cloudpc_expand_price(ctx, cycle_type, cycle_cnt, volume_oid, volume_size, output):
+    """云硬盘扩容询价"""
+    from cloudpc.client import CloudPCClient
+    result = CloudPCClient(ctx.obj['client']).describe_expand_price(cycle_type, cycle_cnt, volume_oid, volume_size)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@cloudpc.command('renew-ecs-price')
+@click.option('--cycle-type', required=True, type=click.Choice(['Month']), help='周期类型')
+@click.option('--cycle-cnt', required=True, type=int, help='周期数(1-36)')
+@click.option('--desktop-oids', required=True, help='云电脑ID列表，逗号分隔(最多10个)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def cloudpc_renew_ecs_price(ctx, cycle_type, cycle_cnt, desktop_oids, output):
+    """云电脑续订询价"""
+    from cloudpc.client import CloudPCClient
+    result = CloudPCClient(ctx.obj['client']).describe_renew_ecs_price(
+        cycle_type, cycle_cnt, desktop_oids.split(','))
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@cloudpc.command('renew-volume-price')
+@click.option('--cycle-type', required=True, type=click.Choice(['Month']), help='周期类型')
+@click.option('--cycle-cnt', required=True, type=int, help='周期数(1-36)')
+@click.option('--volume-oid', required=True, help='云硬盘ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def cloudpc_renew_volume_price(ctx, cycle_type, cycle_cnt, volume_oid, output):
+    """云硬盘续订询价"""
+    from cloudpc.client import CloudPCClient
+    result = CloudPCClient(ctx.obj['client']).describe_renew_volume_price(cycle_type, cycle_cnt, volume_oid)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@cloudpc.command('resize-sysdisk-price')
+@click.option('--desktop-oid', required=True, help='云电脑ID')
+@click.option('--disk-size', required=True, type=int, help='扩容后系统盘大小(GB，10的倍数)')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def cloudpc_resize_sysdisk_price(ctx, desktop_oid, disk_size, output):
+    """系统盘扩容询价"""
+    from cloudpc.client import CloudPCClient
+    result = CloudPCClient(ctx.obj['client']).describe_resize_sysdisk_price(desktop_oid, disk_size)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))

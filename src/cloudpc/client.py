@@ -179,3 +179,82 @@ class CloudPCClient:
         if parent_org_oid: params['parentOrgOid'] = parent_org_oid
         if org_name: params['orgName'] = org_name
         return self._get('/v3/org/describe', region_id, params)
+
+    # ==================== CloudPC 询价 API（6个） ====================
+
+    def _post_price(self, path: str, body: Dict[str, Any], desc: str) -> Optional[Dict[str, Any]]:
+        """通用询价 POST 请求"""
+        import json as _json
+        url = f'https://{self.base_endpoint}{path}'
+        body_str = _json.dumps(body)
+        try:
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={}, body=body_str, extra_headers={})
+            response = self.client.session.post(url, json=body, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"{desc}失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def describe_cloud_volume_price(self, bill_mode: str, disk_type: str,
+                                    count: int, volume_size: int, encryption: bool,
+                                    cycle_type: Optional[str] = None,
+                                    cycle_cnt: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """云硬盘创建询价 - POST /v3/cloudVolume/describePrice"""
+        body = {'billMode': bill_mode, 'diskType': disk_type, 'count': count,
+                'volumeSize': volume_size, 'encryption': encryption}
+        if cycle_type: body['cycleType'] = cycle_type
+        if cycle_cnt is not None: body['cycleCnt'] = cycle_cnt
+        return self._post_price('/v3/cloudVolume/describePrice', body, '云硬盘创建询价')
+
+    def describe_ecs_price(self, bill_mode: str, os_type: str,
+                           template_oid: str, image_oid: str,
+                           subnet_oid: str, security_group_oid: str,
+                           sys_disk_type: str, sys_disk_size: int,
+                           instance_num: int,
+                           cycle_type: Optional[str] = None,
+                           cycle_cnt: Optional[int] = None,
+                           processor_type: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """云电脑创建询价 - POST /v3/ecs/describePrice"""
+        body = {'billMode': bill_mode, 'osType': os_type,
+                'templateOid': template_oid, 'imageOid': image_oid,
+                'subnetOid': subnet_oid, 'securityGroupOid': security_group_oid,
+                'sysDiskType': sys_disk_type, 'sysDiskSize': sys_disk_size,
+                'instanceNum': instance_num}
+        if cycle_type: body['cycleType'] = cycle_type
+        if cycle_cnt is not None: body['cycleCnt'] = cycle_cnt
+        if processor_type: body['processorType'] = processor_type
+        return self._post_price('/v3/ecs/describePrice', body, '云电脑创建询价')
+
+    def describe_expand_price(self, cycle_type: str, cycle_cnt: int,
+                              volume_oid: str, volume_size: int) -> Optional[Dict[str, Any]]:
+        """云硬盘扩容询价 - POST /v3/cloudVolume/describeExpandPrice"""
+        return self._post_price('/v3/cloudVolume/describeExpandPrice',
+                                {'cycleType': cycle_type, 'cycleCnt': cycle_cnt,
+                                 'volumeOid': volume_oid, 'volumeSize': volume_size},
+                                '云硬盘扩容询价')
+
+    def describe_renew_ecs_price(self, cycle_type: str, cycle_cnt: int,
+                                 desktop_oid_list: list) -> Optional[Dict[str, Any]]:
+        """云电脑续订询价 - POST /v3/ecs/describeRenewEcsPrice"""
+        return self._post_price('/v3/ecs/describeRenewEcsPrice',
+                                {'cycleType': cycle_type, 'cycleCnt': cycle_cnt,
+                                 'desktopOidList': desktop_oid_list},
+                                '云电脑续订询价')
+
+    def describe_renew_volume_price(self, cycle_type: str, cycle_cnt: int,
+                                    volume_oid: str) -> Optional[Dict[str, Any]]:
+        """云硬盘续订询价 - POST /v3/cloudVolume/describeRenewCloudVolumePrice"""
+        return self._post_price('/v3/cloudVolume/describeRenewCloudVolumePrice',
+                                {'cycleType': cycle_type, 'cycleCnt': cycle_cnt,
+                                 'volumeOid': volume_oid},
+                                '云硬盘续订询价')
+
+    def describe_resize_sysdisk_price(self, desktop_oid: str,
+                                      disk_size: int) -> Optional[Dict[str, Any]]:
+        """系统盘扩容询价 - POST /v3/ecs/describeResizeSystemDiskPrice"""
+        return self._post_price('/v3/ecs/describeResizeSystemDiskPrice',
+                                {'desktopOid': desktop_oid, 'diskSize': disk_size},
+                                '系统盘扩容询价')

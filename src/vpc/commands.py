@@ -2118,3 +2118,281 @@ def ipv4_gw_list(ctx, region_id: str, vpc_id: Optional[str]):
     client = get_vpc_client(ctx)
     result = client.list_ipv4_gateways(region_id=region_id, vpc_id=vpc_id)
     format_output(result, ctx.obj['output'])
+
+
+# ==================== VPC 询价命令（18个） ====================
+
+@vpc.group()
+def price():
+    """VPC 询价"""
+    pass
+
+
+@price.group()
+def eip():
+    """EIP 询价"""
+    pass
+
+
+@eip.command('create')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cycle-type', required=True, type=click.Choice(['month', 'year', 'on_demand']), help='订购类型')
+@click.option('--name', required=True, help='EIP名称')
+@click.option('--cycle-count', type=int, help='订购时长')
+@click.option('--bandwidth', type=int, help='带宽峰值(Mbps 1-300)')
+@click.option('--demand-billing-type', type=click.Choice(['bandwidth', 'upflowc']), help='按需计费类型')
+@click.pass_context
+@handle_error
+def price_eip_create(ctx, **kw):
+    """EIP创建询价"""
+    result = get_vpc_client(ctx).eip_create_price(**{k.replace('-','_'):v for k,v in kw.items() if v is not None})
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@eip.command('modify')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--eip-id', required=True, help='EIP ID')
+@click.option('--bandwidth', required=True, type=int, help='变更后带宽(Mbps)')
+@click.pass_context
+@handle_error
+def price_eip_modify(ctx, region_id, eip_id, bandwidth):
+    """EIP变配询价"""
+    result = get_vpc_client(ctx).eip_modify_price(region_id, eip_id, bandwidth)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@eip.command('renew')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--eip-id', required=True, help='EIP ID')
+@click.option('--cycle-type', required=True, type=click.Choice(['month', 'year']), help='订购类型')
+@click.option('--cycle-count', required=True, type=int, help='订购时长')
+@click.pass_context
+@handle_error
+def price_eip_renew(ctx, region_id, eip_id, cycle_type, cycle_count):
+    """EIP续订询价"""
+    result = get_vpc_client(ctx).eip_renew_price(region_id, eip_id, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.group()
+def nat():
+    """NAT 询价"""
+    pass
+
+
+@nat.command('create')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--vpc-id', required=True, help='VPC ID')
+@click.option('--name', required=True, help='NAT网关名称')
+@click.option('--spec', required=True, type=click.Choice([1,2,3,4]), help='规格：1小/2中/3大/4超大')
+@click.option('--az-name', required=True, help='可用区')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='订购类型')
+@click.option('--cycle-count', required=True, type=int, help='订购时长')
+@click.pass_context
+@handle_error
+def price_nat_create(ctx, region_id, vpc_id, name, spec, az_name, cycle_type, cycle_count):
+    """NAT创建询价"""
+    result = get_vpc_client(ctx).nat_create_price(region_id, vpc_id, name, spec, az_name, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@nat.command('modify')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--nat-gateway-id', required=True, help='NAT网关ID')
+@click.option('--spec', required=True, type=click.Choice([1,2,3,4]), help='规格：1小/2中/3大/4超大')
+@click.pass_context
+@handle_error
+def price_nat_modify(ctx, region_id, nat_gateway_id, spec):
+    """NAT变配询价"""
+    result = get_vpc_client(ctx).nat_modify_price(region_id, nat_gateway_id, spec)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@nat.command('renew')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--nat-gateway-id', required=True, help='NAT网关ID')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='订购类型')
+@click.option('--cycle-count', required=True, type=int, help='订购时长')
+@click.pass_context
+@handle_error
+def price_nat_renew(ctx, region_id, nat_gateway_id, cycle_type, cycle_count):
+    """NAT续订询价"""
+    result = get_vpc_client(ctx).nat_renew_price(region_id, nat_gateway_id, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.group()
+def bw():
+    """共享带宽询价"""
+    pass
+
+
+@bw.command('create')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--bandwidth', required=True, type=int, help='带宽峰值(Mbps >=5)')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year','on_demand']), help='订购类型')
+@click.option('--cycle-count', type=int, help='订购时长')
+@click.option('--name', required=True, help='共享带宽名称')
+@click.pass_context
+@handle_error
+def price_bw_create(ctx, region_id, bandwidth, cycle_type, cycle_count, name):
+    """共享带宽创建询价"""
+    result = get_vpc_client(ctx).bandwidth_create_price(region_id, bandwidth, cycle_type, cycle_count or 1, name)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@bw.command('modify')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--bandwidth-id', required=True, help='共享带宽ID')
+@click.option('--bandwidth', required=True, type=int, help='变更后带宽(Mbps)')
+@click.pass_context
+@handle_error
+def price_bw_modify(ctx, region_id, bandwidth_id, bandwidth):
+    """共享带宽变配询价"""
+    result = get_vpc_client(ctx).bandwidth_modify_price(region_id, bandwidth_id, bandwidth)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@bw.command('renew')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--bandwidth-id', required=True, help='共享带宽ID')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='订购类型')
+@click.option('--cycle-count', required=True, type=int, help='订购时长')
+@click.pass_context
+@handle_error
+def price_bw_renew(ctx, region_id, bandwidth_id, cycle_type, cycle_count):
+    """共享带宽续订询价"""
+    result = get_vpc_client(ctx).bandwidth_renew_price(region_id, bandwidth_id, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.command('flow-package')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cycle-type', required=True, type=click.Choice(['MONTH','YEAR']), help='订阅周期')
+@click.option('--cycle-count', required=True, type=int, help='周期时长（仅支持1）')
+@click.option('--count', required=True, type=int, help='购买数量(1-20)')
+@click.option('--spec', required=True, type=int, help='流量包规格(GB)')
+@click.pass_context
+@handle_error
+def price_flow_pkg(ctx, region_id, cycle_type, cycle_count, count, spec):
+    """共享流量包询价"""
+    result = get_vpc_client(ctx).flow_package_price(region_id, cycle_type, cycle_count, count, spec)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.group()
+def ipv6():
+    """IPv6带宽询价"""
+    pass
+
+
+@ipv6.command('create')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--bandwidth', required=True, type=int, help='带宽峰值(Mbps)')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='订购类型')
+@click.option('--cycle-count', required=True, type=int, help='订购时长')
+@click.option('--name', required=True, help='IPv6带宽名称')
+@click.pass_context
+@handle_error
+def price_ipv6_create(ctx, region_id, bandwidth, cycle_type, cycle_count, name):
+    """IPv6带宽创建询价"""
+    result = get_vpc_client(ctx).ipv6_bw_create_price(region_id, bandwidth, cycle_type, cycle_count, name)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@ipv6.command('modify')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--bandwidth-id', required=True, help='IPv6带宽ID')
+@click.option('--bandwidth', required=True, type=int, help='变更后带宽(Mbps)')
+@click.pass_context
+@handle_error
+def price_ipv6_modify(ctx, region_id, bandwidth_id, bandwidth):
+    """IPv6带宽变配询价"""
+    result = get_vpc_client(ctx).ipv6_bw_modify_price(region_id, bandwidth_id, bandwidth)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@ipv6.command('renew')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--bandwidth-id', required=True, help='IPv6带宽ID')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='订购类型')
+@click.option('--cycle-count', required=True, type=int, help='订购时长')
+@click.pass_context
+@handle_error
+def price_ipv6_renew(ctx, region_id, bandwidth_id, cycle_type, cycle_count):
+    """IPv6带宽续订询价"""
+    result = get_vpc_client(ctx).ipv6_bw_renew_price(region_id, bandwidth_id, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.command('vpce')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--endpoint-service-id', required=True, help='终端节点服务ID')
+@click.option('--endpoint-name', required=True, help='终端节点名称')
+@click.option('--subnet-id', required=True, help='子网ID')
+@click.option('--vpc-id', required=True, help='VPC ID')
+@click.option('--ip', help='指定IP地址')
+@click.pass_context
+@handle_error
+def price_vpce(ctx, region_id, endpoint_service_id, endpoint_name, subnet_id, vpc_id, ip):
+    """终端节点创建询价"""
+    result = get_vpc_client(ctx).vpce_create_price(region_id, endpoint_service_id, endpoint_name, subnet_id, vpc_id, ip)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.group()
+def l2gw():
+    """L2GW询价"""
+    pass
+
+
+@l2gw.command('create')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--spec', required=True, type=click.Choice(['STANDARD','ENHANCED']), help='规格')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year','on_demand']), help='订购类型')
+@click.option('--cycle-count', type=int, help='订购时长')
+@click.pass_context
+@handle_error
+def price_l2gw_create(ctx, region_id, spec, cycle_type, cycle_count):
+    """L2GW订购询价"""
+    result = get_vpc_client(ctx).l2gw_create_price(region_id, spec, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@l2gw.command('renew')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--l2gw-id', required=True, help='L2GW ID')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='订购类型')
+@click.option('--cycle-count', required=True, type=int, help='订购时长')
+@click.pass_context
+@handle_error
+def price_l2gw_renew(ctx, region_id, l2gw_id, cycle_type, cycle_count):
+    """L2GW续订询价"""
+    result = get_vpc_client(ctx).l2gw_renew_price(region_id, l2gw_id, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.command('to-cycle')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--resource-id', required=True, help='资源ID')
+@click.option('--resource-type', required=True, type=click.Choice(['eip','bandwidth','elb','private_nat','public_nat']), help='资源类型')
+@click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='周期类型')
+@click.option('--cycle-count', required=True, type=int, help='周期数')
+@click.pass_context
+@handle_error
+def price_to_cycle(ctx, region_id, resource_id, resource_type, cycle_type, cycle_count):
+    """包周期询价（按需转包周期）"""
+    result = get_vpc_client(ctx).to_cycle_price(region_id, resource_id, resource_type, cycle_type, cycle_count)
+    format_output(result, ctx.obj.get('output', 'table'))
+
+
+@price.command('to-ondemand')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--resource-id', required=True, help='资源ID')
+@click.option('--resource-type', required=True, type=click.Choice(['eip','bandwidth','elb','private_nat','public_nat']), help='资源类型')
+@click.pass_context
+@handle_error
+def price_to_ondemand(ctx, region_id, resource_id, resource_type):
+    """转按需询价（包周期转按需）"""
+    result = get_vpc_client(ctx).to_ondemand_price(region_id, resource_id, resource_type)
+    format_output(result, ctx.obj.get('output', 'table'))

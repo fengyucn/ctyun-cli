@@ -2625,3 +2625,170 @@ class VPCClient:
         """获取内网DNS绑定的标签 - GET /v4/private-zone/list-labels"""
         qp = {'zoneID': zone_id, 'pageNo': page_no, 'pageSize': page_size}
         return self._label_get(region_id, '/v4/private-zone/list-labels', qp, '获取内网DNS标签')
+    # ==================== VPC 询价 API（18个） ====================
+
+    def _post_price(self, path: str, body: Dict[str, Any], desc: str) -> Dict[str, Any]:
+        """通用 VPC 询价 POST 请求"""
+        import json as _json, uuid
+        bd = {k: v for k, v in body.items() if v is not None}
+        if 'clientToken' not in bd:
+            bd['clientToken'] = str(uuid.uuid4())
+        url = f'https://{self.base_endpoint}{path}'
+        body_str = _json.dumps(bd)
+        try:
+            headers = self.eop_auth.sign_request(method='POST', url=url, query_params={},
+                                                 body=body_str, extra_headers={})
+            response = self.client.session.post(url, json=bd, headers=headers, timeout=30)
+            if response.status_code != 200:
+                return {'statusCode': response.status_code,
+                        'message': f'HTTP {response.status_code}: {response.text}',
+                        'returnObj': None}
+            return response.json()
+        except Exception as e:
+            logger.error(f"{desc}失败: {e}")
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def eip_create_price(self, region_id: str, cycle_type: str, name: str,
+                         cycle_count: Optional[int] = None, bandwidth: Optional[int] = None,
+                         bandwidth_id: Optional[str] = None,
+                         demand_billing_type: Optional[str] = None) -> Dict[str, Any]:
+        """EIP创建询价 - POST /v4/eip/query-create-price"""
+        body = {'regionID': region_id, 'cycleType': cycle_type, 'name': name}
+        if cycle_count is not None: body['cycleCount'] = cycle_count
+        if bandwidth is not None: body['bandwidth'] = bandwidth
+        if bandwidth_id: body['bandwidthID'] = bandwidth_id
+        if demand_billing_type: body['demandBillingType'] = demand_billing_type
+        return self._post_price('/v4/eip/query-create-price', body, 'EIP创建询价')
+
+    def eip_modify_price(self, region_id: str, eip_id: str, bandwidth: int) -> Dict[str, Any]:
+        """EIP变配询价 - POST /v4/eip/query-modify-price"""
+        return self._post_price('/v4/eip/query-modify-price',
+                                {'regionID': region_id, 'eipID': eip_id, 'bandwidth': bandwidth},
+                                'EIP变配询价')
+
+    def eip_renew_price(self, region_id: str, eip_id: str,
+                        cycle_type: str, cycle_count: int) -> Dict[str, Any]:
+        """EIP续订询价 - POST /v4/eip/query-renew-price"""
+        return self._post_price('/v4/eip/query-renew-price',
+                                {'regionID': region_id, 'eipID': eip_id,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count},
+                                'EIP续订询价')
+
+    def nat_create_price(self, region_id: str, vpc_id: str, name: str,
+                         spec: int, az_name: str, cycle_type: str, cycle_count: int,
+                         description: Optional[str] = None) -> Dict[str, Any]:
+        """NAT创建询价 - POST /v4/nat/query-create-price"""
+        body = {'regionID': region_id, 'vpcID': vpc_id, 'name': name,
+                'spec': spec, 'azName': az_name, 'cycleType': cycle_type, 'cycleCount': cycle_count}
+        if description: body['description'] = description
+        return self._post_price('/v4/nat/query-create-price', body, 'NAT创建询价')
+
+    def nat_modify_price(self, region_id: str, nat_gateway_id: str, spec: int) -> Dict[str, Any]:
+        """NAT变配询价 - POST /v4/nat/query-modify-price"""
+        return self._post_price('/v4/nat/query-modify-price',
+                                {'regionID': region_id, 'natGatewayID': nat_gateway_id, 'spec': spec},
+                                'NAT变配询价')
+
+    def nat_renew_price(self, region_id: str, nat_gateway_id: str,
+                        cycle_type: str, cycle_count: int) -> Dict[str, Any]:
+        """NAT续订询价 - POST /v4/nat/query-renew-price"""
+        return self._post_price('/v4/nat/query-renew-price',
+                                {'regionID': region_id, 'natGatewayID': nat_gateway_id,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count},
+                                'NAT续订询价')
+
+    def bandwidth_create_price(self, region_id: str, bandwidth: int,
+                               cycle_type: str, cycle_count: int, name: str) -> Dict[str, Any]:
+        """共享带宽创建询价 - POST /v4/bandwidth/query-create-price"""
+        return self._post_price('/v4/bandwidth/query-create-price',
+                                {'regionID': region_id, 'bandwidth': bandwidth,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count, 'name': name},
+                                '共享带宽创建询价')
+
+    def bandwidth_modify_price(self, region_id: str, bandwidth_id: str, bandwidth: int) -> Dict[str, Any]:
+        """共享带宽变配询价 - POST /v4/bandwidth/query-modify-price"""
+        return self._post_price('/v4/bandwidth/query-modify-price',
+                                {'regionID': region_id, 'bandwidthID': bandwidth_id, 'bandwidth': bandwidth},
+                                '共享带宽变配询价')
+
+    def bandwidth_renew_price(self, region_id: str, bandwidth_id: str,
+                              cycle_type: str, cycle_count: int) -> Dict[str, Any]:
+        """共享带宽续订询价 - POST /v4/bandwidth/query-renew-price"""
+        return self._post_price('/v4/bandwidth/query-renew-price',
+                                {'regionID': region_id, 'bandwidthID': bandwidth_id,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count},
+                                '共享带宽续订询价')
+
+    def flow_package_price(self, region_id: str, cycle_type: str, cycle_count: int,
+                           count: int, spec: int) -> Dict[str, Any]:
+        """共享流量包询价 - POST /v4/flow_package/query-price"""
+        return self._post_price('/v4/flow_package/query-price',
+                                {'regionID': region_id, 'resourceType': 'flow_pkg',
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count,
+                                 'count': count, 'spec': spec},
+                                '共享流量包询价')
+
+    def ipv6_bw_create_price(self, region_id: str, bandwidth: int,
+                             cycle_type: str, cycle_count: int, name: str) -> Dict[str, Any]:
+        """IPv6带宽创建询价 - POST /v4/ipv6_bandwidth/query-create-price"""
+        return self._post_price('/v4/ipv6_bandwidth/query-create-price',
+                                {'regionID': region_id, 'bandwidth': bandwidth,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count, 'name': name},
+                                'IPv6带宽创建询价')
+
+    def ipv6_bw_modify_price(self, region_id: str, bandwidth_id: str, bandwidth: int) -> Dict[str, Any]:
+        """IPv6带宽变配询价 - POST /v4/ipv6_bandwidth/query-modify-price"""
+        return self._post_price('/v4/ipv6_bandwidth/query-modify-price',
+                                {'regionID': region_id, 'bandwidthID': bandwidth_id, 'bandwidth': bandwidth},
+                                'IPv6带宽变配询价')
+
+    def ipv6_bw_renew_price(self, region_id: str, bandwidth_id: str,
+                            cycle_type: str, cycle_count: int) -> Dict[str, Any]:
+        """IPv6带宽续订询价 - POST /v4/ipv6_bandwidth/query-renew-price"""
+        return self._post_price('/v4/ipv6_bandwidth/query-renew-price',
+                                {'regionID': region_id, 'bandwidthID': bandwidth_id,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count},
+                                'IPv6带宽续订询价')
+
+    def vpce_create_price(self, region_id: str, endpoint_service_id: str,
+                          endpoint_name: str, subnet_id: str, vpc_id: str,
+                          ip: Optional[str] = None,
+                          whitelist_flag: int = 1) -> Dict[str, Any]:
+        """终端节点创建询价 - POST /v4/vpce/query-create-endpoint-price"""
+        body = {'regionID': region_id, 'cycleType': 'on_demand',
+                'endpointServiceID': endpoint_service_id, 'endpointName': endpoint_name,
+                'subnetID': subnet_id, 'vpcID': vpc_id, 'whitelistFlag': whitelist_flag}
+        if ip: body['IP'] = ip
+        return self._post_price('/v4/vpce/query-create-endpoint-price', body, '终端节点创建询价')
+
+    def l2gw_create_price(self, region_id: str, spec: str,
+                          cycle_type: str, cycle_count: Optional[int] = None) -> Dict[str, Any]:
+        """L2GW订购询价 - POST /v4/l2gw/query-create-price"""
+        body = {'regionID': region_id, 'spec': spec, 'cycleType': cycle_type}
+        if cycle_count is not None: body['cycleCount'] = cycle_count
+        return self._post_price('/v4/l2gw/query-create-price', body, 'L2GW订购询价')
+
+    def l2gw_renew_price(self, region_id: str, l2gw_id: str,
+                         cycle_type: str, cycle_count: int) -> Dict[str, Any]:
+        """L2GW续订询价 - POST /v4/l2gw/query-renew-price"""
+        return self._post_price('/v4/l2gw/query-renew-price',
+                                {'regionID': region_id, 'l2gwID': l2gw_id,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count},
+                                'L2GW续订询价')
+
+    def to_cycle_price(self, region_id: str, resource_id: str, resource_type: str,
+                       cycle_type: str, cycle_count: int) -> Dict[str, Any]:
+        """包周期询价（按需转包周期） - POST /v4/order/query-to-cycle-price"""
+        return self._post_price('/v4/order/query-to-cycle-price',
+                                {'regionID': region_id, 'resourceID': resource_id,
+                                 'resourceType': resource_type,
+                                 'cycleType': cycle_type, 'cycleCount': cycle_count},
+                                '包周期询价')
+
+    def to_ondemand_price(self, region_id: str, resource_id: str,
+                          resource_type: str) -> Dict[str, Any]:
+        """转按需询价（包周期转按需） - POST /v4/order/query-to-need-price"""
+        return self._post_price('/v4/order/query-to-need-price',
+                                {'regionID': region_id, 'resourceID': resource_id,
+                                 'resourceType': resource_type},
+                                '转按需询价')

@@ -238,3 +238,71 @@ class KafkaClient:
         except Exception as e:
             logger.error(f"查询标签列表失败: {e}")
             return {"error": True, "message": f"请求异常: {str(e)}", "exception": str(e)}
+
+    # ==================== Kafka 询价 API（5个） ====================
+
+    def _post_price(self, path: str, region_id: str, body: Dict[str, Any], desc: str) -> Optional[Dict[str, Any]]:
+        """通用 Kafka 询价 POST 请求"""
+        import json as _json
+        url = f'https://{self.base_endpoint}{path}'
+        full_body = {**body}
+        body_str = _json.dumps(full_body)
+        try:
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={}, body=body_str,
+                extra_headers={'regionId': region_id})
+            response = self.client.session.post(url, json=full_body, headers=headers, timeout=self.timeout)
+            if response.status_code != 200:
+                return self._create_error_response(response.status_code, response.text)
+            return response.json()
+        except Exception as e:
+            logger.error(f"{desc}失败: {e}")
+            return {"error": True, "message": f"请求异常: {str(e)}"}
+
+    def query_create_price(self, region_id: str, spec_name: str, node_num: int,
+                           zone_list: list, disk_type: str, disk_size: int,
+                           cycle_type: str = '3', cycle_cnt: Optional[int] = None,
+                           engine_version: Optional[str] = None,
+                           instance_num: Optional[int] = None,
+                           enable_ipv6: Optional[bool] = None,
+                           project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """开通查价 - POST /v3/instances/queryPrice"""
+        body: Dict[str, Any] = {
+            'specName': spec_name, 'nodeNum': node_num,
+            'zoneList': zone_list, 'diskType': disk_type, 'diskSize': disk_size,
+            'cycleType': cycle_type,
+        }
+        if cycle_cnt is not None: body['cycleCnt'] = cycle_cnt
+        if engine_version: body['engineVersion'] = engine_version
+        if instance_num is not None: body['instanceNum'] = instance_num
+        if enable_ipv6 is not None: body['enableIpv6'] = enable_ipv6
+        if project_id: body['projectId'] = project_id
+        return self._post_price('/v3/instances/queryPrice', region_id, body, 'Kafka开通查价')
+
+    def query_renew_price(self, region_id: str, prod_inst_id: str,
+                          cycle_cnt: int, project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """续费查价 - POST /v3/instances/queryPriceForRenew"""
+        body = {'prodInstId': prod_inst_id, 'cycleCnt': cycle_cnt}
+        if project_id: body['projectId'] = project_id
+        return self._post_price('/v3/instances/queryPriceForRenew', region_id, body, 'Kafka续费查价')
+
+    def query_spec_change_price(self, region_id: str, prod_inst_id: str,
+                                spec_name: str, project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """规格变更查价 - POST /v3/instances/queryPriceForSpecChange"""
+        body = {'prodInstId': prod_inst_id, 'specName': spec_name}
+        if project_id: body['projectId'] = project_id
+        return self._post_price('/v3/instances/queryPriceForSpecChange', region_id, body, 'Kafka规格变更查价')
+
+    def query_disk_change_price(self, region_id: str, prod_inst_id: str,
+                                disk_size: int, project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """磁盘变更查价 - POST /v3/instances/queryPriceForDiskChange"""
+        body = {'prodInstId': prod_inst_id, 'diskSize': disk_size}
+        if project_id: body['projectId'] = project_id
+        return self._post_price('/v3/instances/queryPriceForDiskChange', region_id, body, 'Kafka磁盘变更查价')
+
+    def query_node_change_price(self, region_id: str, prod_inst_id: str,
+                                node_num: int, project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """节点变更查价 - POST /v3/instances/queryPriceForNodeChange"""
+        body = {'prodInstId': prod_inst_id, 'nodeNum': node_num}
+        if project_id: body['projectId'] = project_id
+        return self._post_price('/v3/instances/queryPriceForNodeChange', region_id, body, 'Kafka节点变更查价')

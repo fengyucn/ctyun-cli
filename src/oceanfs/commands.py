@@ -111,3 +111,22 @@ def upgrade_price(ctx, region_id: str, sfs_uid: str,
             click.echo("错误: 需要安装PyYAML库", err=True)
     else:
         _display_price_result(result, f"扩容询价  文件系统: {sfs_uid}  目标容量: {sfs_size}GB")
+import json as _json
+
+
+@oceanfs.command('create-price')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--order-num', required=True, type=int, help='订购数量(最大200)')
+@click.option('--sfs-size', required=True, type=int, help='容量(GB 最小100)')
+@click.option('--sfs-type', required=True, type=click.Choice(['massive','massive_perf']), help='massive容量型/massive_perf性能型')
+@click.option('--on-demand', is_flag=True, default=True, help='按需计费（默认），不传则包周期')
+@click.option('--cycle-type', type=click.Choice(['year','month']), help='包周期类型')
+@click.option('--cycle-cnt', type=int, help='包周期数')
+@click.pass_context
+def oceanfs_create_price(ctx, region_id, order_num, sfs_size, sfs_type, on_demand, cycle_type, cycle_cnt):
+    """订购文件系统询价"""
+    from oceanfs.client import OceanFSClient
+    result = OceanFSClient(ctx.obj['client']).create_price(
+        region_id, order_num, sfs_size, sfs_type,
+        on_demand=on_demand, cycle_type=cycle_type, cycle_cnt=cycle_cnt)
+    click.echo(_json.dumps(result, indent=2, ensure_ascii=False))

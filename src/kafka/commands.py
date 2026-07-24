@@ -505,3 +505,98 @@ def list_tags(ctx, region_id: str, tag_name: Optional[str], page_num: int, page_
             click.echo(json.dumps(data, indent=2, ensure_ascii=False))
     else:
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+# ==================== Kafka 询价命令（5个） ====================
+
+@kafka.command('create-price')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--spec-name', required=True, help='规格名称（如 kafka.8u16g.cluster）')
+@click.option('--node-num', required=True, type=int, help='节点数（单机版1，集群版3-50）')
+@click.option('--zone-list', required=True, help='可用区列表，逗号分隔（如 cn-huadong1-jsnj1A-public-ctcloud）')
+@click.option('--disk-type', required=True, type=click.Choice(['SAS', 'SSD', 'FAST-SSD']), help='磁盘类型')
+@click.option('--disk-size', required=True, type=int, help='单节点磁盘大小(GB 100-30000，100的倍数)')
+@click.option('--cycle-type', default='3', help='计费模式：101 按需 / 3 包年包月（默认3）')
+@click.option('--cycle-cnt', type=int, help='订购周期（月），包年包月时必填（1-6,12,24,36）')
+@click.option('--engine-version', help='引擎版本（2.8/3.6，默认3.6）')
+@click.option('--instance-num', type=int, help='购买数量（1-100，默认1）')
+@click.option('--enable-ipv6', is_flag=True, help='启用IPv6')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def kafka_create_price(ctx, region_id, spec_name, node_num, zone_list, disk_type,
+                       disk_size, cycle_type, cycle_cnt, engine_version,
+                       instance_num, enable_ipv6, project_id, output):
+    """开通查价"""
+    from kafka.client import KafkaClient
+    result = KafkaClient(ctx.obj['client']).query_create_price(
+        region_id=region_id, spec_name=spec_name, node_num=node_num,
+        zone_list=zone_list.split(','), disk_type=disk_type, disk_size=disk_size,
+        cycle_type=cycle_type, cycle_cnt=cycle_cnt, engine_version=engine_version,
+        instance_num=instance_num, enable_ipv6=enable_ipv6 if enable_ipv6 else None,
+        project_id=project_id)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@kafka.command('renew-price')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--cycle-cnt', required=True, type=int, help='续订周期（月）：1-6,12,24,36')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def kafka_renew_price(ctx, region_id, prod_inst_id, cycle_cnt, project_id, output):
+    """续费查价"""
+    from kafka.client import KafkaClient
+    result = KafkaClient(ctx.obj['client']).query_renew_price(
+        region_id=region_id, prod_inst_id=prod_inst_id,
+        cycle_cnt=cycle_cnt, project_id=project_id)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@kafka.command('spec-change-price')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--spec-name', required=True, help='目标规格名称')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def kafka_spec_change_price(ctx, region_id, prod_inst_id, spec_name, project_id, output):
+    """规格变更查价"""
+    from kafka.client import KafkaClient
+    result = KafkaClient(ctx.obj['client']).query_spec_change_price(
+        region_id=region_id, prod_inst_id=prod_inst_id,
+        spec_name=spec_name, project_id=project_id)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@kafka.command('disk-change-price')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID')
+@click.option('--disk-size', required=True, type=int, help='变更后单节点磁盘大小(GB 100-30000)')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def kafka_disk_change_price(ctx, region_id, prod_inst_id, disk_size, project_id, output):
+    """磁盘变更查价"""
+    from kafka.client import KafkaClient
+    result = KafkaClient(ctx.obj['client']).query_disk_change_price(
+        region_id=region_id, prod_inst_id=prod_inst_id,
+        disk_size=disk_size, project_id=project_id)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@kafka.command('node-change-price')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--prod-inst-id', '-i', required=True, help='实例ID（需集群版）')
+@click.option('--node-num', required=True, type=int, help='变更后节点数(3-50)')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='json')
+@click.pass_context
+def kafka_node_change_price(ctx, region_id, prod_inst_id, node_num, project_id, output):
+    """节点变更查价"""
+    from kafka.client import KafkaClient
+    result = KafkaClient(ctx.obj['client']).query_node_change_price(
+        region_id=region_id, prod_inst_id=prod_inst_id,
+        node_num=node_num, project_id=project_id)
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))

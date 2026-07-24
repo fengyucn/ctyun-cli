@@ -4630,3 +4630,116 @@ class ECSClient:
             import traceback
             logger.debug(traceback.format_exc())
             return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    # ==================== ECS 询价 API（新 URI） ====================
+
+    def _post_price(self, path: str, body: Dict[str, Any], desc: str) -> Dict[str, Any]:
+        """通用询价 POST 请求"""
+        import json as _json
+        url = f'https://{self.base_endpoint}{path}'
+        body_str = _json.dumps(body)
+        try:
+            headers = self.eop_auth.sign_request(
+                method='POST', url=url, query_params={}, body=body_str, extra_headers={})
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
+            if response.status_code != 200:
+                return {'statusCode': response.status_code,
+                        'message': f'HTTP {response.status_code}: {response.text}',
+                        'returnObj': None}
+            return response.json()
+        except Exception as e:
+            logger.error(f"{desc}失败: {e}")
+            return {'statusCode': 500, 'message': str(e), 'returnObj': None}
+
+    def new_order_query_price(self, region_id: str, resource_type: str,
+                              count: int = 1, on_demand: bool = False,
+                              cycle_type: Optional[str] = None,
+                              cycle_count: Optional[int] = None,
+                              flavor_name: Optional[str] = None,
+                              image_uuid: Optional[str] = None,
+                              sys_disk_type: Optional[str] = None,
+                              sys_disk_size: Optional[int] = None,
+                              disks: Optional[List[Dict[str, Any]]] = None,
+                              bandwidth: Optional[int] = None,
+                              disk_type: Optional[str] = None,
+                              disk_size: Optional[int] = None,
+                              disk_mode: Optional[str] = None,
+                              nat_type: Optional[str] = None,
+                              ip_pool_bandwidth: Optional[int] = None,
+                              device_type: Optional[str] = None,
+                              elb_type: Optional[str] = None,
+                              cbr_value: Optional[int] = None) -> Dict[str, Any]:
+        """新订单询价 - POST /v4/order/new-query-price"""
+        logger.info(f"新订单询价: regionID={region_id}, resourceType={resource_type}")
+        body = {'regionID': region_id, 'resourceType': resource_type,
+                'count': count, 'onDemand': on_demand}
+        if not on_demand:
+            if cycle_type: body['cycleType'] = cycle_type
+            if cycle_count is not None: body['cycleCount'] = cycle_count
+        if flavor_name: body['flavorName'] = flavor_name
+        if image_uuid: body['imageUUID'] = image_uuid
+        if sys_disk_type: body['sysDiskType'] = sys_disk_type
+        if sys_disk_size is not None: body['sysDiskSize'] = sys_disk_size
+        if disks: body['disks'] = disks
+        if bandwidth is not None: body['bandwidth'] = bandwidth
+        if disk_type: body['diskType'] = disk_type
+        if disk_size is not None: body['diskSize'] = disk_size
+        if disk_mode: body['diskMode'] = disk_mode
+        if nat_type: body['natType'] = nat_type
+        if ip_pool_bandwidth is not None: body['ipPoolBandwidth'] = ip_pool_bandwidth
+        if device_type: body['deviceType'] = device_type
+        if elb_type: body['elbType'] = elb_type
+        if cbr_value is not None: body['cbrValue'] = cbr_value
+        return self._post_price('/v4/order/new-query-price', body, '新订单询价')
+
+    def upgrade_order_query_price(self, region_id: str, resource_id: str,
+                                  resource_type: str,
+                                  flavor_name: Optional[str] = None,
+                                  bandwidth: Optional[int] = None,
+                                  disk_size: Optional[int] = None,
+                                  nat_type: Optional[str] = None,
+                                  ip_pool_bandwidth: Optional[int] = None,
+                                  elb_type: Optional[str] = None,
+                                  cbr_value: Optional[int] = None) -> Dict[str, Any]:
+        """订单升级询价 - POST /v4/upgrade-order/query-price"""
+        logger.info(f"订单升级询价: regionID={region_id}, resourceID={resource_id}, resourceType={resource_type}")
+        body = {'regionID': region_id, 'resourceID': resource_id, 'resourceType': resource_type}
+        if flavor_name: body['flavorName'] = flavor_name
+        if bandwidth is not None: body['bandwidth'] = bandwidth
+        if disk_size is not None: body['diskSize'] = disk_size
+        if nat_type: body['natType'] = nat_type
+        if ip_pool_bandwidth is not None: body['ipPoolBandwidth'] = ip_pool_bandwidth
+        if elb_type: body['elbType'] = elb_type
+        if cbr_value is not None: body['cbrValue'] = cbr_value
+        return self._post_price('/v4/upgrade-order/query-price', body, '订单升级询价')
+
+    def renew_order_query_price(self, region_id: str, resource_id: str,
+                                resource_type: str,
+                                cycle_type: str, cycle_count: int) -> Dict[str, Any]:
+        """订单续订询价 - POST /v4/renew-order/query-price"""
+        logger.info(f"订单续订询价: regionID={region_id}, resourceID={resource_id}, resourceType={resource_type}")
+        body = {'regionID': region_id, 'resourceID': resource_id,
+                'resourceType': resource_type,
+                'cycleType': cycle_type, 'cycleCount': cycle_count}
+        return self._post_price('/v4/renew-order/query-price', body, '订单续订询价')
+
+    def order_upgrade_query_price(self, region_id: str, resource_uuid: str,
+                                  resource_type: str,
+                                  flavor_name: Optional[str] = None,
+                                  bandwidth: Optional[int] = None,
+                                  disk_size: Optional[int] = None,
+                                  nat_type: Optional[str] = None,
+                                  ip_pool_bandwidth: Optional[int] = None,
+                                  elb_type: Optional[str] = None,
+                                  cbr_value: Optional[int] = None) -> Dict[str, Any]:
+        """资源uuid升级询价 - POST /v4/order/upgrade-query-price"""
+        logger.info(f"资源UUID升级询价: regionID={region_id}, resourceUUID={resource_uuid}, resourceType={resource_type}")
+        body = {'regionID': region_id, 'resourceUUID': resource_uuid, 'resourceType': resource_type}
+        if flavor_name: body['flavorName'] = flavor_name
+        if bandwidth is not None: body['bandwidth'] = bandwidth
+        if disk_size is not None: body['diskSize'] = disk_size
+        if nat_type: body['natType'] = nat_type
+        if ip_pool_bandwidth is not None: body['ipPoolBandwidth'] = ip_pool_bandwidth
+        if elb_type: body['elbType'] = elb_type
+        if cbr_value is not None: body['cbrValue'] = cbr_value
+        return self._post_price('/v4/order/upgrade-query-price', body, '资源UUID升级询价')
