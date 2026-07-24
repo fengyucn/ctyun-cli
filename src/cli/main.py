@@ -683,7 +683,7 @@ def regions(ctx, region_name: Optional[str], no_cache: bool, output: Optional[st
                     zones_str = ', '.join(zone_list) if zone_list else '-'
                     
                     table_data.append([
-                        region.get('regionID', '')[:30],
+                        region.get('regionID', ''),
                         region.get('regionName', ''),
                         region.get('regionParent', ''),
                         region.get('regionCode', ''),
