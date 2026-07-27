@@ -4,6 +4,20 @@
 
 ---
 
+## v1.29.2 (2026-07-27)
+
+### 🚀 MSE 模块新增云原生 API 网关管理能力
+
+**MSE 模块新增 18 个命令**，覆盖云原生 API 网关全生命周期管理：
+
+- **网关实例（5个）**：`gateway list` / `detail` / `global-config` / `base-config` / `task`
+- **路由管理（4个）**：`route list` / `detail` / `snapshots` / `snapshot`
+- **服务管理（4个）**：`upstream list` / `detail` / `versions` / `sources`
+- **域名管理（3个）**：`domain list` / `detail` / `routes`
+- **ELB 管理（2个）**：`elb bound` / `available`
+
+---
+
 ## v1.29.1 (2026-07-27)
 
 ### 🚀 MSE 模块补充：Nacos 命名空间/用户/AKSK 认证管理

@@ -511,3 +511,249 @@ def nacos_aksk_list(ctx, region_id, instance_id, page_num, page_size):
 def nacos_aksk_permission(ctx, region_id, instance_id, access_key):
     """查询NacosAKSK权限"""
     _echo(_get_client(ctx).get_nacos_aksk_permission(region_id, instance_id, access_key))
+
+
+# ==================== 云原生 API 网关 ====================
+
+@mse.group()
+def gateway():
+    """云原生 API 网关"""
+    pass
+
+
+@gateway.command('list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--spu-inst-id', help='实例ID过滤')
+@click.option('--spu-inst-name', help='实例名称过滤')
+@click.option('--biz-state', help='实例状态过滤')
+@click.option('--page-num', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页记录数')
+@click.pass_context
+def gateway_list(ctx, region_id, spu_inst_id, spu_inst_name, biz_state, page_num, page_size):
+    """查询网关列表"""
+    _echo(_get_client(ctx).list_gateways(
+        region_id, spu_inst_id=spu_inst_id, spu_inst_name=spu_inst_name,
+        biz_state=biz_state, page_num=page_num, page_size=page_size))
+
+
+@gateway.command('detail')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--spu-inst-id', '-i', required=True, help='实例ID')
+@click.pass_context
+def gateway_detail(ctx, region_id, spu_inst_id):
+    """查询网关详情"""
+    _echo(_get_client(ctx).get_gateway_detail(region_id, spu_inst_id))
+
+
+@gateway.command('global-config')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.pass_context
+def gateway_global_config(ctx, region_id, inst_id):
+    """获取网关全局参数"""
+    _echo(_get_client(ctx).get_gateway_global_config(region_id, inst_id))
+
+
+@gateway.command('base-config')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--gw-inst-id', '-i', required=True, help='网关实例ID')
+@click.pass_context
+def gateway_base_config(ctx, region_id, gw_inst_id):
+    """获取基础信息页配置信息"""
+    _echo(_get_client(ctx).get_gateway_base_config(region_id, gw_inst_id))
+
+
+@gateway.command('task')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--code', required=True, help='任务编码')
+@click.pass_context
+def gateway_task(ctx, region_id, code):
+    """查询异步任务信息"""
+    _echo(_get_client(ctx).query_async_task(region_id, code))
+
+
+@gateway.group()
+def route():
+    """网关路由管理"""
+    pass
+
+
+@route.command('list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--route-name', help='路由名称过滤')
+@click.option('--route-status', help='路由状态过滤')
+@click.option('--type', 'type_', help='来源类型（如msgc）')
+@click.option('--destination-type', help='目标服务类型（如single）')
+@click.option('--page-num', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页记录数')
+@click.pass_context
+def gateway_route_list(ctx, region_id, inst_id, route_name, route_status, type_,
+                       destination_type, page_num, page_size):
+    """查询网关路由列表"""
+    _echo(_get_client(ctx).list_gateway_routes(
+        region_id, inst_id, route_name=route_name, route_status=route_status,
+        type_=type_, destination_type=destination_type,
+        page_num=page_num, page_size=page_size))
+
+
+@route.command('detail')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--id', 'id_', required=True, help='路由资源ID')
+@click.pass_context
+def gateway_route_detail(ctx, region_id, inst_id, id_):
+    """查询网关路由详情"""
+    _echo(_get_client(ctx).get_gateway_route_detail(region_id, inst_id, id_))
+
+
+@route.command('snapshots')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--route-id', required=True, help='路由内部ID')
+@click.option('--operation-version', help='版本名称过滤')
+@click.option('--operation-id', help='版本ID过滤')
+@click.option('--page-num', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页记录数')
+@click.pass_context
+def gateway_route_snapshots(ctx, region_id, inst_id, route_id, operation_version,
+                            operation_id, page_num, page_size):
+    """查询路由历史快照列表"""
+    _echo(_get_client(ctx).list_route_snapshots(
+        region_id, inst_id, route_id,
+        operation_version=operation_version, operation_id=operation_id,
+        page_num=page_num, page_size=page_size))
+
+
+@route.command('snapshot')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--route-id', required=True, help='路由内部ID')
+@click.option('--id', 'id_', required=True, help='快照ID')
+@click.pass_context
+def gateway_route_snapshot(ctx, region_id, inst_id, route_id, id_):
+    """查询路由历史快照"""
+    _echo(_get_client(ctx).get_route_snapshot(region_id, inst_id, route_id, id_))
+
+
+@gateway.group()
+def upstream():
+    """网关服务管理"""
+    pass
+
+
+@upstream.command('list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--service-name', help='服务名称过滤')
+@click.option('--service-source-type', help='服务来源过滤（如nacos）')
+@click.option('--page-num', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页记录数')
+@click.pass_context
+def gateway_upstream_list(ctx, region_id, inst_id, service_name, service_source_type,
+                          page_num, page_size):
+    """查询网关已订阅的服务列表"""
+    _echo(_get_client(ctx).list_gateway_upstreams(
+        region_id, inst_id, service_name=service_name,
+        service_source_type=service_source_type,
+        page_num=page_num, page_size=page_size))
+
+
+@upstream.command('detail')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--id', 'id_', required=True, help='服务内部ID')
+@click.pass_context
+def gateway_upstream_detail(ctx, region_id, inst_id, id_):
+    """查询服务详情"""
+    _echo(_get_client(ctx).get_gateway_upstream_detail(region_id, inst_id, id_))
+
+
+@upstream.command('versions')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--upstream-id', required=True, help='服务内部ID')
+@click.pass_context
+def gateway_upstream_versions(ctx, region_id, inst_id, upstream_id):
+    """查询服务版本列表"""
+    _echo(_get_client(ctx).list_upstream_versions(region_id, inst_id, upstream_id))
+
+
+@upstream.command('sources')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.pass_context
+def gateway_upstream_sources(ctx, region_id, inst_id):
+    """查询已关联来源列表"""
+    _echo(_get_client(ctx).list_upstream_sources(region_id, inst_id))
+
+
+@gateway.group()
+def domain():
+    """网关域名管理"""
+    pass
+
+
+@domain.command('list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--page-num', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页记录数')
+@click.pass_context
+def gateway_domain_list(ctx, region_id, inst_id, page_num, page_size):
+    """查询网关域名列表"""
+    _echo(_get_client(ctx).list_gateway_domains(
+        region_id, inst_id, page_num=page_num, page_size=page_size))
+
+
+@domain.command('detail')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--id', 'id_', required=True, help='域名内部资源ID')
+@click.pass_context
+def gateway_domain_detail(ctx, region_id, inst_id, id_):
+    """查询网关域名详情"""
+    _echo(_get_client(ctx).get_gateway_domain_detail(region_id, inst_id, id_))
+
+
+@domain.command('routes')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--domain-code', help='域名code（与域名二选一，优先使用code）')
+@click.option('--domain-name', help='域名')
+@click.option('--page-num', type=int, help='页码')
+@click.option('--page-size', type=int, help='每页记录数')
+@click.pass_context
+def gateway_domain_routes(ctx, region_id, inst_id, domain_code, domain_name,
+                          page_num, page_size):
+    """查询网关域名绑定的路由列表"""
+    _echo(_get_client(ctx).list_routes_used_domain(
+        region_id, inst_id, domain_code=domain_code, domain_name=domain_name,
+        page_num=page_num, page_size=page_size))
+
+
+@gateway.group()
+def elb():
+    """网关 ELB 管理"""
+    pass
+
+
+@elb.command('bound')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='网关实例ID')
+@click.pass_context
+def gateway_elb_bound(ctx, region_id, inst_id):
+    """查询网关绑定的ELB列表"""
+    _echo(_get_client(ctx).list_bound_elbs(region_id, inst_id))
+
+
+@elb.command('available')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--inst-id', '-i', required=True, help='实例ID')
+@click.option('--region-code', required=True, help='资源池编码')
+@click.option('--elb-instance-type', type=click.Choice(['private', 'public']), help='ELB类型（默认private）')
+@click.pass_context
+def gateway_elb_available(ctx, region_id, inst_id, region_code, elb_instance_type):
+    """查询用户已有（启动中状态无监听）ELB"""
+    _echo(_get_client(ctx).list_available_elbs(
+        region_id, inst_id, region_code, elb_instance_type=elb_instance_type))

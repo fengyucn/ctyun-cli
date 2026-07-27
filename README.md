@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-859+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-814+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![APIs](https://img.shields.io/badge/APIs-877+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-832+-orange.svg)](docs/MODULES/README.md#命令统计)
 [![Modules](https://img.shields.io/badge/Modules-27+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -45,7 +45,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖859+个API，支持27大服务模块
+- 📊 **功能全面** - 覆盖877+个API，支持27大服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -136,9 +136,9 @@ ctyun-cli cce list-clusters
 | **OceanFS (海量文件服务)** | 2 | 2 | 海量文件存储管理 | - |
 | **EBS (弹性块存储)** | 1 | 1 | 块存储管理 | [详细文档](docs/MODULES/ebs.md) |
 | **SFS (弹性文件服务)** | - | - | 弹性文件存储管理（实现中） | - |
-| **总计** | **814** | **859** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **总计** | **832** | **877** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：61,000+行代码，859+个API，814+个命令，27大服务模块**
+📊 **规模统计：61,000+行代码，877+个API，832+个命令，27大服务模块**
 
 ## 📚 完整文档
 
@@ -184,7 +184,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.29.1 (2026-07-27)
+**最新版本**: v1.29.2 (2026-07-27)
+- 🚀 **MSE 模块新增云原生 API 网关管理**：涵盖网关实例/路由/服务/域名/ELB 管理，共 18 个新命令
+
+**v1.29.1** (2026-07-27)
 - 🚀 **MSE 模块补充**：新增 Nacos 命名空间/黑白名单/用户与角色/AKSK 认证管理，共 8 个新命令
 
 **v1.29.0** (2026-07-27)

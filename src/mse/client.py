@@ -386,3 +386,145 @@ class MSEClient:
         return self._get('/rcc/v1/nacos/aksk/getPermission', region_id, {
             'instanceId': instance_id, 'accessKey': access_key,
         }, '查询NacosAKSK权限')
+
+    # ==================== P3 云原生API网关（18个） ====================
+
+    def list_gateways(self, region_id: str,
+                      spu_inst_id: Optional[str] = None,
+                      spu_inst_name: Optional[str] = None,
+                      biz_state: Optional[str] = None,
+                      page_num: Optional[int] = None,
+                      page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询网关列表 - GET /cgw/v1/instance/list"""
+        return self._get('/cgw/v1/instance/list', region_id, {
+            'spuInstId': spu_inst_id, 'spuInstName': spu_inst_name,
+            'bizState': biz_state, 'pageNum': page_num, 'pageSize': page_size,
+        }, '查询网关列表')
+
+    def get_gateway_detail(self, region_id: str, spu_inst_id: str) -> Dict[str, Any]:
+        """查询网关详情 - GET /cgw/v1/instance/one"""
+        return self._get('/cgw/v1/instance/one', region_id,
+                         {'spuInstId': spu_inst_id}, '查询网关详情')
+
+    def get_gateway_global_config(self, region_id: str, inst_id: str) -> Dict[str, Any]:
+        """获取网关全局参数 - GET /cgw/v1/globalConfig/getTraceAnalysisStatus"""
+        return self._get('/cgw/v1/globalConfig/getTraceAnalysisStatus', region_id,
+                         {'instId': inst_id}, '获取网关全局参数')
+
+    def get_gateway_base_config(self, region_id: str, gw_inst_id: str) -> Dict[str, Any]:
+        """获取基础信息页配置信息 - GET /cgw/v1/globalConfig/getConfig"""
+        return self._get('/cgw/v1/globalConfig/getConfig', region_id,
+                         {'gwInstId': gw_inst_id}, '获取基础信息页配置信息')
+
+    def query_async_task(self, region_id: str, code: str) -> Dict[str, Any]:
+        """查询异步任务信息 - GET /cgw/v1/task/query"""
+        return self._get('/cgw/v1/task/query', region_id,
+                         {'code': code}, '查询异步任务信息')
+
+    def list_gateway_routes(self, region_id: str, inst_id: str,
+                            route_name: Optional[str] = None,
+                            route_status: Optional[str] = None,
+                            type_: Optional[str] = None,
+                            destination_type: Optional[str] = None,
+                            page_num: Optional[int] = None,
+                            page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询网关路由列表 - GET /cgw/v1/route/list"""
+        return self._get('/cgw/v1/route/list', region_id, {
+            'instId': inst_id, 'routeName': route_name,
+            'routeStatus': route_status, 'type': type_,
+            'destinationType': destination_type,
+            'pageNum': page_num, 'pageSize': page_size,
+        }, '查询网关路由列表')
+
+    def get_gateway_route_detail(self, region_id: str, inst_id: str, id_: str) -> Dict[str, Any]:
+        """查询网关路由详情 - GET /cgw/v1/route/one"""
+        return self._get('/cgw/v1/route/one', region_id,
+                         {'instId': inst_id, 'id': id_}, '查询网关路由详情')
+
+    def list_route_snapshots(self, region_id: str, inst_id: str, route_id: str,
+                             operation_version: Optional[str] = None,
+                             operation_id: Optional[str] = None,
+                             page_num: Optional[int] = None,
+                             page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询路由历史快照列表 - GET /cgw/v1/routeSnapshot/list"""
+        return self._get('/cgw/v1/routeSnapshot/list', region_id, {
+            'instId': inst_id, 'routeId': route_id,
+            'operationVersion': operation_version, 'operationId': operation_id,
+            'pageNum': page_num, 'pageSize': page_size,
+        }, '查询路由历史快照列表')
+
+    def get_route_snapshot(self, region_id: str, inst_id: str,
+                           route_id: str, id_: str) -> Dict[str, Any]:
+        """查询路由历史快照 - GET /cgw/v1/routeSnapshot/one"""
+        return self._get('/cgw/v1/routeSnapshot/one', region_id,
+                         {'instId': inst_id, 'routeId': route_id, 'id': id_},
+                         '查询路由历史快照')
+
+    def list_gateway_upstreams(self, region_id: str, inst_id: str,
+                               service_name: Optional[str] = None,
+                               service_source_type: Optional[str] = None,
+                               page_num: Optional[int] = None,
+                               page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询网关已订阅的服务列表 - GET /cgw/v1/upstream/list"""
+        return self._get('/cgw/v1/upstream/list', region_id, {
+            'instId': inst_id, 'serviceName': service_name,
+            'serviceSourceType': service_source_type,
+            'pageNum': page_num, 'pageSize': page_size,
+        }, '查询网关已订阅的服务列表')
+
+    def get_gateway_upstream_detail(self, region_id: str, inst_id: str,
+                                    id_: str) -> Dict[str, Any]:
+        """查询服务详情 - GET /cgw/v1/upstream/one"""
+        return self._get('/cgw/v1/upstream/one', region_id,
+                         {'instId': inst_id, 'id': id_}, '查询服务详情')
+
+    def list_upstream_versions(self, region_id: str, inst_id: str,
+                               upstream_id: str) -> Dict[str, Any]:
+        """查询服务版本列表 - GET /cgw/v1/upstreamVersion/list"""
+        return self._get('/cgw/v1/upstreamVersion/list', region_id,
+                         {'instId': inst_id, 'upstreamId': upstream_id},
+                         '查询服务版本列表')
+
+    def list_upstream_sources(self, region_id: str, inst_id: str) -> Dict[str, Any]:
+        """查询已关联来源列表 - GET /cgw/v1/upstreamSource/list"""
+        return self._get('/cgw/v1/upstreamSource/list', region_id,
+                         {'instId': inst_id}, '查询已关联来源列表')
+
+    def list_gateway_domains(self, region_id: str, inst_id: str,
+                             page_num: Optional[int] = None,
+                             page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询网关域名列表 - GET /cgw/v1/domain/list"""
+        return self._get('/cgw/v1/domain/list', region_id, {
+            'instId': inst_id, 'pageNum': page_num, 'pageSize': page_size,
+        }, '查询网关域名列表')
+
+    def get_gateway_domain_detail(self, region_id: str, inst_id: str,
+                                  id_: str) -> Dict[str, Any]:
+        """查询网关域名详情 - GET /cgw/v1/domain/one"""
+        return self._get('/cgw/v1/domain/one', region_id,
+                         {'instId': inst_id, 'id': id_}, '查询网关域名详情')
+
+    def list_routes_used_domain(self, region_id: str, inst_id: str,
+                                domain_code: Optional[str] = None,
+                                domain_name: Optional[str] = None,
+                                page_num: Optional[int] = None,
+                                page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询网关域名绑定的路由列表 - GET /cgw/v1/domain/listRoutesUsedDomain"""
+        return self._get('/cgw/v1/domain/listRoutesUsedDomain', region_id, {
+            'instId': inst_id, 'domainCode': domain_code,
+            'domainName': domain_name,
+            'pageNum': page_num, 'pageSize': page_size,
+        }, '查询网关域名绑定的路由列表')
+
+    def list_bound_elbs(self, region_id: str, inst_id: str) -> Dict[str, Any]:
+        """查询网关绑定的ELB列表 - GET /cgw/v1/elb/boundElbInfoList"""
+        return self._get('/cgw/v1/elb/boundElbInfoList', region_id,
+                         {'instId': inst_id}, '查询网关绑定的ELB列表')
+
+    def list_available_elbs(self, region_id: str, inst_id: str, region_code: str,
+                            elb_instance_type: Optional[str] = None) -> Dict[str, Any]:
+        """查询用户已有（启动中状态无监听）ELB - GET /cgw/v1/elb/elbList"""
+        return self._get('/cgw/v1/elb/elbList', region_id, {
+            'instId': inst_id, 'regionCode': region_code,
+            'elbInstanceType': elb_instance_type,
+        }, '查询可用ELB列表')
