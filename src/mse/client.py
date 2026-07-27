@@ -320,3 +320,69 @@ class MSEClient:
             'instanceId': instance_id, 'namespaceId': namespace_id,
             'dataId': data_id, 'group': group, 'ip': ip, 'type': type_,
         }, '查询Nacos配置监听列表')
+
+    # ==================== P2 Nacos 周边（8个） ====================
+
+    def list_nacos_namespaces(self, region_id: str, instance_id: str,
+                              page_num: Optional[int] = None,
+                              page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询Nacos命名空间列表 - GET /rcc/v1/nacos/namespace/list"""
+        return self._get('/rcc/v1/nacos/namespace/list', region_id, {
+            'instanceId': instance_id, 'pageNum': page_num, 'pageSize': page_size,
+        }, '查询Nacos命名空间列表')
+
+    def get_nacos_namespace_detail(self, region_id: str, instance_id: str,
+                                   namespace_id: str) -> Dict[str, Any]:
+        """查询Nacos命名空间详情 - GET /rcc/v1/nacos/namespace/detail"""
+        return self._get('/rcc/v1/nacos/namespace/detail', region_id, {
+            'instanceId': instance_id, 'namespaceId': namespace_id,
+        }, '查询Nacos命名空间详情')
+
+    def get_nacos_blackwhite_list(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """查询Nacos黑白名单 - GET /rcc/v1/nacos/property/query"""
+        return self._get('/rcc/v1/nacos/property/query', region_id, {
+            'instanceId': instance_id,
+        }, '查询Nacos黑白名单')
+
+    def list_nacos_users(self, region_id: str, instance_id: str,
+                         page_num: Optional[int] = None,
+                         page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询Nacos实例用户列表 - GET /rcc/v1/nacos/user/list"""
+        return self._get('/rcc/v1/nacos/user/list', region_id, {
+            'instanceId': instance_id, 'pageNum': page_num, 'pageSize': page_size,
+        }, '查询Nacos实例用户列表')
+
+    def list_nacos_roles(self, region_id: str, instance_id: str,
+                         username: Optional[str] = None,
+                         page_num: Optional[int] = None,
+                         page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询Nacos用户角色 - GET /rcc/v1/nacos/user/listRole"""
+        return self._get('/rcc/v1/nacos/user/listRole', region_id, {
+            'instanceId': instance_id, 'username': username,
+            'pageNum': page_num, 'pageSize': page_size,
+        }, '查询Nacos用户角色')
+
+    def get_nacos_role_permission(self, region_id: str, instance_id: str,
+                                  role: Optional[str] = None,
+                                  page_num: Optional[int] = None,
+                                  page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询Nacos用户角色权限 - GET /rcc/v1/nacos/user/getPermission"""
+        return self._get('/rcc/v1/nacos/user/getPermission', region_id, {
+            'instanceId': instance_id, 'role': role,
+            'pageNum': page_num, 'pageSize': page_size,
+        }, '查询Nacos用户角色权限')
+
+    def list_nacos_aksk(self, region_id: str, instance_id: str,
+                        page_num: Optional[int] = None,
+                        page_size: Optional[int] = None) -> Dict[str, Any]:
+        """查询NacosAKSK认证 - GET /rcc/v1/nacos/aksk/list"""
+        return self._get('/rcc/v1/nacos/aksk/list', region_id, {
+            'instanceId': instance_id, 'pageNum': page_num, 'pageSize': page_size,
+        }, '查询NacosAKSK认证')
+
+    def get_nacos_aksk_permission(self, region_id: str, instance_id: str,
+                                  access_key: str) -> Dict[str, Any]:
+        """查询NacosAKSK权限 - GET /rcc/v1/nacos/aksk/getPermission"""
+        return self._get('/rcc/v1/nacos/aksk/getPermission', region_id, {
+            'instanceId': instance_id, 'accessKey': access_key,
+        }, '查询NacosAKSK权限')

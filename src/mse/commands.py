@@ -398,3 +398,116 @@ def nacos_config_listeners(ctx, region_id, instance_id, data_id, group, type_, n
     _echo(_get_client(ctx).get_nacos_config_listeners(
         region_id, instance_id, data_id, group, type_,
         namespace_id=namespace_id, ip=ip))
+
+
+# ==================== Nacos 命名空间/黑白名单/用户/AKSK ====================
+
+@nacos.group()
+def namespace():
+    """Nacos 命名空间"""
+    pass
+
+
+@namespace.command('list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.option('--page-num', type=int, help='页数（默认1）')
+@click.option('--page-size', type=int, help='每页数量（默认10）')
+@click.pass_context
+def nacos_namespace_list(ctx, region_id, instance_id, page_num, page_size):
+    """查询Nacos命名空间列表"""
+    _echo(_get_client(ctx).list_nacos_namespaces(
+        region_id, instance_id, page_num=page_num, page_size=page_size))
+
+
+@namespace.command('detail')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.option('--namespace-id', required=True, help='命名空间ID')
+@click.pass_context
+def nacos_namespace_detail(ctx, region_id, instance_id, namespace_id):
+    """查询Nacos命名空间详情"""
+    _echo(_get_client(ctx).get_nacos_namespace_detail(region_id, instance_id, namespace_id))
+
+
+@nacos.command('blackwhite-list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.pass_context
+def nacos_blackwhite(ctx, region_id, instance_id):
+    """查询Nacos黑白名单"""
+    _echo(_get_client(ctx).get_nacos_blackwhite_list(region_id, instance_id))
+
+
+@nacos.group()
+def user():
+    """Nacos 用户与角色"""
+    pass
+
+
+@user.command('list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.option('--page-num', type=int, help='页号')
+@click.option('--page-size', type=int, help='每页数量')
+@click.pass_context
+def nacos_user_list(ctx, region_id, instance_id, page_num, page_size):
+    """查询Nacos实例用户列表"""
+    _echo(_get_client(ctx).list_nacos_users(
+        region_id, instance_id, page_num=page_num, page_size=page_size))
+
+
+@user.command('roles')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.option('--username', help='用户名过滤')
+@click.option('--page-num', type=int, help='页号')
+@click.option('--page-size', type=int, help='每页数量')
+@click.pass_context
+def nacos_user_roles(ctx, region_id, instance_id, username, page_num, page_size):
+    """查询Nacos用户角色"""
+    _echo(_get_client(ctx).list_nacos_roles(
+        region_id, instance_id, username=username,
+        page_num=page_num, page_size=page_size))
+
+
+@user.command('permissions')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.option('--role', help='角色名过滤')
+@click.option('--page-num', type=int, help='页号')
+@click.option('--page-size', type=int, help='每页数量')
+@click.pass_context
+def nacos_user_permissions(ctx, region_id, instance_id, role, page_num, page_size):
+    """查询Nacos用户角色权限"""
+    _echo(_get_client(ctx).get_nacos_role_permission(
+        region_id, instance_id, role=role,
+        page_num=page_num, page_size=page_size))
+
+
+@nacos.group()
+def aksk():
+    """Nacos AKSK 认证"""
+    pass
+
+
+@aksk.command('list')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.option('--page-num', type=int, help='页号')
+@click.option('--page-size', type=int, help='每页数量')
+@click.pass_context
+def nacos_aksk_list(ctx, region_id, instance_id, page_num, page_size):
+    """查询NacosAKSK认证"""
+    _echo(_get_client(ctx).list_nacos_aksk(
+        region_id, instance_id, page_num=page_num, page_size=page_size))
+
+
+@aksk.command('permission')
+@click.option('--region-id', '-r', required=True, help='资源池ID')
+@click.option('--instance-id', '-i', required=True, help='实例ID')
+@click.option('--access-key', required=True, help='AccessKey密钥')
+@click.pass_context
+def nacos_aksk_permission(ctx, region_id, instance_id, access_key):
+    """查询NacosAKSK权限"""
+    _echo(_get_client(ctx).get_nacos_aksk_permission(region_id, instance_id, access_key))

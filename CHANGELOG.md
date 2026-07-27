@@ -4,6 +4,19 @@
 
 ---
 
+## v1.29.1 (2026-07-27)
+
+### 🚀 MSE 模块补充：Nacos 命名空间/用户/AKSK 认证管理
+
+**MSE 模块新增 8 个命令**，补充 Nacos 周边管理能力：
+
+- **命名空间（2个）**：`namespace list` / `detail`
+- **黑白名单（1个）**：`nacos blackwhite-list`
+- **用户与角色（3个）**：`user list` / `roles` / `permissions`
+- **AKSK 认证（2个）**：`aksk list` / `permission`
+
+---
+
 ## v1.29.0 (2026-07-27)
 
 ### 🚀 MSE 模块大幅扩展：新增 Nacos 注册配置中心管理能力
