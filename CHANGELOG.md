@@ -4,6 +4,18 @@
 
 ---
 
+## v1.29.0 (2026-07-27)
+
+### 🚀 MSE 模块大幅扩展：新增 Nacos 注册配置中心管理能力
+
+**MSE 模块新增 21 个命令**，覆盖实例管理与 Nacos 注册配置中心全生命周期操作：
+
+- **实例管理（4个）**：`list` / `detail` / `node-status` / `metrics`
+- **Nacos 服务管理（9个）**：`service list` / `detail` / `service-and-group` / `instances` / `instance-detail` / `clusters` / `cluster-instances` / `push-trace` / `properties`
+- **Nacos 配置管理（8个）**：`config list` / `detail` / `content` / `dataid-and-group` / `history-list` / `history-detail` / `trace` / `listeners`
+
+---
+
 ## v1.28.1 (2026-07-24)
 
 ### 🔧 VPC 模块优化
