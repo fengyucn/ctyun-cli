@@ -1223,6 +1223,9 @@ cli.add_command(ec)
 from mse.commands import mse
 cli.add_command(mse)
 
+from cfw.commands import cfw
+cli.add_command(cfw)
+
 # 将 ecs/commands.py 中定义的命令注册到当前 ecs group
 from ecs.commands import (format_output, handle_error, update_ecs_label, query_dedicated_host_uuid, query_order_uuid,
                            cpu_history, mem_history, network_history, disk_history,

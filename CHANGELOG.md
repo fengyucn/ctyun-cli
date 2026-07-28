@@ -4,6 +4,29 @@
 
 ---
 
+## v1.30.0 (2026-07-27)
+
+### 🆕 新增 CFW（云防火墙）模块
+
+**新增 CFW 服务模块（66 个命令，覆盖 66 个 API）**：
+
+- **防火墙管理（4个）**：`list` / `show` / `can-buy` / `notification`
+- **概览（4个）**：`overview` / `protection-overview` / `asset-overview` / `acl-overview`
+- **版本与配额（3个）**：`can-downgrade` / `min-quota` / `judge-upgrade`
+- **网络工具（4个）**：`check-cidr` / `random-name` / `vpc-list` / `subnet-list`
+- **资产管理（12个）**：`asset all` / `statistics` / `nat-list` / `cda-list` / `ec-list` / `vpc-peer-list` / `protect-check` / `vpc-statistics` / `list` / `info` / `sync-status` / `sync-time`
+- **防护规则（4个）**：`policy list` / `show` / `statistics` / `export-template`
+- **黑白名单（3个）**：`blackwhite list` / `show` / `export-template`
+- **地址簿（3个）**：`address-book list` / `items` / `statistics`
+- **IPS 入侵防御（4个）**：`ips rules` / `attack-types` / `rule-types` / `dpi-info`
+- **应用管理（2个）**：`app list` / `categories`
+- **告警管理（3个）**：`alarm list` / `show` / `statistics`
+- **日志管理（10个）**：`log flow-list` / `flow-trend` / `operation` / `storage` / `setting` / `deliver-list` / `deliver-info` / `deliver-time` / `raw` / `count`
+- **报表管理（3个）**：`report list` / `statistics` / `subscribe`
+- **询价（6个）**：`price new` / `renew` / `upgrade` / `new-n100` / `renew-n100` / `upgrade-n100`
+
+---
+
 ## v1.29.2 (2026-07-27)
 
 ### 🚀 MSE 模块新增云原生 API 网关管理能力
