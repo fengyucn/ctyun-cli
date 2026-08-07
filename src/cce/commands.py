@@ -3206,3 +3206,162 @@ def query_cluster_id_by_order_id(ctx, region_id: str, order_id: str, output: Opt
             click.echo(f"集群ID: {return_obj}")
         else:
             click.echo("未找到对应的集群ID")
+
+
+# ==================== V2 查询 API（与V1.1并存，URI不同视为独立API）====================
+
+@cce.command('get-cluster-resources-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID（32位hex）')
+@click.pass_context
+@handle_error
+def get_cluster_resources_v2(ctx, region_id: str, cluster_id: str):
+    """查询集群资源(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_resources_v2(region_id, cluster_id)
+    format_output(result, output_format)
+
+
+@cce.command('get-cluster-upgrade-status-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--task-id', type=int, help='任务ID')
+@click.pass_context
+@handle_error
+def get_cluster_upgrade_status_v2(ctx, region_id: str, cluster_id: str, task_id: Optional[int]):
+    """查询集群升级状态(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_upgrade_status_v2(region_id, cluster_id, task_id)
+    format_output(result, output_format)
+
+
+@cce.command('check-component-log-collection-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def check_component_log_collection_v2(ctx, region_id: str, cluster_id: str):
+    """查询核心组件日志采集开启情况(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.check_component_log_collection_v2(region_id, cluster_id)
+    format_output(result, output_format)
+
+
+@cce.command('list-kubernetes-versions-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.pass_context
+@handle_error
+def list_kubernetes_versions_v2(ctx, region_id: str):
+    """查询Kubernetes版本详情(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.get_kubernetes_versions_v2(region_id)
+    format_output(result, output_format)
+
+
+@cce.command('list-authorized-namespaces-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.pass_context
+@handle_error
+def list_authorized_namespaces_v2(ctx, region_id: str, cluster_id: str):
+    """查询用户被授权的命名空间列表(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.list_authorized_namespaces_v2(region_id, cluster_id)
+    format_output(result, output_format)
+
+
+@cce.command('query-sub-user-permissions-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--user-id', required=True, type=int, help='子用户ID')
+@click.pass_context
+@handle_error
+def query_sub_user_permissions_v2(ctx, region_id: str, cluster_id: str, user_id: int):
+    """查询子账号集群授权信息(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.query_sub_user_permissions_v2(region_id, cluster_id, user_id)
+    format_output(result, output_format)
+
+
+@cce.command('check-plugin-installed-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--instance-name', required=True, help='插件实例名称')
+@click.pass_context
+@handle_error
+def check_plugin_installed_v2(ctx, region_id: str, cluster_id: str, instance_name: str):
+    """查询集群插件是否安装(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.check_plugin_installed_v2(region_id, cluster_id, instance_name)
+    format_output(result, output_format)
+
+
+@cce.command('get-template-instance-detail-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--template-instance-name', required=True, help='模板实例名称')
+@click.pass_context
+@handle_error
+def get_template_instance_detail_v2(ctx, region_id: str, cluster_id: str,
+                                      namespace: str, template_instance_name: str):
+    """查询模板实例详情(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.get_template_instance_detail_v2(
+        region_id, cluster_id, namespace, template_instance_name)
+    format_output(result, output_format)
+
+
+@cce.command('check-template-instance-exists-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID')
+@click.option('--namespace', required=True, help='命名空间名称')
+@click.option('--template-instance-name', required=True, help='模板实例名称')
+@click.pass_context
+@handle_error
+def check_template_instance_exists_v2(ctx, region_id: str, cluster_id: str,
+                                        namespace: str, template_instance_name: str):
+    """查询模板实例是否存在(V2)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.check_template_instance_exists_v2(
+        region_id, cluster_id, namespace, template_instance_name)
+    format_output(result, output_format)
+
+
+@cce.command('get-cluster-events-v2')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--cluster-id', required=True, help='集群ID（Long型数字）')
+@click.option('--event-type', help='事件类型')
+@click.option('--task-id', help='任务ID')
+@click.option('--page-number', type=int, default=1, help='分页页数（默认1）')
+@click.option('--page-size', type=int, default=10, help='每页数量（默认10）')
+@click.pass_context
+@handle_error
+def get_cluster_events_v2(ctx, region_id: str, cluster_id: str,
+                            event_type: Optional[str], task_id: Optional[str],
+                            page_number: int, page_size: int):
+    """查询指定集群事件列表(V2，路径 /v1.1/ccse/events/)"""
+    client = ctx.obj['client']
+    output_format = ctx.obj['output']
+    cce_client = CCEClient(client)
+    result = cce_client.get_cluster_events_v2(
+        region_id, cluster_id, event_type, task_id, page_number, page_size)
+    format_output(result, output_format)

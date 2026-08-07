@@ -4,6 +4,29 @@
 
 ---
 
+## v1.31.0 (2026-08-07)
+
+### 🚀 CCE 模块新增 V2/V3 查询 API（10 个命令）
+
+**新增 10 个 V2 版本查询命令**，与现有 V1.1 接口并存（不同 URI 视为独立 API），命令统一加 `-v2` 后缀，参数从 `cluster_name` 切换为 `cluster_id`：
+
+- **升级类（6个）**：
+  - `cce get-cluster-resources-v2`（`/v2/cce/clusters/*/resources`）
+  - `cce get-cluster-upgrade-status-v2`（`/v2/cce/clusters/*/upgrade/status`）
+  - `cce check-component-log-collection-v2`（`/v2/cce/clusters/*/logcenter/controlplane/check`）
+  - `cce list-kubernetes-versions-v2`（`/v2/cce/metadata/versions`）
+  - `cce list-authorized-namespaces-v2`（`/v2/cce/clusters/*/binding/namespaces`）
+  - `cce query-sub-user-permissions-v2`（`/v2/cce/clusters/*/binding`）
+- **全新类（4个）**：
+  - `cce check-plugin-installed-v2`（`/v2/cce/clusters/*/plugininstance/*/exists`）
+  - `cce get-template-instance-detail-v2`（`/v2/cce/clusters/*/namespaces/*/templateinstance/*/detail`）
+  - `cce check-template-instance-exists-v2`（`/v2/cce/clusters/*/namespaces/*/templateinstance/*/exists`）
+  - `cce get-cluster-events-v2`（`/v1.1/ccse/events/*`，Long型集群ID）
+
+**全部已实测通过**（真实集群 `prod-trp-cce01`，statusCode 800 或可接受的业务错误码）。
+
+---
+
 ## v1.30.0 (2026-07-27)
 
 ### 🆕 新增 CFW（云防火墙）模块

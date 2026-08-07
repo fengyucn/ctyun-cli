@@ -378,6 +378,37 @@ class CCEClient:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
 
+    def get_kubernetes_versions_v2(self, region_id: str) -> Dict[str, Any]:
+        """
+        查询Kubernetes版本详情(V2) - GET /v2/cce/metadata/versions
+
+        Args:
+            region_id: 区域ID
+
+        Returns:
+            Kubernetes版本详情的响应结果
+        """
+        logger.info(f"查询Kubernetes版本详情(V2): regionId={region_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/metadata/versions'
+
+        headers = self.eop_auth.sign_request(method='GET', url=url)
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
     def query_sub_user_permissions(self, region_id: str, cluster_name: str, user_id: int) -> Dict[str, Any]:
         """
         查询子账号集群授权信息
@@ -401,6 +432,42 @@ class CCEClient:
             url=url,
             query_params=query_params
         )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def query_sub_user_permissions_v2(self, region_id: str, cluster_id: str, user_id: int) -> Dict[str, Any]:
+        """
+        查询子账号集群授权信息(V2) - GET /v2/cce/clusters/{clusterId}/binding
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            user_id: 子用户ID
+
+        Returns:
+            子账号集群授权信息的响应结果
+        """
+        logger.info(f"查询子账号集群授权信息(V2): regionId={region_id}, clusterId={cluster_id}, userId={user_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/binding'
+
+        query_params = {'userId': user_id}
+
+        headers = self.eop_auth.sign_request(
+            method='GET', url=url, query_params=query_params)
         headers['regionId'] = region_id
         headers['Content-Type'] = 'application/json'
 
@@ -522,6 +589,38 @@ class CCEClient:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
 
+    def get_cluster_resources_v2(self, region_id: str, cluster_id: str) -> Dict[str, Any]:
+        """
+        查询集群资源(V2) - GET /v2/cce/clusters/{clusterId}/resources
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+
+        Returns:
+            集群资源的响应结果
+        """
+        logger.info(f"查询集群资源(V2): regionId={region_id}, clusterId={cluster_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/resources'
+
+        headers = self.eop_auth.sign_request(method='GET', url=url)
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
     def get_cluster_info_v1(self, region_id: str, cluster_name: str) -> Dict[str, Any]:
         """
         查询集群信息 (v1.1, 按集群名称查询)
@@ -583,6 +682,45 @@ class CCEClient:
             url=url,
             query_params=query_params
         )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def get_cluster_upgrade_status_v2(self, region_id: str, cluster_id: str,
+                                       task_id: Optional[int] = None) -> Dict[str, Any]:
+        """
+        查询集群升级状态(V2) - GET /v2/cce/clusters/{clusterId}/upgrade/status
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            task_id: 任务ID（可选）
+
+        Returns:
+            集群升级状态的响应结果
+        """
+        logger.info(f"查询集群升级状态(V2): regionId={region_id}, clusterId={cluster_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/upgrade/status'
+
+        query_params = {}
+        if task_id is not None:
+            query_params['taskId'] = task_id
+
+        headers = self.eop_auth.sign_request(
+            method='GET', url=url, query_params=query_params)
         headers['regionId'] = region_id
         headers['Content-Type'] = 'application/json'
 
@@ -2882,6 +3020,38 @@ class CCEClient:
             from core import CTYUNAPIError
             raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
 
+    def check_component_log_collection_v2(self, region_id: str, cluster_id: str) -> Dict[str, Any]:
+        """
+        查询核心组件日志采集开启情况(V2) - GET /v2/cce/clusters/{clusterId}/logcenter/controlplane/check
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+
+        Returns:
+            核心组件日志采集情况的响应结果
+        """
+        logger.info(f"查询核心组件日志采集开启情况(V2): regionId={region_id}, clusterId={cluster_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/logcenter/controlplane/check'
+
+        headers = self.eop_auth.sign_request(method='GET', url=url)
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
     # ========== 弹性伸缩 ==========
 
     def create_auto_scaling_policy(self, region_id: str, cluster_id: str,
@@ -3085,6 +3255,38 @@ class CCEClient:
             method='GET',
             url=url
         )
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def list_authorized_namespaces_v2(self, region_id: str, cluster_id: str) -> Dict[str, Any]:
+        """
+        查询用户被授权的命名空间列表(V2) - GET /v2/cce/clusters/{clusterId}/binding/namespaces
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+
+        Returns:
+            用户被授权的命名空间列表的响应结果
+        """
+        logger.info(f"查询用户被授权的命名空间列表(V2): regionId={region_id}, clusterId={cluster_id}")
+
+        url = f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}/binding/namespaces'
+
+        headers = self.eop_auth.sign_request(method='GET', url=url)
         headers['regionId'] = region_id
         headers['Content-Type'] = 'application/json'
 
@@ -3837,6 +4039,172 @@ class CCEClient:
         headers['Content-Type'] = 'application/json'
 
         response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    # ==================== V2 新增查询 API ====================
+
+    def check_plugin_installed_v2(self, region_id: str, cluster_id: str,
+                                   instance_name: str) -> Dict[str, Any]:
+        """
+        查询集群插件是否安装(V2) - GET /v2/cce/clusters/{clusterId}/plugininstance/{instanceName}/exists
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            instance_name: 插件实例名称
+
+        Returns:
+            插件是否安装的响应结果
+        """
+        logger.info(f"查询集群插件是否安装(V2): regionId={region_id}, clusterId={cluster_id}, instanceName={instance_name}")
+
+        url = (f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}'
+               f'/plugininstance/{instance_name}/exists')
+
+        headers = self.eop_auth.sign_request(method='GET', url=url)
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def get_template_instance_detail_v2(self, region_id: str, cluster_id: str,
+                                          namespace_name: str,
+                                          template_instance_name: str) -> Dict[str, Any]:
+        """
+        查询模板实例详情(V2) - GET /v2/cce/clusters/{clusterId}/namespaces/{namespaceName}/templateinstance/{templateInstanceName}/detail
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            namespace_name: 命名空间名称
+            template_instance_name: 模板实例名称
+
+        Returns:
+            模板实例详情的响应结果
+        """
+        logger.info(f"查询模板实例详情(V2): regionId={region_id}, clusterId={cluster_id}, namespace={namespace_name}, templateInstance={template_instance_name}")
+
+        url = (f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}'
+               f'/namespaces/{namespace_name}'
+               f'/templateinstance/{template_instance_name}/detail')
+
+        headers = self.eop_auth.sign_request(method='GET', url=url)
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def check_template_instance_exists_v2(self, region_id: str, cluster_id: str,
+                                            namespace_name: str,
+                                            template_instance_name: str) -> Dict[str, Any]:
+        """
+        查询模板实例是否存在(V2) - GET /v2/cce/clusters/{clusterId}/namespaces/{namespaceName}/templateinstance/{templateInstanceName}/exists
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID
+            namespace_name: 命名空间名称
+            template_instance_name: 模板实例名称
+
+        Returns:
+            模板实例是否存在的响应结果
+        """
+        logger.info(f"查询模板实例是否存在(V2): regionId={region_id}, clusterId={cluster_id}, namespace={namespace_name}, templateInstance={template_instance_name}")
+
+        url = (f'https://{self.base_endpoint}/v2/cce/clusters/{cluster_id}'
+               f'/namespaces/{namespace_name}'
+               f'/templateinstance/{template_instance_name}/exists')
+
+        headers = self.eop_auth.sign_request(method='GET', url=url)
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('statusCode') == 800:
+                return result
+            else:
+                from core import CTYUNAPIError
+                raise CTYUNAPIError(result.get('statusCode', 'unknown'), result.get('message', 'Unknown error'))
+        else:
+            from core import CTYUNAPIError
+            raise CTYUNAPIError('HTTP_ERROR', f'HTTP {response.status_code}: {response.text}')
+
+    def get_cluster_events_v2(self, region_id: str, cluster_id: str,
+                                event_type: Optional[str] = None,
+                                task_id: Optional[str] = None,
+                                page_number: int = 1,
+                                page_size: int = 10) -> Dict[str, Any]:
+        """
+        查询指定集群事件列表(V2) - GET /v1.1/ccse/events/{clusterId}
+
+        注意：该API路径仍为 /v1.1/ccse/events/，clusterId 为 Long 型数字ID（非32位hex）
+        与 get_cluster_events（/v2/cce/events/{clusterId}）为不同URI，视为独立API
+
+        Args:
+            region_id: 区域ID
+            cluster_id: 集群ID（Long型数字）
+            event_type: 事件类型（可选）
+            task_id: 任务ID（可选）
+            page_number: 分页页数（默认1）
+            page_size: 每页数量（默认10）
+
+        Returns:
+            集群事件列表的响应结果
+        """
+        logger.info(f"查询指定集群事件列表(V2): regionId={region_id}, clusterId={cluster_id}")
+
+        url = f'https://{self.base_endpoint}/v1.1/ccse/events/{cluster_id}'
+
+        query_params = {
+            'pageNumber': page_number,
+            'pageSize': page_size
+        }
+        if event_type is not None:
+            query_params['eventType'] = event_type
+        if task_id is not None:
+            query_params['taskId'] = task_id
+
+        headers = self.eop_auth.sign_request(
+            method='GET', url=url, query_params=query_params)
+        headers['regionId'] = region_id
+        headers['Content-Type'] = 'application/json'
+
+        response = self.client.session.get(url, params=query_params, headers=headers)
 
         if response.status_code == 200:
             result = response.json()
