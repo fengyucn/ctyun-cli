@@ -523,6 +523,16 @@ def describe_monitor_history(ctx, instance_id: str, metric: str, start_time: str
     # 获取凭证
     client = ctx.obj['client']
 
+    # 友好指标名 → 后端 type 字段值（见 monitor-items 返回的 instanceMonitorList[].type）
+    METRIC_TYPE_MAP = {
+        'memory_fragmentation': 'MemFragmentation',
+        'memory_usage': 'UsedMemoryPercentage',
+        'cpu_util': 'instanceMaxUsedCpuUsage',
+        'connections': 'ConnClients',
+        'hit_rate': 'HitsRatio',
+    }
+    metric_type = METRIC_TYPE_MAP.get(metric, metric)
+
     # 时间处理
     if not start_time or not end_time:
         import datetime
@@ -538,8 +548,8 @@ def describe_monitor_history(ctx, instance_id: str, metric: str, start_time: str
             start_time_dt = now - datetime.timedelta(hours=24)  # 默认24小时
             end_time_dt = now
 
-        start_time = start_time_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-        end_time = end_time_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+        start_time = start_time_dt.strftime('%Y-%m-%d %H:%M:%S')
+        end_time = end_time_dt.strftime('%Y-%m-%d %H:%M:%S')
 
     click.echo(f"📈 正在查询Redis监控历史数据: {instance_id}")
     click.echo(f"   指标: {metric}")
@@ -550,7 +560,7 @@ def describe_monitor_history(ctx, instance_id: str, metric: str, start_time: str
 
     try:
         result = redis_client.describe_instance_history_monitor_values(
-            instance_id, metric, start_time, end_time, period
+            instance_id, metric_type, start_time, end_time, period
         )
 
         if output_format == 'json':

@@ -4,6 +4,26 @@
 
 ---
 
+## v1.31.1 (2026-08-21)
+
+### 🔧 Redis 模块监控 API 修复（rdscmd）
+
+修复 4 个监控类 API 因路径错误导致的 404 问题，并修正参数名、时间格式与签名编码：
+
+- **路径修复**：`/v2/monitorServant/` → `/v2/resourceMonitor/`（4 处）
+  - `describeHistoryMonitorItems`（查询性能监控指标列表）
+  - `describeInstanceHistoryMonitorValues`（查询实例性能指标监控历史数据）
+  - `describeNodeHistoryMonitorValues`（查询节点性能监控指标历史数据）
+  - `getClientIPInfo`（查询实例客户端会话列表）
+- **参数名对齐官方文档**：`instanceId`→`prodInstId`、`metricName`→`type`、`nodeId`→`nodeName`
+- **时间格式修正**：ISO 格式 → 后端要求的 `yyyy-MM-dd HH:mm:ss`
+- **签名编码修复**：含空格的 query 参数改用 `urlencode(quote_via=quote)`（空格→`%20`），与 EOP 签名保持一致，解决 403 签名验证失败
+- **指标名映射**：CLI 友好名（`memory_usage` 等）自动映射为后端 type 值（`UsedMemoryPercentage` 等）
+
+**实测验证**：`redis monitor-items` / `monitor-history` / `clients` 均返回真实数据（statusCode 800）。
+
+---
+
 ## v1.31.0 (2026-08-07)
 
 ### 🚀 CCE 模块新增 V2/V3 查询 API（10 个命令）

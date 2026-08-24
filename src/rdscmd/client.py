@@ -394,10 +394,10 @@ class RedisClient:
         logger.info(f"查询Redis监控指标列表: instanceId={instance_id}")
 
         try:
-            url = f'{self.service_endpoint}/v2/monitorServant/describeHistoryMonitorItems'
+            url = f'{self.service_endpoint}/v2/resourceMonitor/describeHistoryMonitorItems'
 
             query_params = {
-                'instanceId': instance_id
+                'prodInstId': instance_id
             }
 
             extra_headers = {
@@ -458,11 +458,11 @@ class RedisClient:
         logger.info(f"查询Redis监控历史数据: instanceId={instance_id}, metric={metric_name}")
 
         try:
-            url = f'{self.service_endpoint}/v2/monitorServant/describeInstanceHistoryMonitorValues'
+            url = f'{self.service_endpoint}/v2/resourceMonitor/describeInstanceHistoryMonitorValues'
 
             query_params = {
-                'instanceId': instance_id,
-                'metricName': metric_name,
+                'prodInstId': instance_id,
+                'type': metric_name,
                 'startTime': start_time,
                 'endTime': end_time,
                 'period': period
@@ -480,9 +480,10 @@ class RedisClient:
                 extra_headers=extra_headers
             )
 
+            from urllib.parse import urlencode, quote
+            encoded_qs = urlencode(query_params, quote_via=quote)
             response = self.client.session.get(
-                url,
-                params=query_params,
+                f"{url}?{encoded_qs}",
                 headers=headers,
                 timeout=self.timeout
             )
@@ -528,12 +529,12 @@ class RedisClient:
         logger.info(f"查询Redis节点监控数据: instanceId={instance_id}, nodeId={node_id}, metric={metric_name}")
 
         try:
-            url = f'{self.service_endpoint}/v2/monitorServant/describeNodeHistoryMonitorValues'
+            url = f'{self.service_endpoint}/v2/resourceMonitor/describeNodeHistoryMonitorValues'
 
             query_params = {
-                'instanceId': instance_id,
-                'nodeId': node_id,
-                'metricName': metric_name,
+                'prodInstId': instance_id,
+                'nodeName': node_id,
+                'type': metric_name,
                 'startTime': start_time,
                 'endTime': end_time,
                 'period': period
@@ -551,9 +552,10 @@ class RedisClient:
                 extra_headers=extra_headers
             )
 
+            from urllib.parse import urlencode, quote
+            encoded_qs = urlencode(query_params, quote_via=quote)
             response = self.client.session.get(
-                url,
-                params=query_params,
+                f"{url}?{encoded_qs}",
                 headers=headers,
                 timeout=self.timeout
             )
@@ -700,14 +702,14 @@ class RedisClient:
         logger.info(f"查询Redis客户端会话: instanceId={instance_id}, nodeId={node_id}")
 
         try:
-            url = f'{self.service_endpoint}/v2/monitorServant/getClientIPInfo'
+            url = f'{self.service_endpoint}/v2/resourceMonitor/getClientIPInfo'
 
             query_params = {
-                'instanceId': instance_id
+                'prodInstId': instance_id
             }
 
             if node_id:
-                query_params['nodeId'] = node_id
+                query_params['nodeName'] = node_id
 
             extra_headers = {
                 'regionId': self.region_id
