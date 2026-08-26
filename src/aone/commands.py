@@ -25,7 +25,7 @@ def format_output(data, output_format='table'):
             click.echo(table)
         elif isinstance(data, dict):
             headers = ['字段', '值']
-            table_data = [[key, value] for key, value in data.items()]
+            table_data = [{'字段': key, '值': value} for key, value in data.items()]
             table = OutputFormatter.format_table(table_data, headers)
             click.echo(table)
         else:
@@ -36,6 +36,28 @@ def format_output(data, output_format='table'):
 def aone():
     """边缘安全加速平台(Aone)管理"""
     pass
+
+
+# Aone 平台存在两种响应结构：
+#   1. {'statusCode': '100000', 'message': ..., 'returnObj': ...}
+#   2. {'code': '100000', 'message': ..., 'data': ...}
+# 成功码可能是字符串或整数，统一兼容判断
+_AONE_SUCCESS_CODES = {'800', '100000', 800, 100000}
+
+
+def _is_success(result) -> bool:
+    """判断 Aone API 响应是否成功（兼容 statusCode/code 两种字段及字符串/数字类型）"""
+    if not isinstance(result, dict):
+        return False
+    code = result.get('statusCode', result.get('code'))
+    return code in _AONE_SUCCESS_CODES
+
+
+def _get_data(result):
+    """提取 Aone API 响应数据（兼容 returnObj/data 两种字段）"""
+    if not isinstance(result, dict):
+        return {}
+    return result.get('returnObj', result.get('data', {}))
 
 
 # ==================== 域名管理 ====================
@@ -64,9 +86,9 @@ def cmd_query_domain_list(ctx, access_mode, domain, instance, product_code,
         product_code=product_code, status=status,
         area_scope=area_scope, page=page, page_size=page_size
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     record_list = return_obj.get('result', [])
     if not record_list:
         click.echo("未找到域名"); return
@@ -90,9 +112,9 @@ def cmd_query_domain_config(ctx, product_code, access_mode, domain, instance, ou
         product_code=product_code, access_mode=access_mode,
         domain=domain, instance=instance
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(result.get('returnObj', {}), output_format)
+    format_output(_get_data(result), output_format)
 
 
 @aone.command('query-domain-basic-config')
@@ -106,9 +128,9 @@ def cmd_query_domain_basic_config(ctx, domain, product_code, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_domain_basic_config(domain=domain, product_code=product_code)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(result.get('returnObj', {}), output_format)
+    format_output(_get_data(result), output_format)
 
 
 @aone.command('query-domain-status')
@@ -127,9 +149,9 @@ def cmd_query_domain_status(ctx, domains, product_code, page_index, page_size, o
         domains=list(domains), product_code=product_code,
         page_index=page_index, page_size=page_size
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     record_list = return_obj.get('result', [])
     if not record_list:
         click.echo("未找到域名状态"); return
@@ -153,9 +175,9 @@ def cmd_query_domain_protocol(ctx, product_code, access_mode, domain, instance, 
         product_code=product_code, access_mode=access_mode,
         domain=domain, instance=instance
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(result.get('returnObj', {}), output_format)
+    format_output(_get_data(result), output_format)
 
 
 @aone.command('query-domain-list-basic')
@@ -177,9 +199,9 @@ def cmd_query_domain_list_basic(ctx, domain, product_code, status,
         domain=domain, product_code=product_code, status=status,
         area_scope=area_scope, page=page, page_size=page_size
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     record_list = return_obj.get('result', [])
     if not record_list:
         click.echo("未找到域名"); return
@@ -202,9 +224,9 @@ def cmd_query_service_detail(ctx, product_code, output):
     result = aone_client.query_service_detail(
         product_code=list(product_code) if product_code else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     service_list = return_obj.get('result', [])
     if not service_list:
         click.echo("未查询到服务信息"); return
@@ -220,9 +242,9 @@ def cmd_query_resource_packages(ctx, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_resource_packages()
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(result.get('returnObj', {}), output_format)
+    format_output(_get_data(result), output_format)
 
 
 # ==================== 证书管理 ====================
@@ -240,9 +262,9 @@ def cmd_query_cert_list(ctx, page, per_page, usage_mode, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_cert_list(page=page, per_page=per_page, usage_mode=usage_mode)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     cert_list = return_obj.get('result', [])
     if not cert_list:
         click.echo("未找到证书"); return
@@ -262,9 +284,9 @@ def cmd_query_cert_detail(ctx, name, id, usage_mode, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_cert_detail(name=name, id=id, usage_mode=usage_mode)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    cert_info = result.get('returnObj', {}).get('result', {})
+    cert_info = _get_data(result).get('result', {})
     if not cert_info:
         click.echo("未找到证书"); return
     format_output(cert_info, output_format)
@@ -280,9 +302,9 @@ def cmd_query_cert_domains(ctx, name, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_cert_domains(name=name)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    domain_list = result.get('returnObj', {}).get('result', [])
+    domain_list = _get_data(result).get('result', [])
     if not domain_list:
         click.echo("该证书未关联任何域名"); return
     format_output(domain_list, output_format)
@@ -314,9 +336,9 @@ def cmd_query_refresh_tasks(ctx, query_type, url, start_time, end_time,
         submit_id=submit_id, task_id=task_id, task_type=task_type,
         page=page, page_size=page_size
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     task_list = return_obj.get('result', [])
     if not task_list:
         click.echo("未找到刷新任务"); return
@@ -333,9 +355,9 @@ def cmd_query_refresh_task_quota(ctx, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_refresh_task_quota()
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    result_data = result.get('returnObj', {}).get('result', {})
+    result_data = _get_data(result).get('result', {})
     quotas = result_data.get('quotas', [])
     if quotas:
         click.echo("刷新任务额度:")
@@ -365,9 +387,9 @@ def cmd_query_preload_tasks(ctx, query_type, url, start_time, end_time,
         type=query_type, url=url, start_time=start_time, end_time=end_time,
         submit_id=submit_id, task_id=task_id, page=page, page_size=page_size
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     task_list = return_obj.get('result', [])
     if not task_list:
         click.echo("未找到预取任务"); return
@@ -384,9 +406,9 @@ def cmd_query_preload_task_quota(ctx, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_preload_task_quota()
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    result_data = result.get('returnObj', {}).get('result', {})
+    result_data = _get_data(result).get('result', {})
     quotas = result_data.get('quotas', [])
     if quotas:
         click.echo("预取任务额度:")
@@ -433,9 +455,9 @@ def cmd_query_bandwidth_data(ctx, start_time, end_time, interval,
         abroad=abroad,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_bandwidth_data_interval', [])
     if not data_list:
         click.echo("未查询到带宽数据"); return
@@ -478,9 +500,9 @@ def cmd_query_flow_data(ctx, start_time, end_time, interval,
         abroad=abroad,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_hit_flow_rate_data_interval', [])
     if not data_list:
         click.echo("未查询到流量数据"); return
@@ -519,9 +541,9 @@ def cmd_query_qps_data(ctx, start_time, end_time, interval,
         application_layer_protocol=application_layer_protocol,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_qps_data_interval', [])
     if not data_list:
         click.echo("未查询到QPS数据"); return
@@ -560,9 +582,9 @@ def cmd_query_request_num_data(ctx, start_time, end_time, interval,
         application_layer_protocol=application_layer_protocol,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_request_num_data_interval', [])
     if not data_list:
         click.echo("未查询到请求数数据"); return
@@ -601,9 +623,9 @@ def cmd_query_miss_bandwidth_data(ctx, start_time, end_time, interval,
         application_layer_protocol=application_layer_protocol,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_miss_bandwidth_data_interval', [])
     if not data_list:
         click.echo("未查询到回源带宽数据"); return
@@ -628,9 +650,9 @@ def cmd_query_pv_data(ctx, start_time, end_time, domain, http_protocol, output):
         domain=list(domain) if domain else None,
         http_protocol=http_protocol
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    data_list = result.get('returnObj', {}).get('result', [])
+    data_list = _get_data(result).get('result', [])
     if not data_list:
         click.echo("未查询到PV数据"); return
     format_output(data_list, output_format)
@@ -651,9 +673,9 @@ def cmd_query_uv_data(ctx, start_time, end_time, domain, output):
         start_time=start_time, end_time=end_time,
         domain=list(domain) if domain else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    data_list = result.get('returnObj', {}).get('result', [])
+    data_list = _get_data(result).get('result', [])
     if not data_list:
         click.echo("未查询到UV数据"); return
     format_output(data_list, output_format)
@@ -694,9 +716,9 @@ def cmd_query_http_status_code_data(ctx, start_time, end_time, interval,
         busi_type=list(busi_type) if busi_type else None,
         abroad=abroad
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_http_status_code_data_interval', [])
     if not data_list:
         click.echo("未查询到状态码数据"); return
@@ -735,9 +757,9 @@ def cmd_query_miss_http_status_code_data(ctx, start_time, end_time, interval,
         application_layer_protocol=application_layer_protocol,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_miss_http_status_code_data_interval', [])
     if not data_list:
         click.echo("未查询到回源状态码数据"); return
@@ -776,9 +798,9 @@ def cmd_query_miss_request_num_data(ctx, start_time, end_time, interval,
         application_layer_protocol=application_layer_protocol,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_miss_request_num_data_interval', [])
     if not data_list:
         click.echo("未查询到回源请求数数据"); return
@@ -813,9 +835,9 @@ def cmd_query_response_time_data(ctx, start_time, end_time, interval,
         network_layer_protocol=network_layer_protocol,
         application_layer_protocol=application_layer_protocol
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_response_time_data_interval', [])
     if not data_list:
         click.echo("未查询到响应时间数据"); return
@@ -846,9 +868,9 @@ def cmd_query_request_success_rate(ctx, start_time, end_time, interval,
         province=list(province) if province else None,
         isp=list(isp) if isp else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_request_success_rate_data_interval', [])
     if not data_list:
         click.echo("未查询到请求成功率数据"); return
@@ -879,9 +901,9 @@ def cmd_query_request_failure_rate(ctx, start_time, end_time, interval,
         province=list(province) if province else None,
         isp=list(isp) if isp else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_request_failure_rate_data_interval', [])
     if not data_list:
         click.echo("未查询到请求失败率数据"); return
@@ -912,9 +934,9 @@ def cmd_query_miss_request_success_rate(ctx, start_time, end_time, interval,
         province=list(province) if province else None,
         isp=list(isp) if isp else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_miss_request_success_rate_data_interval', [])
     if not data_list:
         click.echo("未查询到回源请求成功率数据"); return
@@ -953,9 +975,9 @@ def cmd_query_miss_request_failure_rate(ctx, start_time, end_time, interval,
         application_layer_protocol=application_layer_protocol,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_miss_request_failure_rate_data_interval', [])
     if not data_list:
         click.echo("未查询到回源请求失败率数据"); return
@@ -998,9 +1020,9 @@ def cmd_query_user_connection_num(ctx, start_time, end_time, interval,
         abroad=abroad,
         group_by=list(group_by) if group_by else None
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_request_num_data_interval', [])
     if not data_list:
         click.echo("未查询到连接数数据"); return
@@ -1040,9 +1062,9 @@ def cmd_query_summary_data(ctx, start_time, end_time, interval,
         application_layer_protocol=application_layer_protocol,
         abroad=abroad, group_by=group_by
     )
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     data_list = return_obj.get('req_summary_data_interval', [])
     if not data_list:
         click.echo("未查询到统计数据"); return
@@ -1094,9 +1116,9 @@ def cmd_query_cc_attack_events(ctx, product_code, start_time, end_time,
         product_code=product_code, start_time=start_time,
         end_time=end_time, domain=domain, page=page, size=size
     )
-    if result.get('statusCode') not in (800, 100000, '100000'):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     event_list = return_obj.get('resultList', [])
     if not event_list:
         click.echo("未查询到CC攻击事件"); return
@@ -1176,9 +1198,9 @@ def cmd_query_waf_config(ctx, domain, product_code, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_waf_config(domain=domain, product_code=product_code)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(result.get('returnObj', {}), output_format)
+    format_output(_get_data(result), output_format)
 
 
 @aone.command('query-rule-engine-config')
@@ -1199,9 +1221,9 @@ def cmd_query_rule_engine_config(ctx, domain, product_code, rule_id,
         domain=domain, product_code=product_code, rule_id=rule_id,
         page_index=page_index, page_size=page_size
     )
-    if result.get('statusCode') not in (800, 100000, '100000'):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    return_obj = result.get('returnObj', {})
+    return_obj = _get_data(result)
     rule_list = return_obj.get('results', [])
     if not rule_list:
         click.echo("未查询到规则配置"); return
@@ -1220,9 +1242,9 @@ def cmd_query_rule_engine_switch(ctx, domain, product_code, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_rule_engine_switch(domain=domain, product_code=product_code)
-    if result.get('statusCode') not in (800, 100000, '100000'):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(result.get('returnObj', {}), output_format)
+    format_output(_get_data(result), output_format)
 
 
 @aone.command('query-access-control-switch')
@@ -1236,9 +1258,9 @@ def cmd_query_access_control_switch(ctx, domain, product_code, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_access_control_switch(domain=domain, product_code=product_code)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(result.get('returnObj', {}), output_format)
+    format_output(_get_data(result), output_format)
 
 
 @aone.command('query-tamper-protect')
@@ -1257,9 +1279,9 @@ def cmd_query_tamper_protect(ctx, domain, product_code, page_index, page_size, o
         domain=domain, product_code=product_code,
         page_index=page_index, page_size=page_size
     )
-    if result.get('statusCode') not in (800, 100000, '100000'):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    page_result = result.get('returnObj', {}).get('pageResult', {})
+    page_result = _get_data(result).get('pageResult', {})
     rule_list = page_result.get('results', [])
     if not rule_list:
         click.echo("未查询到防篡改规则"); return
@@ -1277,9 +1299,9 @@ def cmd_query_ipv6_no_sup_links(ctx, request_id, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_ipv6_no_sup_links(request_id=request_id)
-    if result.get('statusCode') not in (800, 100000, '100000'):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    link_list = result.get('returnObj', [])
+    link_list = _get_data(result)
     if not link_list:
         click.echo("该检测任务无不支持链接"); return
     format_output(link_list, output_format)
@@ -1299,9 +1321,9 @@ def cmd_query_ip_detail(ctx, ipv4, ipv6, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_ip_detail(ipv4=ipv4, ipv6=ipv6)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    ip_list = result.get('returnObj', {}).get('result', [])
+    ip_list = _get_data(result).get('result', [])
     if not ip_list:
         click.echo("未查询到IP信息"); return
     format_output(ip_list, output_format)
@@ -1317,6 +1339,6 @@ def cmd_query_backorigin_ip(ctx, config_name, output):
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
     result = aone_client.query_backorigin_ip(config_name=config_name)
-    if result.get('statusCode') not in (800, 100000):
+    if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
     click.echo(f"回源IP: {result.get('ips', '未获取到')}")

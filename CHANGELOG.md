@@ -4,6 +4,19 @@
 
 ---
 
+## v1.31.2 (2026-08-26)
+
+### 🔧 Aone 模块响应解析与参数命名修复
+
+- **参数命名修复**：`query_waf_config`、`query_access_control_switch` 请求体 `product_code` → `productCode`（API 网关要求驼峰，否则报"productCode不允许为空"）
+- **成功判断修复**：Aone 平台存在两种响应结构（`statusCode` 风格与 `code` 风格），且成功码有字符串/数字两种类型。新增 `_is_success()` 统一兼容判断，修复 CLI 误报"查询失败: success"的问题（批量替换 41 处判断）
+- **数据提取修复**：code 风格响应数据在 `data` 字段而非 `returnObj`，新增 `_get_data()` 统一兼容提取（批量替换 41 处）
+- **format_output 修复**：dict 分支原将数据转为二维数组导致 `format_table` 崩溃，改为 `[{'字段':k,'值':v}]` 结构
+
+**实测验证**：`aone query-waf-config`（webProtectAct=ON）、`query-access-control-switch`（mod=ON）、`query-domain-status` 均正常输出。
+
+---
+
 ## v1.31.1 (2026-08-21)
 
 ### 🔧 Redis 模块监控 API 修复（rdscmd）

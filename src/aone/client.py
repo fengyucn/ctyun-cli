@@ -660,7 +660,7 @@ class AoneClient:
         """查询Web应用防火墙基础配置信息"""
         logger.info(f"查询WAF配置: domain={domain}")
         return self._request('POST', '/ctapi/v1/scdn/domain/wafConfigQuery',
-                             body_data={'domain': domain, 'product_code': product_code})
+                             body_data={'domain': domain, 'productCode': product_code})
 
     def query_rule_engine_config(self, domain: str, product_code: str,
                                  rule_id: Optional[str] = None,
@@ -682,7 +682,7 @@ class AoneClient:
         """查询访问控制限流总开关"""
         logger.info(f"查询访问控制限流开关: domain={domain}")
         return self._request('POST', '/ctapi/v1/scdn/domain/queryAccessControlAct',
-                             body_data={'domain': domain, 'product_code': product_code})
+                             body_data={'domain': domain, 'productCode': product_code})
 
     def query_tamper_protect(self, domain: str, product_code: str,
                              page_index: int = 1, page_size: int = 10) -> Dict[str, Any]:
