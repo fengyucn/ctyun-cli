@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
-from utils import logger
+from utils import logger, redact_headers
 
 
 class MonitorClient:
@@ -81,15 +81,14 @@ class MonitorClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -185,15 +184,14 @@ class MonitorClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -263,15 +261,14 @@ class MonitorClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -340,15 +337,14 @@ class MonitorClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -417,15 +413,14 @@ class MonitorClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -494,15 +489,14 @@ class MonitorClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -589,14 +583,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -660,14 +653,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -735,14 +727,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -844,14 +835,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -919,14 +909,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1027,14 +1016,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1117,14 +1105,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1203,14 +1190,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1328,14 +1314,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1488,14 +1473,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1571,14 +1555,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1689,14 +1672,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1813,14 +1795,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -1929,14 +1910,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2015,14 +1995,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2101,14 +2080,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2192,14 +2170,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2267,14 +2244,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2383,14 +2359,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
                 data=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2454,14 +2429,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2529,14 +2503,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2613,14 +2586,13 @@ class MonitorClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             logger.debug(f"响应状态码: {response.status_code}")
@@ -2674,7 +2646,7 @@ class MonitorClient:
             if time_range:
                 query_params['range'] = time_range
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -2695,7 +2667,7 @@ class MonitorClient:
             if time_range:
                 query_params['range'] = time_range
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -2730,7 +2702,7 @@ class MonitorClient:
             if res_group_id: query_params['resGroupID'] = res_group_id
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -2767,8 +2739,7 @@ class MonitorClient:
                 url,
                 params=query_params,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             if response.status_code != 200:
@@ -2821,8 +2792,7 @@ class MonitorClient:
                 url,
                 json=body if body else None,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             if response.status_code != 200:
@@ -2872,8 +2842,7 @@ class MonitorClient:
                 url,
                 json=body if body else None,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             if response.status_code != 200:
@@ -2928,8 +2897,7 @@ class MonitorClient:
                 url,
                 json=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             if response.status_code != 200:
@@ -2982,8 +2950,7 @@ class MonitorClient:
                 url,
                 json=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             if response.status_code != 200:
@@ -3034,8 +3001,7 @@ class MonitorClient:
                 url,
                 json=body,
                 headers=headers,
-                timeout=30,
-                verify=False
+                timeout=30
             )
             
             if response.status_code != 200:
@@ -3072,7 +3038,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3104,7 +3070,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3127,7 +3093,7 @@ class MonitorClient:
             query_params = {'regionID': region_id, 'alarmRuleID': alarm_rule_id}
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3160,7 +3126,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
 
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
 
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3200,7 +3166,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
 
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
 
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3230,7 +3196,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3253,7 +3219,7 @@ class MonitorClient:
             query_params = {'noticeTemplateID': notice_template_id}
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3276,7 +3242,7 @@ class MonitorClient:
             query_params = {'group': group, 'dimension': dimension}
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3299,7 +3265,7 @@ class MonitorClient:
             query_params = {'regionID': region_id, 'templateID': template_id}
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3333,7 +3299,7 @@ class MonitorClient:
             
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                 extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3356,7 +3322,7 @@ class MonitorClient:
             query_params = {'contactID': contact_id}
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3379,7 +3345,7 @@ class MonitorClient:
             query_params = {'contactGroupID': contact_group_id}
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3417,7 +3383,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3451,7 +3417,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3479,7 +3445,7 @@ class MonitorClient:
             body_json = json.dumps(body)
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                 extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=60, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=60)
 
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3510,7 +3476,7 @@ class MonitorClient:
             
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                 extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3538,7 +3504,7 @@ class MonitorClient:
             
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                 extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3563,7 +3529,7 @@ class MonitorClient:
             if search: query_params['search'] = search
             
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3594,7 +3560,7 @@ class MonitorClient:
             
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                 extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3622,7 +3588,7 @@ class MonitorClient:
             
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                 extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
             
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -3646,7 +3612,7 @@ class MonitorClient:
             url = f"https://{self.base_endpoint}/v4/monitor/query-message-subscription"
             query_params = {'regionID': region_id}
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3666,7 +3632,7 @@ class MonitorClient:
             url = f"https://{self.base_endpoint}/v4/monitor/describe-message-subscription"
             query_params = {'subscriptionID': subscription_id}
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3700,7 +3666,7 @@ class MonitorClient:
             if page_size: query_params['pageSize'] = page_size
 
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3720,7 +3686,7 @@ class MonitorClient:
             url = f"https://{self.base_endpoint}/v4/monitor/order/notice-pack-used"
             query_params = {'method': method}
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3740,7 +3706,7 @@ class MonitorClient:
             url = f"https://{self.base_endpoint}/v4/monitor/order/notice-pack-limit-detail"
             query_params = {'method': method}
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3767,7 +3733,7 @@ class MonitorClient:
             if page_no is not None: query_params['pageNo'] = page_no
             if page_size is not None: query_params['pageSize'] = page_size
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3798,7 +3764,7 @@ class MonitorClient:
             if page_no is not None: query_params['pageNo'] = page_no
             if page_size is not None: query_params['pageSize'] = page_size
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3818,7 +3784,7 @@ class MonitorClient:
             url = f"https://{self.base_endpoint}/v4/monitor/monitor-board/query-sys-services"
             query_params = {'regionID': region_id}
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3848,7 +3814,7 @@ class MonitorClient:
             body_json = json.dumps(body)
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                 extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3933,7 +3899,7 @@ class MonitorClient:
             query_params = {}
             if device_type: query_params['deviceType'] = device_type
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params, body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
             result = response.json()
@@ -3988,11 +3954,11 @@ class MonitorClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             response = self.client.session.get(
                 url, params=query_params, headers=headers,
-                timeout=30, verify=False
+                timeout=30
             )
 
             logger.debug(f"响应状态码: {response.status_code}")
@@ -4060,11 +4026,11 @@ class MonitorClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             response = self.client.session.post(
                 url, data=body, headers=headers,
-                timeout=30, verify=False
+                timeout=30
             )
 
             logger.debug(f"响应状态码: {response.status_code}")
@@ -4131,11 +4097,11 @@ class MonitorClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             response = self.client.session.post(
                 url, data=body, headers=headers,
-                timeout=30, verify=False
+                timeout=30
             )
 
             logger.debug(f"响应状态码: {response.status_code}")
@@ -4202,11 +4168,11 @@ class MonitorClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             response = self.client.session.post(
                 url, data=body, headers=headers,
-                timeout=30, verify=False
+                timeout=30
             )
 
             logger.debug(f"响应状态码: {response.status_code}")
@@ -4256,7 +4222,7 @@ class MonitorClient:
 
             headers = self.eop_auth.sign_request(method='GET', url=url, query_params=query_params,
                                                   body=None, extra_headers={})
-            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30, verify=False)
+            response = self.client.session.get(url, params=query_params, headers=headers, timeout=30)
 
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}
@@ -4281,7 +4247,7 @@ class MonitorClient:
 
             headers = self.eop_auth.sign_request(method='POST', url=url, query_params=None, body=body_json,
                                                   extra_headers={'Content-Type': 'application/json'})
-            response = self.client.session.post(url, json=body, headers=headers, timeout=30, verify=False)
+            response = self.client.session.post(url, json=body, headers=headers, timeout=30)
 
             if response.status_code != 200:
                 return {'success': False, 'error': f'HTTP {response.status_code}', 'message': response.text}

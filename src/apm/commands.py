@@ -21,7 +21,7 @@ def format_output(data, output_format='table'):
         if isinstance(data, list) and data:
             click.echo(OutputFormatter.format_table(data, list(data[0].keys())))
         elif isinstance(data, dict):
-            table_data = [[k, v] for k, v in data.items()]
+            table_data = [{'字段': k, '值': v} for k, v in data.items()]
             click.echo(OutputFormatter.format_table(table_data, ['字段', '值']))
         else:
             click.echo(data)

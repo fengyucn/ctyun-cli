@@ -15,6 +15,22 @@ from colorama import Fore, Style
 # 初始化colorama
 colorama.init()
 
+# 认证类请求头，日志输出时需脱敏
+SENSITIVE_HEADERS = {'eop-authorization', 'authorization'}
+
+
+def redact_headers(headers):
+    """日志脱敏：认证类请求头仅保留前8字符，其余原样返回"""
+    if not isinstance(headers, dict):
+        return headers
+    redacted = {}
+    for k, v in headers.items():
+        if k.lower() in SENSITIVE_HEADERS and isinstance(v, str) and len(v) > 8:
+            redacted[k] = v[:8] + '***'
+        else:
+            redacted[k] = v
+    return redacted
+
 
 class OutputFormatter:
     """输出格式化器"""

@@ -866,7 +866,7 @@ class ELBClient:
         logger.debug(f"GET {url} params={params}")
         try:
             response = self.client.session.get(
-                url, params=params, headers=headers, timeout=30, verify=False
+                url, params=params, headers=headers, timeout=30
             )
             if response.status_code != 200:
                 return {'statusCode': response.status_code, 'message': response.text}
@@ -885,7 +885,7 @@ class ELBClient:
         logger.debug(f"POST {url} body={body}")
         try:
             response = self.client.session.post(
-                url, data=body, headers=headers, timeout=30, verify=False
+                url, data=body, headers=headers, timeout=30
             )
             if response.status_code != 200:
                 return {'statusCode': response.status_code, 'message': response.text}

@@ -98,40 +98,35 @@ class CDAClient:
                             params=query_params,
                             data=body,
                             headers=headers,
-                            timeout=timeout,
-                            verify=False
+                            timeout=timeout
                         )
                     else:
                         response = self.client.session.get(
                             url,
                             params=query_params,
                             headers=headers,
-                            timeout=timeout,
-                            verify=False
+                            timeout=timeout
                         )
                 elif method.upper() == 'POST':
                     response = self.client.session.post(
                         url,
                         data=body,
                         headers=headers,
-                        timeout=timeout,
-                        verify=False
+                        timeout=timeout
                     )
                 elif method.upper() == 'PUT':
                     response = self.client.session.put(
                         url,
                         data=body,
                         headers=headers,
-                        timeout=timeout,
-                        verify=False
+                        timeout=timeout
                     )
                 elif method.upper() == 'DELETE':
                     response = self.client.session.delete(
                         url,
                         params=query_params,
                         headers=headers,
-                        timeout=timeout,
-                        verify=False
+                        timeout=timeout
                     )
                 else:
                     raise ValueError(f"不支持的HTTP方法: {method}")

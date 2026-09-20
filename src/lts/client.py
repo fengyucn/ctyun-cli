@@ -832,3 +832,67 @@ class LTSClient:
     def check_product_agency_created(self, region_id: str) -> Dict[str, Any]:
         """检查产品委托授权是否创建 - GET /v1/lts/service/agency-status"""
         raise NotImplementedError
+
+    # ==================== v1 检索接口（playground 实测可用）====================
+
+    def list_units_v1(self, region_id: str, project_code: str,
+                      unit_name: Optional[str] = None) -> Dict[str, Any]:
+        """日志单元列表(v1) - GET /v1/unit/list
+
+        Args:
+            region_id: 资源池ID（header regionId）
+            project_code: 日志项目ID（projectCode）
+            unit_name: 单元名称/原始名称模糊匹配（可选）
+        """
+        logger.info(f"查询日志单元列表(v1): projectCode={project_code}, unitName={unit_name}")
+        qp = {'projectCode': project_code}
+        if unit_name:
+            qp['unitName'] = unit_name
+        return self._request('GET', '/v1/unit/list', qp, None,
+                             {'regionId': region_id})
+
+    def get_unit_index_v1(self, region_id: str, project_code: str,
+                          unit_code: str) -> Dict[str, Any]:
+        """查询指定日志单元的索引信息(v1) - GET /v1/index/getIndex
+
+        Args:
+            region_id: 资源池ID（header regionId）
+            project_code: 日志项目ID
+            unit_code: 日志单元ID
+        """
+        logger.info(f"查询单元索引(v1): projectCode={project_code}, unitCode={unit_code}")
+        return self._request('GET', '/v1/index/getIndex',
+                             {'projectCode': project_code, 'unitCode': unit_code},
+                             None, {'regionId': region_id})
+
+    def get_logs_v1(self, region_id: str, project_code: str, unit_code: str,
+                    start_time: int, end_time: int,
+                    query: str = '*', limit: int = 100,
+                    reverse: bool = True,
+                    cursor: Optional[str] = None,
+                    search_type: Optional[str] = None) -> Dict[str, Any]:
+        """日志检索(v1) - POST /v1/content/getLogs
+
+        Args:
+            region_id: 资源池ID（header regionId）
+            project_code: 日志项目ID
+            unit_code: 日志单元ID
+            start_time: 起始时间（秒级时间戳）
+            end_time: 结束时间（秒级时间戳）
+            query: 查询或分析语句，如 status:200 或 * | select count(*) from log
+            limit: 返回日志数量（默认100，最大5000）
+            reverse: 是否按时间倒序（仅查询语句有效）
+            cursor: 翻页游标（上一页最后一条的 __cursor__）
+            search_type: forward（默认）/backward，后退翻页时配 backward
+        """
+        logger.info(f"日志检索(v1): unitCode={unit_code}, query={query!r}, "
+                    f"[{start_time}, {end_time}], limit={limit}")
+        body = {'projectCode': project_code, 'unitCode': unit_code,
+                'startTime': int(start_time), 'endTime': int(end_time),
+                'query': query, 'limit': limit, 'reverse': reverse}
+        if cursor:
+            body['cursor'] = cursor
+        if search_type:
+            body['searchType'] = search_type
+        return self._request('POST', '/v1/content/getLogs', None, body,
+                             {'regionId': region_id})

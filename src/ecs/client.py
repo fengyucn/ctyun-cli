@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 import json
 from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
-from utils import logger
+from utils import logger, redact_headers
 
 
 class ECSClient:
@@ -54,7 +54,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -200,7 +200,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
@@ -266,7 +266,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -376,7 +376,7 @@ class ECSClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             response = self.client.session.get(
                 url,
@@ -464,7 +464,7 @@ class ECSClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             response = self.client.session.post(
                 url,
@@ -537,7 +537,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -628,7 +628,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -706,7 +706,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -776,7 +776,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -875,7 +875,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
@@ -946,7 +946,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1037,7 +1037,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
@@ -1109,7 +1109,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
@@ -1180,7 +1180,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1251,7 +1251,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1321,7 +1321,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1407,7 +1407,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1477,7 +1477,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1546,7 +1546,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"查询参数: {query_params}")
             
             response = self.client.session.get(
@@ -1622,7 +1622,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"查询参数: {query_params}")
             
             response = self.client.session.get(
@@ -1698,7 +1698,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
@@ -1769,7 +1769,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1828,7 +1828,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -1895,7 +1895,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -2748,7 +2748,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
@@ -2817,7 +2817,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -2900,7 +2900,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             logger.debug(f"请求体: {body}")
             
             response = self.client.session.post(
@@ -2969,7 +2969,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -3035,7 +3035,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -3106,7 +3106,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -3203,7 +3203,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -3262,7 +3262,7 @@ class ECSClient:
             )
             
             logger.debug(f"请求URL: {url}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -3332,7 +3332,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
@@ -3403,7 +3403,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
@@ -3479,7 +3479,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -3548,7 +3548,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,
@@ -3655,7 +3655,7 @@ class ECSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"请求体: {body}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.post(
                 url,
@@ -3932,7 +3932,7 @@ class ECSClient:
 
         logger.debug(f"请求URL: {url}")
         logger.debug(f"请求体: {body}")
-        logger.debug(f"请求头: {headers}")
+        logger.debug(f"请求头: {redact_headers(headers)}")
 
         try:
             response = self.client.session.post(

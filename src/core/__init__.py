@@ -12,7 +12,7 @@ from urllib3.util.retry import Retry
 
 from auth.signature import CTYUNAuth
 from config import config
-from utils.helpers import logger
+from utils.helpers import logger, redact_headers
 
 
 class CTYUNClient:
@@ -138,7 +138,7 @@ class CTYUNClient:
             headers['Authorization'] = self.auth.get_bearer_token()
 
         logger.debug(f"发送请求: {method} {url}")
-        logger.debug(f"请求头: {headers}")
+        logger.debug(f"请求头: {redact_headers(headers)}")
         if data:
             logger.debug(f"请求体: {data}")
 

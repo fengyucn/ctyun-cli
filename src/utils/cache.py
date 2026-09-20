@@ -26,9 +26,16 @@ class FileCache:
         
         self.cache_dir = Path(cache_dir)
         self.default_ttl = default_ttl
-        
-        # 确保缓存目录存在
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        # 确保缓存目录存在（缓存可能含资源敏感数据，仅属主可访问）
+        if self.cache_dir.exists():
+            if self.cache_dir.stat().st_mode & 0o077:
+                try:
+                    self.cache_dir.chmod(0o700)
+                except OSError:
+                    pass
+        else:
+            self.cache_dir.mkdir(parents=True, mode=0o700, exist_ok=True)
     
     def _get_cache_path(self, key: str) -> Path:
         """获取缓存文件路径"""
@@ -95,6 +102,7 @@ class FileCache:
         try:
             with open(cache_path, 'w', encoding='utf-8') as f:
                 json.dump(cache_data, f, ensure_ascii=False, indent=2)
+            os.chmod(cache_path, 0o600)
             return True
         except IOError:
             return False

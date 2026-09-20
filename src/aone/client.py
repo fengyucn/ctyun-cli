@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional, List
 import json
 from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
-from utils import logger
+from utils import logger, redact_headers
 
 
 class AoneClient:
@@ -41,16 +41,16 @@ class AoneClient:
         logger.debug(f"请求URL: {url}")
         logger.debug(f"请求体: {body}")
         logger.debug(f"查询参数: {query_params}")
-        logger.debug(f"请求头: {headers}")
+        logger.debug(f"请求头: {redact_headers(headers)}")
 
         try:
             if method == 'GET':
                 response = self.client.session.get(
-                    url, params=query_params, headers=headers, timeout=30, verify=False
+                    url, params=query_params, headers=headers, timeout=30
                 )
             else:
                 response = self.client.session.post(
-                    url, data=body, headers=headers, timeout=30, verify=False
+                    url, data=body, headers=headers, timeout=30
                 )
 
             logger.debug(f"响应状态码: {response.status_code}")

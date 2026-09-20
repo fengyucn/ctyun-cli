@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 import json
 from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
-from utils import logger
+from utils import logger, redact_headers
 
 
 class EBSClient:
@@ -106,7 +106,7 @@ class EBSClient:
             
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
             
             response = self.client.session.get(
                 url,

@@ -22,7 +22,7 @@ class ConfigManager:
         if config_file is None:
             home_dir = Path.home()
             config_dir = home_dir / ".ctyun"
-            config_dir.mkdir(exist_ok=True)
+            config_dir.mkdir(mode=0o700, exist_ok=True)
             config_file = str(config_dir / "config")
 
         self.config_file = config_file
@@ -31,7 +31,21 @@ class ConfigManager:
 
     def _load_config(self) -> None:
         """加载配置文件"""
+        config_dir = os.path.dirname(self.config_file)
+        if os.path.isdir(config_dir):
+            # 目录含明文AK/SK配置，收紧为仅属主可访问
+            if os.stat(config_dir).st_mode & 0o077:
+                try:
+                    os.chmod(config_dir, 0o700)
+                except OSError:
+                    pass
         if os.path.exists(self.config_file):
+            # 历史版本可能以默认umask创建（组/其他可读），读取时收紧权限
+            if os.stat(self.config_file).st_mode & 0o077:
+                try:
+                    os.chmod(self.config_file, 0o600)
+                except OSError:
+                    pass
             self.config.read(self.config_file, encoding='utf-8')
         else:
             # 创建默认配置
@@ -136,6 +150,8 @@ class ConfigManager:
         os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
         with open(self.config_file, 'w', encoding='utf-8') as f:
             self.config.write(f)
+        # 配置含AK/SK明文，收紧为仅属主可读写
+        os.chmod(self.config_file, 0o600)
 
     def list_profiles(self) -> list:
         """列出所有配置文件"""

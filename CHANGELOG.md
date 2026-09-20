@@ -4,6 +4,40 @@
 
 ---
 
+## v1.32.1 (2026-09-20)
+
+### 🚀 LTS 模块首批可用命令（v1 检索接口）
+
+- `lts unit list-v1`：日志单元列表（`GET /v1/unit/list`）
+- `lts unit get-index-v1`：查询单元索引信息（`GET /v1/index/getIndex`）
+- `lts search logs-v1`：日志检索（`POST /v1/content/getLogs`，支持查询/SQL 分析语句、`--hours`/时间戳、游标翻页）
+- 注意：v1 接口成功码为 `0`（非 800），与现有空壳 v2 命令并存（URI 不同视为独立 API）
+- 实测通过（真实单元列表、索引、ingress 日志检索与 count 统计）
+
+---
+
+## v1.32.0 (2026-09-20)
+
+### 🆕 新增 SWR（容器镜像服务）模块
+
+- 终端节点 `crs-global.ctapi.ctyun.cn`，首批实现 2 个查询命令：
+  - `swr list-instances`：镜像实例列表（支持名称模糊过滤、`--all-region` 全资源池查询）
+  - `swr list-repositories`：实例下镜像仓库列表（分页）
+- 实测通过（3 个实例、999 个镜像仓库真实数据）
+
+---
+
+## v1.31.3 (2026-09-20)
+
+### 🔒 安全加固
+
+- **启用全量 TLS 证书校验**：移除 monitor/iam/cda/apm/elb/zos/aone 七个模块共 88 处 `verify=False`
+- **日志脱敏**：debug 日志中的认证头（Eop-Authorization 等）仅保留前 8 字符（86 处）
+- **凭据文件权限收紧**：`~/.ctyun/config` 及缓存目录/文件收紧为 600/700
+- **修复 APM 模块表格输出崩溃**
+
+---
+
 ## v1.31.2 (2026-08-26)
 
 ### 🔧 Aone 模块响应解析与参数命名修复

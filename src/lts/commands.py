@@ -1746,3 +1746,90 @@ def service_create_agency(ctx, region_id):
 def service_agency_status(ctx, region_id):
     """检查产品委托授权是否创建"""
     raise NotImplementedError
+
+
+# ==================== v1 检索接口（与空壳 v2 命令并存，URI 不同视为独立API）====================
+
+@unit.command('list-v1')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--project-code', required=True, help='日志项目ID（projectCode）')
+@click.option('--unit-name', help='单元名称/原始名称模糊匹配')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+def unit_list_v1(ctx, region_id: str, project_code: str,
+                 unit_name: Optional[str], output: Optional[str]):
+    """日志单元列表(v1) - GET /v1/unit/list"""
+    client = ctx.obj['client']
+    output_format = output or ctx.obj.get('output', 'table')
+    result = LTSClient(client).list_units_v1(region_id, project_code, unit_name)
+    if result.get('statusCode') not in (800, 0, '0'):
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    ro = result.get('returnObj')
+    units = ro if isinstance(ro, list) else (ro or {}).get('units', [])
+    if output_format == 'table':
+        rows = [{'unitCode': u.get('unitCode'),
+                 'unitName': u.get('unitName') or u.get('aliasName'),
+                 'ttlDays': u.get('ttlDays')} for u in units]
+        click.echo(f"日志单元列表(v1) (共 {len(rows)} 个):")
+        format_output(rows, output_format)
+    else:
+        format_output(units, output_format)
+
+
+@unit.command('get-index-v1')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--project-code', required=True, help='日志项目ID')
+@click.option('--unit-code', required=True, help='日志单元ID')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+def unit_get_index_v1(ctx, region_id: str, project_code: str,
+                      unit_code: str, output: Optional[str]):
+    """查询指定日志单元的索引信息(v1) - GET /v1/index/getIndex"""
+    client = ctx.obj['client']
+    output_format = output or ctx.obj.get('output', 'table')
+    result = LTSClient(client).get_unit_index_v1(region_id, project_code, unit_code)
+    if result.get('statusCode') not in (800, 0, '0'):
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    format_output(result.get('returnObj'), output_format)
+
+
+@search.command('logs-v1')
+@click.option('--region-id', required=True, help='资源池ID')
+@click.option('--project-code', required=True, help='日志项目ID')
+@click.option('--unit-code', required=True, help='日志单元ID')
+@click.option('--query', default='*', help='查询/分析语句，如 status:200 或 * | select count(*) from log')
+@click.option('--start-time', type=int, help='起始时间（秒级时间戳，与--end-time成对）')
+@click.option('--end-time', type=int, help='结束时间（秒级时间戳）')
+@click.option('--hours', type=float, default=1.0, help='未指定时间时的最近N小时（默认1）')
+@click.option('--limit', type=int, default=100, help='返回日志数量（默认100，最大5000）')
+@click.option('--reverse/--no-reverse', default=True, help='是否按时间倒序（默认倒序）')
+@click.option('--cursor', help='翻页游标（上一页最后一条的 __cursor__）')
+@click.option('--search-type', type=click.Choice(['forward', 'backward']), help='翻页方向')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+def search_logs_v1(ctx, region_id: str, project_code: str, unit_code: str,
+                   query: str, start_time: Optional[int], end_time: Optional[int],
+                   hours: float, limit: int, reverse: bool,
+                   cursor: Optional[str], search_type: Optional[str],
+                   output: Optional[str]):
+    """日志检索(v1) - POST /v1/content/getLogs"""
+    import time as _time
+    client = ctx.obj['client']
+    output_format = output or ctx.obj.get('output', 'table')
+    if start_time is None or end_time is None:
+        now = int(_time.time())
+        end_time = end_time if end_time is not None else now
+        start_time = start_time if start_time is not None else now - int(hours * 3600)
+    result = LTSClient(client).get_logs_v1(
+        region_id, project_code, unit_code, start_time, end_time,
+        query, limit, reverse, cursor, search_type)
+    if result.get('statusCode') not in (800, 0, '0'):
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+    ro = result.get('returnObj')
+    logs = ro.get('logs', []) if isinstance(ro, dict) else (ro or [])
+    if output_format == 'table':
+        click.echo(f"日志检索(v1) [{project_code}/{unit_code}] 返回 {len(logs)} 条:")
+    format_output(logs, output_format)

@@ -39,7 +39,7 @@ class IAMClient:
             )
             logger.debug(f"请求URL: {url}, 请求体: {body}")
             response = self.client.session.post(
-                url, data=body, headers=headers, timeout=30, verify=False
+                url, data=body, headers=headers, timeout=30
             )
             logger.debug(f"响应状态码: {response.status_code}")
             if response.status_code != 200:
@@ -67,7 +67,7 @@ class IAMClient:
             logger.debug(f"请求URL: {url}, 参数: {query_params}")
             response = self.client.session.get(
                 url, params=query_params, headers=headers,
-                timeout=30, verify=False
+                timeout=30
             )
             logger.debug(f"响应状态码: {response.status_code}")
             if response.status_code != 200:

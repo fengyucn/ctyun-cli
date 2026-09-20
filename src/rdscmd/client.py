@@ -7,7 +7,7 @@ import json
 from typing import Dict, List, Optional, Any
 from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
-from utils import logger
+from utils import logger, redact_headers
 
 
 class RedisClient:
@@ -138,7 +138,7 @@ class RedisClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             # 发送请求
             response = self.client.session.get(
@@ -1277,7 +1277,7 @@ class RedisClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             # 发送请求
             response = self.client.session.get(
@@ -1350,7 +1350,7 @@ class RedisClient:
 
             logger.debug(f"请求URL: {url}")
             logger.debug(f"查询参数: {query_params}")
-            logger.debug(f"请求头: {headers}")
+            logger.debug(f"请求头: {redact_headers(headers)}")
 
             # 发送请求
             response = self.client.session.get(

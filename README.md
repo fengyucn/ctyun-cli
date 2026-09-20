@@ -3,49 +3,49 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-943+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-898+-orange.svg)](docs/MODULES/README.md#命令统计)
-[![Modules](https://img.shields.io/badge/Modules-28+-blue.svg)](docs/MODULES/README.md)
+[![APIs](https://img.shields.io/badge/APIs-1102+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-1048+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![Modules](https://img.shields.io/badge/Modules-31+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
 
 [English](README_EN.md) | 简体中文
 
-## 🎉 庆祝天翼云官方 CLI 正式上线！
+## 🆚 与天翼云官方 CLI 的对比
 
-热烈祝贺天翼云官方命令行工具正式发布！官方 CLI 的推出标志着天翼云开发者生态的进一步完善。作为社区开源项目，ctyun-cli 与官方 CLI **互补共存**，共同为开发者提供高效的云端操作体验。
+天翼云官方已于 2026 年推出命令行工具（Go 实现，命令名同为 `ctyun-cli`）。
+以下对比基于 **官方 v0.3.0 实测**（2026-09-20）：
 
-### 📋 命令与能力对比报告：官方CLI vs ctyun-cli
+| 维度 | 官方 CLI | ctyun-cli (本项目) |
+|------|---------|-------------------|
+| 实现 | Go，OpenAPI 自动生成 | Python，手工精编封装 |
+| 规模 | 51 模块 / 3,650 命令 | 31 模块 / 1,048 命令（1,102+ API） |
+| 命令风格 | API 名原样 `ctyun-cli ecs ListEcsInstances` | 动词式 `ctyun-cli ecs list` |
+| 参数风格 | API 参数原名（`--instanceIDList`、`--pageNo`） | 人性化 kebab-case 命名 |
+| 命令结构 | 扁平，一模块一长串 | 嵌套子命令组（`vpc eip list`） |
+| 输出格式 | json / table | json / table / yaml |
+| 配置 | `~/.ctyun-cli.yaml`，环境变量 `CTYUN_AK/SK` | `~/.ctyun/config`(INI)，多 profile，环境变量 `CTYUN_ACCESS_KEY/SECRET_KEY` |
+| 特色能力 | `--cli-query`（JMESPath）、`--body` 透传 | 响应统一校验(800)、结果缓存、表格友好输出 |
 
-#### 命令风格
+### 能力差异
 
-| 维度 | 官方CLI (Go) | ctyun-cli (Python) |
-|------|-------------|-------------------|
-| 命名 | API 动作名原样 `ListEbmInstance`（PascalCase） | 动词式 `list`/`detail`（kebab-case） |
-| 结构 | 扁平，一模块一长串 | 嵌套子命令组 `vpc eip list` |
-| 来源 | 照 OpenAPI 自动生成 | 手工精编封装 |
+- **官方覆盖更全**：弹性伸缩、资源编排、SD-WAN、备份(CSBS/VBS)、DRDS/SQLServer/MongoDB/ClickHouse、DTS、容器镜像(CRS)、CCEOne、MQTT/RabbitMQ/RocketMQ、内网DNS、VPCE 等
+- **本项目独有**：CFW 云防火墙(66)、CSSCN 云安全中心、CloudPC 云电脑、Security 安全卫士、Billing 账务增强、OceanFS/IMS 询价、MSE 云原生网关细化命令
 
-#### 能力覆盖
+### 定位
 
-| 域 | 官方CLI | ctyun-cli |
-|----|--------|-----------|
-| VPC/网络查询（EIP/NAT/安全组/路由/子网/终端节点） | ~71 | ~73 |
-| ECS/ELB/EVS/DPS/IMS | ✓（更全） | ✓ |
-| 弹性伸缩/SD-WAN/资源编排/云间高速/备份/VPN/并行文件/专属云 | ✓ 独占 | ✗ |
-| Redis/CCE（容器60+）/Kafka/CSS/EMR | ✗ | ✓ 独占 |
-| IAM/账务/CDN(WAF)/云电脑/监控 | ✗ | ✓ 独占 |
+官方 CLI 走 **API 直通**路线（参数即文档，灵活但繁琐）；本项目走 **开发者体验**路线（贴近 AWS CLI 风格的高层封装，常用操作一行完成）。例如查询运行中的云主机：
 
-#### 结论
+- 官方：`ctyun-cli ecs ListEcsInstances --regionID xxx --state running`
+- 本项目：`ctyun-cli --region cn-north-1 ecs list --state running`
 
-- **网络核心查询两者对等**（各约 70 条）
-- **官方CLI 强于边缘 IaaS**（伸缩/编排/备份/SD-WAN）；**ctyun-cli 强于 PaaS/账务/容器**（Redis/CCE/Kafka/IAM）
-- **二者互补而非包含**。选型建议：IaaS 网络明细 → 官方CLI；容器/中间件/账务 → ctyun-cli
+两者可共存（安装方式见下方⚠️说明），按需选用。
 
 ## ✨ 为什么选择天翼云 CLI？
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖943+个API，支持28大服务模块
+- 📊 **功能全面** - 覆盖1,102+个API，支持31大服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -64,9 +64,35 @@ pip install ctyun-cli
 ctyun-cli --help
 ```
 
+### ⚠️ 与官方 CLI 同名共存
+
+天翼云官方 CLI 的命令名同为 `ctyun-cli`，且其安装脚本默认写入 `/usr/local/bin`（优先级高于 pip 的 `~/.local/bin`）。如果安装过官方 CLI，本工具的命令可能被其覆盖。
+
+**检测方法：**
+
+```bash
+which -a ctyun-cli              # 本工具在 ~/.local/bin 或 miniforge3/bin，官方在 /usr/local/bin
+ctyun-cli --help 2>&1 | head -3 # 本工具显示"天翼云CLI工具"，官方显示"天翼云命令行工具 (CTYUN CLI)"
+```
+
+**推荐共存方案（任选其一）：**
+
+1. **pipx 隔离安装**（推荐）：
+   ```bash
+   pipx install ctyun-cli
+   ```
+2. **为官方 CLI 指定非 PATH 安装目录**，让 `ctyun-cli` 归本工具：
+   ```bash
+   sudo INSTALL_DIR=/opt/ctyun-official/bin sh install-cli.sh
+   ```
+3. **为本工具设置别名**：
+   ```bash
+   alias ct='~/.local/bin/ctyun-cli'
+   ```
+
 ## ⚡ 快速开始
 
-详细步骤请参考：[5分钟快速上手指南](docs/QUICKSTART.md)
+完整参数说明请参阅：[命令参考手册](docs/COMMAND_MANUAL.md)
 
 ### 第一步：配置认证信息
 
@@ -109,59 +135,57 @@ ctyun-cli cce list-clusters
 
 | 服务模块 | 命令数 | API数 | 核心功能 | 文档 |
 |---------|--------|-------|----------|------|
-| **ECS (云服务器)** | 71 | 74 | 实例管理、快照备份、密钥对、订单查询、资源池查询、云助手、宿主机、网卡、安全组 | [详细文档](docs/MODULES/ecs.md) |
-| **Monitor (监控服务)** | 82 | 74 | 监控数据、告警管理、Top-N统计、事件管理 | [详细文档](docs/MODULES/monitor.md) |
-| **LTS (云日志服务)** | 168 | 169 | 日志项目/单元、主机组、采集配置、检索、转储、加工、告警、仪表盘、快速查询 | - |
-| **CCE (容器引擎)** | 92 | 93 | Kubernetes集群、节点池、工作负载、配置管理、任务管理、命名空间 | [详细文档](docs/MODULES/cce.md) |
+| **LTS (云日志服务)** | 171 | 171 | 日志项目/单元、主机组、采集配置、检索、转储、加工、告警、仪表盘、快速查询 | - |
+| **CCE (容器引擎)** | 102 | 103 | Kubernetes集群、节点池、工作负载、Pod/Service/Job、存储卷/PVC/Secret、巡检、任务管理、命名空间、V2查询API | [模块总览](docs/MODULES/README.md) |
+| **VPC (私有网络)** | 102 | 104 | VPC/子网/路由表/安全组/EIP/NAT网关、对等连接、ACL、前缀列表、流日志、镜像流量、IPv6、网关路由、l2gw、HAVIP、DHCP、网络诊断、询价 | [模块总览](docs/MODULES/README.md) |
+| **Redis (分布式缓存)** | 85 | 89 | 实例管理、监控(V1/V2/代理)、备份与策略、参数模板、账号、SSL、大热key/离线key分析、诊断任务、迁移任务、回收站、询价 | [模块总览](docs/MODULES/README.md) |
+| **Monitor (监控服务)** | 82 | 84 | 监控数据、告警管理、Top-N统计、事件管理 | [模块总览](docs/MODULES/README.md) |
 | **CFW (云防火墙)** | 66 | 66 | 防火墙管理、概览、资产、防护规则、黑白名单、地址簿、IPS、应用、告警、日志、报表、询价 | - |
-| **Aone (边缘安全加速平台)** | 45 | 46 | 域名管理、证书管理、缓存刷新/预取、数据统计、安全防护（CC/WAF/DDoS） | - |
-| **APM (应用性能监控)** | 44 | 47 | 元数据、应用管理、链路追踪、性能分析、用量统计、告警、通知、Webhook | - |
-| **ZOS (对象存储)** | 39 | 40 | 桶管理、对象管理、IAM、标签操作 | - |
-| **ELB (弹性负载均衡)** | 34 | 33 | 负载均衡器、目标组、后端主机、访问控制、证书、网关负载均衡 | [详细文档](docs/MODULES/elb.md) |
-| **IAM (身份访问管理)** | 34 | 34 | 用户/用户组/权限/策略/委托/AK-SK/MFA/企业项目/身份供应商/敏感操作 | [详细文档](docs/MODULES/iam.md) |
-| **RDS (云数据库Redis)** | 33 | 36 | 实例管理、性能监控、网络配置、费用查询、运维管理 | [详细文档](docs/MODULES/redis.md) |
-| **VPC (私有网络)** | 23 | 26 | VPC网络、子网、路由表、安全组、弹性IP、标签管理 | [详细文档](docs/MODULES/vpc.md) |
-| **CDA (云专线)** | 20 | 6 | 专线网关、物理专线、VPC管理、健康检查、链路探测 | [详细文档](docs/MODULES/cda.md) |
-| **AIServer (AI服务器)** | 19 | 24 | AI服务器实例管理 | - |
-| **Billing (计费查询)** | 12 | 12 | 账单查询、费用分析、消费统计 | [详细文档](docs/MODULES/billing.md) |
-| **CSSCN (云安全中心)** | 10 | 13 | 资产查询、风险统计、漏洞、告警、病毒检测、配额 | - |
-| **CTMySQL (云数据库MySQL)** | 9 | 11 | 实例查询、标签管理、监控、询价 | - |
-| **CloudPC (云桌面)** | 9 | 16 | 云桌面实例管理 | - |
-| **Audit (云审计)** | 8 | 13 | 事件查询、资源池管理、跟踪任务管理 | [详细文档](docs/MODULES/audit.md) |
-| **DPS (数据迁移服务)** | 8 | 9 | 数据迁移任务管理 | - |
-| **Security (安全卫士)** | 6 | 22 | 安全扫描、漏洞管理、风险评估 | [详细文档](docs/MODULES/security.md) |
-| **EMR (翼MapReduce)** | 6 | 10 | 集群、节点组、Hive元数据管理 | [详细文档](docs/MODULES/emr.md) |
-| **Kafka (分布式消息服务)** | 5 | 7 | 实例列表、节点状态、弹性IP、配置查询、标签 | [详细文档](docs/MODULES/kafka.md) |
-| **CSS (云搜索服务)** | 3 | 5 | OpenSearch/Elasticsearch/Logstash 实例管理 | [详细文档](docs/MODULES/css.md) |
-| **IMS (镜像服务)** | 2 | 7 | 镜像查询、镜像详细信息 | [详细文档](docs/MODULES/ims.md) |
-| **OceanFS (海量文件服务)** | 2 | 2 | 海量文件存储管理 | - |
-| **EBS (弹性块存储)** | 1 | 1 | 块存储管理 | [详细文档](docs/MODULES/ebs.md) |
-| **SFS (弹性文件服务)** | - | - | 弹性文件存储管理（实现中） | - |
-| **总计** | **898** | **943** | **覆盖天翼云核心服务** | [所有模块](docs/MODULES/) |
+| **MSE (微服务引擎)** | 48 | 48 | Nacos注册配置中心、Nacos服务/配置/命名空间管理、微服务实例、云原生API网关（实例/路由/服务/域名/ELB） | - |
+| **ECS (云服务器)** | 46 | 76 | 实例管理、快照备份、密钥对、订单查询、资源池查询、云助手、宿主机、网卡、安全组 | [模块总览](docs/MODULES/README.md) |
+| **Aone (边缘安全加速平台)** | 45 | 45 | 域名管理、证书管理、缓存刷新/预取、数据统计、安全防护（CC/WAF/DDoS） | - |
+| **APM (应用性能监控)** | 44 | 44 | 元数据、应用管理、链路追踪、性能分析、用量统计、告警、通知、Webhook | - |
+| **ZOS (对象存储)** | 39 | 39 | 桶管理、对象管理、IAM、标签操作 | - |
+| **IAM (身份访问管理)** | 34 | 34 | 用户/用户组/权限/策略/委托/AK-SK/MFA/企业项目/身份供应商/敏感操作 | [模块总览](docs/MODULES/README.md) |
+| **ELB (弹性负载均衡)** | 34 | 34 | 负载均衡器、目标组、后端主机、访问控制、证书、网关负载均衡 | [模块总览](docs/MODULES/README.md) |
+| **AIServer (AI服务器)** | 19 | 20 | AI服务器实例管理 | - |
+| **CDA (云专线)** | 19 | 21 | 专线网关、物理专线、VPC管理、健康检查、链路探测 | [模块总览](docs/MODULES/README.md) |
+| **CloudPC (云桌面)** | 15 | 19 | 云桌面实例管理、询价 | - |
+| **Billing (计费查询)** | 12 | 12 | 账单查询、费用分析、消费统计 | [模块总览](docs/MODULES/README.md) |
+| **Kafka (分布式消息服务)** | 10 | 11 | 实例列表、节点状态、弹性IP、配置查询、标签、5类询价 | [模块总览](docs/MODULES/README.md) |
+| **CSSCN (云安全中心)** | 10 | 11 | 资产查询、风险统计、漏洞、告警、病毒检测、配额 | - |
+| **CTMySQL (云数据库MySQL)** | 9 | 9 | 实例查询、标签管理、监控、询价 | - |
+| **DPS (物理机)** | 8 | 8 | 物理机管理 | - |
+| **Audit (云审计)** | 8 | 8 | 事件查询、资源池管理、跟踪任务管理 | [模块总览](docs/MODULES/README.md) |
+| **EBS (弹性块存储)** | 7 | 7 | 块存储管理、快照及快照策略 | [模块总览](docs/MODULES/README.md) |
+| **EMR (翼MapReduce)** | 6 | 9 | 集群、节点组、Hive元数据管理 | [模块总览](docs/MODULES/README.md) |
+| **Security (安全卫士)** | 6 | 13 | 安全扫描、漏洞管理、风险评估 | [模块总览](docs/MODULES/README.md) |
+| **SFS (弹性文件服务)** | 3 | 3 | 弹性文件存储管理、询价 | - |
+| **OceanFS (海量文件服务)** | 3 | 3 | 海量文件存储管理、询价 | - |
+| **CSS (云搜索服务)** | 3 | 4 | OpenSearch/Elasticsearch/Logstash 实例管理 | [模块总览](docs/MODULES/README.md) |
+| **EC (云间高速)** | 3 | 3 | 云间高速连接管理 | - |
+| **IMS (镜像服务)** | 2 | 2 | 镜像查询、镜像详细信息 | [模块总览](docs/MODULES/README.md) |
+| **SWR (容器镜像服务)** | 2 | 2 | 镜像实例列表、镜像仓库列表 | - |
+| **总计** | **1,043** | **1,102** | **另有 configure 等 5 个工具命令，合计 1,048+** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：61,000+行代码，943+个API，898+个命令，28大服务模块**
+📊 **规模统计：71,000+行代码，1,102+个API，1,048+个命令，31大服务模块**
 
 ## 📚 完整文档
 
-### 🚀 快速开始
-- [5分钟快速上手](docs/QUICKSTART.md) - 从安装到第一个命令的完整指南
-- [安装指南](docs/GUIDES/INSTALLATION.md) - 详细的安装说明和故障排除
-- [配置指南](docs/GUIDES/CONFIGURATION.md) - 认证配置和多环境设置
-
 ### 📖 功能文档
-- [功能概览](docs/FEATURES.md) - 完整功能介绍和特性说明
-- [模块详细文档](docs/MODULES/) - 各服务模块的详细使用说明
+- [服务模块总览](docs/MODULES/README.md) - 全部模块命令/API 统计
 - [命令参考](docs/COMMAND_MANUAL.md) - 所有命令的完整参数说明
+- [输出格式指南](docs/OUTPUT_FORMAT_GUIDE.md) - table/json/yaml格式使用说明
 
-### 🔧 高级功能
-- [高级功能](docs/GUIDES/ADVANCED.md) - 管道操作、调试模式等高级特性
-- [输出格式](docs/GUIDES/OUTPUT_FORMATS.md) - table/json/yaml格式使用说明
-- [最佳实践](docs/BEST_PRACTICES.md) - 使用技巧和最佳实践
+### 🔧 专项指南
+- [Redis 使用指南](docs/REDIS_USAGE.md)
+- [监控服务使用指南](docs/MONITOR_USAGE.md)
+- [IAM 使用指南](docs/IAM_USAGE.md)
+- [安全加固指南](docs/SECURITY-GUIDE.md)
 
 ### ❓ 帮助支持
-- [常见问题](docs/FAQ.md) - 常见问题解答和解决方案
-- [故障排除](docs/TROUBLESHOOTING.md) - 错误诊断和解决方法
 - [版本历史](CHANGELOG.md) - 详细的版本更新记录
+- [English README](README_EN.md)
 
 ## 🤝 技术支持
 
@@ -173,7 +197,16 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.31.2 (2026-08-26)
+**最新版本**: v1.32.1 (2026-09-20)
+- 🚀 **LTS 模块首批可用命令**：`unit list-v1` / `unit get-index-v1` / `search logs-v1`（日志检索，支持 SQL 分析语句与游标翻页）
+
+**v1.32.0** (2026-09-20)
+- 🆕 **新增 SWR（容器镜像服务）模块**：镜像实例列表（`list-instances`，支持全资源池查询）、镜像仓库列表（`list-repositories`）
+
+**v1.31.3** (2026-09-20)
+- 🔒 **安全加固**：启用全量 TLS 证书校验、debug 日志认证头脱敏、凭据文件权限收紧（600/700），修复 APM 表格输出崩溃
+
+**v1.31.2** (2026-08-26)
 - 🔧 **Aone 模块响应解析修复**：修复 CLI 误报"查询失败: success"问题（兼容 statusCode/code 两种响应结构），并修正 WAF/访问控制查询的参数命名
 
 **v1.31.1** (2026-08-21)
