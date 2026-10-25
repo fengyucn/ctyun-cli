@@ -7,6 +7,7 @@
 - VPC管理 (cda-vpc)
 - 静态路由管理 (cda-static-route)
 - BGP路由管理 (cda-bgp-route)
+- QOS管理 (cda-qos)
 - 跨账号授权 (cda-account-auth)
 - 健康检查和链路探测
 """
@@ -155,14 +156,14 @@ def list_gateways(ctx, account: str, region_id: Optional[str], project_id: Optio
                     continue
 
                 table_data.append([
-                    gateway.get('fuid', ''),  # 完整显示网关ID，不截断
-                    gateway.get('gatewayName', gateway.get('vrfName', '')),
+                    gateway.get('fuid') or gateway.get('vrfName', ''),  # 完整显示网关ID，不截断
+                    gateway.get('gatewayName') or gateway.get('displayName') or gateway.get('vrfName', ''),
                     gateway.get('accessPoint', ''),
                     gateway.get('account', ''),
                     gateway.get('resourcePoolName', ''),
                     gateway.get('vrfName', ''),
-                    str(len(gateway.get('lineList', []))),
-                    str(len(gateway.get('vpclist', []))),
+                    str(len(gateway.get('lineList') or [])),
+                    str(len(gateway.get('vpcList') or gateway.get('vpclist') or [])),
                     gateway.get('lgcreateTime', '')
                 ])
 
@@ -428,7 +429,7 @@ def list_physical_lines(ctx, region_id: Optional[str], page_no: int, page_size: 
                     continue
 
                 table_data.append([
-                    line.get('lineId', ''),  # 完整显示专线ID，不截断
+                    line.get('lineId') or line.get('lineID') or line.get('fuid', ''),  # 完整显示专线ID，不截断
                     line.get('lineName', ''),
                     line.get('lineType', ''),
                     str(line.get('bandwidth', 0)),
@@ -582,7 +583,7 @@ def list_shared_physical_lines(ctx, region_id: Optional[str], page_no: int, page
                     continue
 
                 table_data.append([
-                    line.get('lineId', ''),  # 完整显示专线ID，不截断
+                    line.get('lineId') or line.get('lineID') or line.get('fuid', ''),  # 完整显示专线ID，不截断
                     line.get('lineName', ''),
                     line.get('lineType', ''),
                     str(line.get('bandwidth', 0)),
@@ -1020,14 +1021,14 @@ def list_static_routes(ctx, gateway_name: str, account: str):
                     continue
 
                 # 处理目的地址列表
-                dst_cidr = ', '.join(route.get('dstCidr', []))
-                dst_cidr_v6 = ', '.join(route.get('dstCidrV6', []))
+                dst_cidr = ', '.join(route.get('dstCidr') or [])
+                dst_cidr_v6 = ', '.join(route.get('dstCidrV6') or [])
                 dst_all = dst_cidr
                 if dst_cidr_v6:
                     dst_all += f" (IPv6: {dst_cidr_v6})"
 
                 # 处理下一跳列表
-                next_hops = route.get('nextHop', [])
+                next_hops = route.get('nextHop') or []
                 next_hop_info = []
                 for nh in next_hops:
                     if isinstance(nh, dict):
@@ -1039,7 +1040,7 @@ def list_static_routes(ctx, gateway_name: str, account: str):
                         next_hop_info.append(nh_info)
 
                 table_data.append([
-                    route.get('gatewayName', ''),
+                    route.get('gatewayName') or route.get('vrfName', ''),
                     route.get('ipVersion', ''),
                     dst_all,
                     ', '.join(next_hop_info),
@@ -1116,20 +1117,20 @@ def list_bgp_routes(ctx, gateway_name: str, account: str):
                     continue
 
                 # 处理客户侧子网列表
-                network_cidr = ', '.join(route.get('networkCidr', []))
-                network_cidr_v6 = ', '.join(route.get('networkCidrV6', []))
+                network_cidr = ', '.join(route.get('networkCidr') or [])
+                network_cidr_v6 = ', '.join(route.get('networkCidrV6') or [])
 
                 # 处理多路径信息
                 multi_path = '是' if route.get('multiPath', False) else '否'
                 multi_path_ipv6 = '是' if route.get('multiPathIpv6', False) else '否'
 
                 # 计算BGP邻居数量
-                bgp_ipv4_count = len(route.get('BGPList', []))
-                bgp_ipv6_count = len(route.get('BGPIpv6List', []))
+                bgp_ipv4_count = len(route.get('BGPList') or [])
+                bgp_ipv6_count = len(route.get('BGPIpv6List') or [])
                 total_neighbors = bgp_ipv4_count + bgp_ipv6_count
 
                 table_data.append([
-                    route.get('gatewayName', ''),
+                    route.get('gatewayName') or route.get('vrfName', ''),
                     route.get('ipVersion', ''),
                     route.get('BGPID', ''),  # 完整显示BGP ID，不截断
                     network_cidr,
@@ -1557,6 +1558,243 @@ def query_link_probe(ctx, gateway_name: str):
         error_msg = result.get('description', result.get('message', '未知错误'))
         error_code = result.get('errorCode', '')
         click.echo(f"查询失败: {error_msg} (错误代码: {error_code})")
+
+
+# ============ QOS相关命令 ============
+
+@cda.group('qos')
+def qos():
+    """QOS管理"""
+    pass
+
+
+@qos.command('list')
+@click.option('--region-id', required=True, help='资源池ID（必填）')
+@click.option('--line-id', required=True, help='物理专线ID（必填）')
+@click.option('--page-no', default=1, type=int, help='页码，默认为1')
+@click.option('--page-size', default=10, type=int, help='每页数量，默认为10')
+@click.pass_context
+@handle_error
+def list_qos(ctx, region_id: str, line_id: str, page_no: int, page_size: int):
+    """
+    查询物理专线下关联的QOS
+
+    示例：
+        # 查询专线下关联的QOS
+        ctyun-cli cda qos list --region-id 200000001852 --line-id LINE_ID
+    """
+    client = ctx.obj['client']
+    output_format = ctx.obj.get('output', 'table')
+    cda_client = init_cda_client(client)
+
+    result = cda_client.list_qos(
+        region_id=region_id,
+        line_id=line_id,
+        page_no=page_no,
+        page_size=page_size
+    )
+
+    if not result.get('success'):
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+
+    data = result.get('data', {})
+    qos_list = data.get('qosList') or []
+    total_count = data.get('totalCount', len(qos_list))
+
+    if output_format == 'json':
+        format_output({
+            'totalCount': total_count,
+            'qosList': qos_list
+        }, output_format)
+    else:
+        if qos_list:
+            table_data = []
+            headers = ['专线ID', '专线名称', 'QOS名称', '创建时间', '描述']
+
+            for item in qos_list:
+                if not isinstance(item, dict):
+                    continue
+                table_data.append([
+                    item.get('lineID', ''),
+                    item.get('lineName', ''),
+                    item.get('qosName', ''),
+                    item.get('createTime', ''),
+                    item.get('qosDescription', '')
+                ])
+
+            from tabulate import tabulate
+            click.echo(f"QOS列表 (物理专线: {line_id}, 总计: {total_count}个)")
+            click.echo("=" * 100)
+            click.echo(tabulate(table_data, headers, tablefmt='grid'))
+        else:
+            click.echo(f"物理专线 '{line_id}' 没有找到QOS记录。")
+
+
+@qos.group('policy')
+def qos_policy():
+    """QOS策略管理"""
+    pass
+
+
+@qos_policy.command('list')
+@click.option('--region-id', required=True, help='资源池ID（必填）')
+@click.option('--line-id', required=True, help='物理专线ID（必填）')
+@click.option('--policy-id', help='QOS策略ID（可选）')
+@click.option('--page-no', default=1, type=int, help='页码，默认为1')
+@click.option('--page-size', default=10, type=int, help='每页数量，默认为10')
+@click.pass_context
+@handle_error
+def list_qos_policies(ctx, region_id: str, line_id: str, policy_id: Optional[str],
+                      page_no: int, page_size: int):
+    """
+    查询物理专线下关联的QOS策略
+
+    示例：
+        # 查询专线下关联的QOS策略
+        ctyun-cli cda qos policy list --region-id 200000001852 --line-id LINE_ID
+
+        # 按策略ID查询
+        ctyun-cli cda qos policy list --region-id 200000001852 \\
+            --line-id LINE_ID --policy-id POLICY_ID
+    """
+    client = ctx.obj['client']
+    output_format = ctx.obj.get('output', 'table')
+    cda_client = init_cda_client(client)
+
+    result = cda_client.list_qos_policies(
+        region_id=region_id,
+        line_id=line_id,
+        page_no=page_no,
+        page_size=page_size,
+        policy_id=policy_id
+    )
+
+    if not result.get('success'):
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+
+    data = result.get('data', {})
+    policy_list = data.get('qosPolicyList') or []
+    total_count = data.get('totalCount', len(policy_list))
+
+    if output_format == 'json':
+        format_output({
+            'totalCount': total_count,
+            'qosPolicyList': policy_list
+        }, output_format)
+    else:
+        if policy_list:
+            table_data = []
+            headers = ['策略ID', '策略名称', '带宽百分比', '带宽值', '状态', '规则数']
+
+            for item in policy_list:
+                if not isinstance(item, dict):
+                    continue
+                table_data.append([
+                    item.get('policyID', ''),  # 完整显示策略ID，不截断
+                    item.get('policyName', ''),
+                    str(item.get('bandwidthPercentage', '')),
+                    str(item.get('bandwidth', '')),
+                    item.get('status', ''),
+                    str(len(item.get('qosRuleList') or []))
+                ])
+
+            from tabulate import tabulate
+            click.echo(f"QOS策略列表 (物理专线: {line_id}, 总计: {total_count}个)")
+            click.echo("=" * 100)
+            click.echo(tabulate(table_data, headers, tablefmt='grid'))
+        else:
+            click.echo(f"物理专线 '{line_id}' 没有找到QOS策略。")
+
+
+@qos.group('rule')
+def qos_rule():
+    """QOS规则管理"""
+    pass
+
+
+@qos_rule.command('list')
+@click.option('--region-id', required=True, help='资源池ID（必填）')
+@click.option('--line-id', required=True, help='物理专线ID（必填）')
+@click.option('--qos-rule-id', help='QOS规则ID（可选）')
+@click.option('--in-use/--no-in-use', default=None, help='是否在用（可选）')
+@click.option('--page-no', default=1, type=int, help='页码，默认为1')
+@click.option('--page-size', default=10, type=int, help='每页数量，默认为10')
+@click.pass_context
+@handle_error
+def list_qos_rules(ctx, region_id: str, line_id: str, qos_rule_id: Optional[str],
+                   in_use: Optional[bool], page_no: int, page_size: int):
+    """
+    查询物理专线下关联的QOS规则
+
+    示例：
+        # 查询专线下关联的QOS规则
+        ctyun-cli cda qos rule list --region-id 200000001852 --line-id LINE_ID
+
+        # 只查询在用规则
+        ctyun-cli cda qos rule list --region-id 200000001852 --line-id LINE_ID --in-use
+    """
+    client = ctx.obj['client']
+    output_format = ctx.obj.get('output', 'table')
+    cda_client = init_cda_client(client)
+
+    result = cda_client.list_qos_rules(
+        region_id=region_id,
+        line_id=line_id,
+        page_no=page_no,
+        page_size=page_size,
+        qos_rule_id=qos_rule_id,
+        in_use=in_use
+    )
+
+    if not result.get('success'):
+        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+        return
+
+    data = result.get('data', {})
+    rule_list = data.get('qosRuleList') or []
+    total_count = data.get('totalCount', len(rule_list))
+
+    if output_format == 'json':
+        format_output({
+            'totalCount': total_count,
+            'qosRuleList': rule_list
+        }, output_format)
+    else:
+        if rule_list:
+            table_data = []
+            headers = [
+                '规则ID', '规则名称', '目的地址', '源地址', 'IP版本',
+                '在用', '策略ID', '创建时间', '更新时间'
+            ]
+
+            for item in rule_list:
+                if not isinstance(item, dict):
+                    continue
+                in_use_value = item.get('inUse')
+                if in_use_value is None:
+                    in_use_text = ''
+                else:
+                    in_use_text = '是' if in_use_value else '否'
+                table_data.append([
+                    item.get('qosRuleID') or item.get('qosRuleId', ''),
+                    item.get('qosRuleName', ''),
+                    item.get('dstCidr', ''),
+                    item.get('srcCidr', ''),
+                    item.get('ipVersion', ''),
+                    in_use_text,
+                    item.get('policyID', ''),
+                    item.get('insertTime', ''),
+                    item.get('updateTime', '')
+                ])
+
+            from tabulate import tabulate
+            click.echo(f"QOS规则列表 (物理专线: {line_id}, 总计: {total_count}条)")
+            click.echo("=" * 130)
+            click.echo(tabulate(table_data, headers, tablefmt='grid'))
+        else:
+            click.echo(f"物理专线 '{line_id}' 没有找到QOS规则。")
 
 
 # ============ 专线交换机相关命令 ============

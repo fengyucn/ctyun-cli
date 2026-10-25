@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-1102+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-1048+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![APIs](https://img.shields.io/badge/APIs-1110+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-1056+-orange.svg)](docs/MODULES/README.md#命令统计)
 [![Modules](https://img.shields.io/badge/Modules-31+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -19,7 +19,7 @@
 | 维度 | 官方 CLI | ctyun-cli (本项目) |
 |------|---------|-------------------|
 | 实现 | Go，OpenAPI 自动生成 | Python，手工精编封装 |
-| 规模 | 51 模块 / 3,650 命令 | 31 模块 / 1,048 命令（1,102+ API） |
+| 规模 | 51 模块 / 3,650 命令 | 31 模块 / 1,051 命令（1,110+ API） |
 | 命令风格 | API 名原样 `ctyun-cli ecs ListEcsInstances` | 动词式 `ctyun-cli ecs list` |
 | 参数风格 | API 参数原名（`--instanceIDList`、`--pageNo`） | 人性化 kebab-case 命名 |
 | 命令结构 | 扁平，一模块一长串 | 嵌套子命令组（`vpc eip list`） |
@@ -45,7 +45,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖1,102+个API，支持31大服务模块
+- 📊 **功能全面** - 覆盖1,110+个API，支持31大服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -149,9 +149,9 @@ ctyun-cli cce list-clusters
 | **IAM (身份访问管理)** | 34 | 34 | 用户/用户组/权限/策略/委托/AK-SK/MFA/企业项目/身份供应商/敏感操作 | [模块总览](docs/MODULES/README.md) |
 | **ELB (弹性负载均衡)** | 34 | 34 | 负载均衡器、目标组、后端主机、访问控制、证书、网关负载均衡 | [模块总览](docs/MODULES/README.md) |
 | **AIServer (AI服务器)** | 19 | 20 | AI服务器实例管理 | - |
-| **CDA (云专线)** | 19 | 21 | 专线网关、物理专线、VPC管理、健康检查、链路探测 | [模块总览](docs/MODULES/README.md) |
+| **CDA (云专线)** | 22 | 24 | 专线网关、物理专线、VPC管理、静态/BGP路由、QOS查询、健康检查、链路探测 | [模块总览](docs/MODULES/README.md) |
 | **CloudPC (云桌面)** | 15 | 19 | 云桌面实例管理、询价 | - |
-| **Billing (计费查询)** | 12 | 12 | 账单查询、费用分析、消费统计 | [模块总览](docs/MODULES/README.md) |
+| **Billing (计费查询)** | 17 | 17 | 账单查询、费用分析、消费统计、新版账单详情 | [模块总览](docs/MODULES/README.md) |
 | **Kafka (分布式消息服务)** | 10 | 11 | 实例列表、节点状态、弹性IP、配置查询、标签、5类询价 | [模块总览](docs/MODULES/README.md) |
 | **CSSCN (云安全中心)** | 10 | 11 | 资产查询、风险统计、漏洞、告警、病毒检测、配额 | - |
 | **CTMySQL (云数据库MySQL)** | 9 | 9 | 实例查询、标签管理、监控、询价 | - |
@@ -166,9 +166,9 @@ ctyun-cli cce list-clusters
 | **EC (云间高速)** | 3 | 3 | 云间高速连接管理 | - |
 | **IMS (镜像服务)** | 2 | 2 | 镜像查询、镜像详细信息 | [模块总览](docs/MODULES/README.md) |
 | **SWR (容器镜像服务)** | 2 | 2 | 镜像实例列表、镜像仓库列表 | - |
-| **总计** | **1,043** | **1,102** | **另有 configure 等 5 个工具命令，合计 1,048+** | [所有模块](docs/MODULES/) |
+| **总计** | **1,051** | **1,110** | **另有 configure 等 5 个工具命令，合计 1,056+** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：71,000+行代码，1,102+个API，1,048+个命令，31大服务模块**
+📊 **规模统计：71,000+行代码，1,110+个API，1,056+个命令，31大服务模块**
 
 ## 📚 完整文档
 
@@ -197,7 +197,13 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.32.1 (2026-09-20)
+**最新版本**: v1.32.3 (2026-10-25)
+- 🆕 **CDA 云专线新增 3 个 QOS 查询命令**：`qos list` / `qos policy list` / `qos rule list`，并修复 `vpc list`、`vpc count`、`static-route list` 的真实传参（`GET` + `vrfName`）
+
+**v1.32.2** (2026-10-25)
+- 🆕 **Billing 模块新增 5 个新版账单详情命令**：`product-cycle-v2` / `resource-detail-v2` / `resource-cycle-v2` / `usage-detail-v2` / `usage-cycle-v2`（包周期+按需合并，支持按天分组）
+
+**v1.32.1** (2026-09-20)
 - 🚀 **LTS 模块首批可用命令**：`unit list-v1` / `unit get-index-v1` / `search logs-v1`（日志检索，支持 SQL 分析语句与游标翻页）
 
 **v1.32.0** (2026-09-20)

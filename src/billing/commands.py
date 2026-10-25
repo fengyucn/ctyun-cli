@@ -57,6 +57,168 @@ def format_output(data, output_format='table'):
             click.echo(data)
 
 
+BILL_MODE_MAP = {'1': '包周期', '2': '按需'}
+BILL_TYPE_MAP = {
+    '1': '新购', '2': '续订', '3': '变更',
+    '4': '退订', '5': '退款降级', '6': '其他', '7': '使用'
+}
+PAY_METHOD_MAP = {'1': '预付费', '2': '后付费'}
+
+
+def _text(value):
+    return '' if value is None else str(value)
+
+
+def _amount(value):
+    if value is None or value == '':
+        return ''
+    try:
+        return f"{float(value):,.2f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _bill_mode(value):
+    return '' if value is None else BILL_MODE_MAP.get(str(value), str(value))
+
+
+def _bill_type(value):
+    return '' if value is None else BILL_TYPE_MAP.get(str(value), str(value))
+
+
+def _pay_method(value):
+    return '' if value is None else PAY_METHOD_MAP.get(str(value), str(value))
+
+
+def _build_rows(items, fields):
+    return [
+        {header: formatter(item.get(key)) for header, key, formatter in fields}
+        for item in items
+    ]
+
+
+def _output_bill_v2(result, output_format, title, fields):
+    """新版账单接口输出：兼容 statusCode/errorCode 两种成功标识"""
+    code = result.get('statusCode', result.get('errorCode'))
+    if str(code) != '800':
+        message = (result.get('msg') or result.get('errorMsg')
+                   or result.get('message') or '未知错误')
+        if output_format in ['json', 'yaml']:
+            format_output(
+                {'error': f'查询失败: {message}', 'result': result},
+                output_format
+            )
+        else:
+            click.echo(f"查询失败: {message}", err=True)
+        return
+
+    payload = result.get('returnObj') or result.get('result') or {}
+    if not isinstance(payload, dict):
+        payload = {'result': payload}
+    items = payload.get('result') or []
+    total_count = payload.get('totalCount', len(items))
+
+    if output_format in ['json', 'yaml']:
+        format_output(result, output_format)
+        return
+
+    if not items:
+        click.echo(f"{title}：无记录")
+        return
+
+    click.echo(f"\n{title}（共 {total_count} 条）：")
+    rows = _build_rows(items, fields)
+    headers = [header for header, _, _ in fields]
+    click.echo(OutputFormatter.format_table(rows, headers, disable_numparse=True))
+
+
+_PRODUCT_CYCLE_V2_FIELDS = [
+    ('账期', 'billingCycleId', _text),
+    ('产品名称', 'productName', _text),
+    ('产品编码', 'productCode', _text),
+    ('服务类型', 'serviceTag', _text),
+    ('计费模式', 'billMode', _bill_mode),
+    ('账单类型', 'billType', _bill_type),
+    ('消费日期', 'consumeDate', _text),
+    ('官网价', 'price', _amount),
+    ('优惠金额', 'discountAmount', _amount),
+    ('应付金额', 'payableAmount', _amount),
+    ('实付金额', 'amount', _amount),
+    ('欠费金额', 'ownAmount', _amount),
+    ('项目名称', 'projectName', _text),
+]
+
+_RESOURCE_DETAIL_V2_FIELDS = [
+    ('资源ID', 'resourceId', _text),
+    ('资源名称', 'resourceName', _text),
+    ('产品名称', 'productName', _text),
+    ('资源类型', 'resourceType', _text),
+    ('计费模式', 'billMode', _bill_mode),
+    ('账单类型', 'billType', _bill_type),
+    ('消费时间', 'consumeDate', _text),
+    ('区域ID', 'regionId', _text),
+    ('官网价', 'price', _amount),
+    ('优惠金额', 'discountAmount', _amount),
+    ('应付金额', 'payableAmount', _amount),
+    ('项目名称', 'projectName', _text),
+    ('合同名称', 'contractName', _text),
+    ('规格', 'salesAttribute', _text),
+]
+
+_RESOURCE_CYCLE_V2_FIELDS = [
+    ('资源ID', 'resourceId', _text),
+    ('真实资源ID', 'realResourceId', _text),
+    ('产品名称', 'productName', _text),
+    ('服务类型', 'serviceTag', _text),
+    ('计费模式', 'billMode', _bill_mode),
+    ('账单类型', 'billType', _bill_type),
+    ('消费时间', 'consumeDate', _text),
+    ('官网价', 'price', _amount),
+    ('优惠金额', 'discountAmount', _amount),
+    ('应付金额', 'payableAmount', _amount),
+    ('实付金额', 'amount', _amount),
+    ('欠费金额', 'ownAmount', _amount),
+    ('区域ID', 'regionId', _text),
+    ('项目名称', 'projectName', _text),
+    ('资源实例ID', 'servId', _text),
+    ('销售品规格', 'salesAttribute', _text),
+]
+
+_USAGE_DETAIL_V2_FIELDS = [
+    ('资源ID', 'resourceId', _text),
+    ('产品名称', 'productName', _text),
+    ('使用量类型', 'usageType', _text),
+    ('使用量', 'usage', _text),
+    ('使用时长', 'usageDuration', _text),
+    ('官网价', 'price', _amount),
+    ('优惠金额', 'discountAmount', _amount),
+    ('应付金额', 'payableAmount', _amount),
+    ('代金券抵扣', 'coupon', _amount),
+    ('消费时间', 'consumeDate', _text),
+    ('区域ID', 'regionId', _text),
+    ('项目名称', 'projectName', _text),
+]
+
+_USAGE_CYCLE_V2_FIELDS = [
+    ('资源ID', 'resourceId', _text),
+    ('产品名称', 'productName', _text),
+    ('使用量类型', 'usageType', _text),
+    ('使用量', 'usage', _text),
+    ('使用时长', 'usageDuration', _text),
+    ('计费模式', 'billMode', _bill_mode),
+    ('账单类型', 'billType', _bill_type),
+    ('官网价', 'price', _amount),
+    ('优惠金额', 'discountAmount', _amount),
+    ('应付金额', 'payableAmount', _amount),
+    ('实付金额', 'amount', _amount),
+    ('单价', 'unitPrice', _text),
+    ('单价单位', 'priceUnit', _text),
+    ('资源数量', 'instanceCnt', _text),
+    ('消费时间', 'consumeDate', _text),
+    ('项目名称', 'projectName', _text),
+]
+
+
 @click.group()
 def billing():
     """账务中心管理 - 账单查询、消费汇总、流水明细"""
@@ -1156,3 +1318,247 @@ def ondemand_resource_cycle(ctx, bill_cycle, page, page_size, product_code, reso
             format_output(simplified_list, 'table')
     else:
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True)
+
+
+@billing.command('product-cycle-v2')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
+@click.option('--contract-id', help='合同ID')
+@click.option('--offset', type=int, help='偏移量（仅按需有效）')
+@click.option('--bill-mode', type=click.IntRange(1, 2), help='计费模式（1-包周期，2-按需）')
+@click.option('--bill-type', type=int, help='账单类型（7-按需，其他-包周期）')
+@click.option('--product-code', help='产品编码')
+@click.option('--resource-id', help='资源ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--group-by-day', type=click.IntRange(0, 1), default=None,
+              help='是否按天分组（1-按天，0-按账期）')
+@click.option('--pay-method', help='支付方式')
+@click.option('--is-zero-filter', is_flag=True, default=None, help='过滤应付金额为0的账单')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def product_cycle_v2(ctx, bill_cycle, page, page_size, contract_id, offset,
+                     bill_mode, bill_type, product_code, resource_id, project_id,
+                     group_by_day, pay_method, is_zero_filter, output):
+    """产品按账期/按天账单（新版，包周期+按需合并）"""
+    if not ValidationUtils.validate_bill_cycle(bill_cycle):
+        click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202508", err=True)
+        raise SystemExit(1)
+
+    result = BillingClient(ctx.obj['client']).query_product_cycle_bill_v2(
+        bill_cycle=bill_cycle,
+        page_no=page,
+        page_size=page_size,
+        contract_id=contract_id,
+        offset=offset,
+        bill_mode=bill_mode,
+        bill_type=bill_type,
+        product_code=product_code,
+        resource_id=resource_id,
+        project_id=project_id,
+        group_by_day=group_by_day,
+        pay_method=pay_method,
+        is_zero_filter=is_zero_filter
+    )
+
+    _output_bill_v2(
+        result,
+        output or ctx.obj.get('output', 'table'),
+        f"账期 {bill_cycle} 产品按账期/按天账单（新版）",
+        _PRODUCT_CYCLE_V2_FIELDS
+    )
+
+
+@billing.command('resource-detail-v2')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
+@click.option('--contract-id', help='合同ID')
+@click.option('--offset', type=int, help='偏移量（仅按需有效）')
+@click.option('--bill-mode', type=click.IntRange(1, 2), help='计费模式（1-包周期，2-按需）')
+@click.option('--bill-type', type=int, help='账单类型（7-按需，其他-包周期）')
+@click.option('--product-code', help='产品编码')
+@click.option('--resource-id', help='资源ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--pay-method', help='支付方式')
+@click.option('--is-zero-filter', is_flag=True, default=None, help='过滤应付金额为0的账单')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def resource_detail_v2(ctx, bill_cycle, page, page_size, contract_id, offset,
+                       bill_mode, bill_type, product_code, resource_id, project_id,
+                       pay_method, is_zero_filter, output):
+    """资源明细账单（新版，包周期+按需合并）"""
+    if not ValidationUtils.validate_bill_cycle(bill_cycle):
+        click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202508", err=True)
+        raise SystemExit(1)
+
+    result = BillingClient(ctx.obj['client']).query_resource_detail_bill_v2(
+        bill_cycle=bill_cycle,
+        page_no=page,
+        page_size=page_size,
+        contract_id=contract_id,
+        offset=offset,
+        bill_mode=bill_mode,
+        bill_type=bill_type,
+        product_code=product_code,
+        resource_id=resource_id,
+        project_id=project_id,
+        pay_method=pay_method,
+        is_zero_filter=is_zero_filter
+    )
+
+    _output_bill_v2(
+        result,
+        output or ctx.obj.get('output', 'table'),
+        f"账期 {bill_cycle} 资源明细账单（新版）",
+        _RESOURCE_DETAIL_V2_FIELDS
+    )
+
+
+@billing.command('resource-cycle-v2')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
+@click.option('--contract-id', help='合同ID')
+@click.option('--offset', type=int, help='偏移量（仅按需有效）')
+@click.option('--bill-mode', type=click.IntRange(1, 2), help='计费模式（1-包周期，2-按需）')
+@click.option('--bill-type', type=int, help='账单类型（7-按需，其他-包周期）')
+@click.option('--product-code', help='产品编码')
+@click.option('--resource-id', help='资源ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--group-by-day', type=click.IntRange(0, 1), default=None,
+              help='是否按天分组（1-按天，0-按账期）')
+@click.option('--pay-method', help='支付方式')
+@click.option('--is-zero-filter', is_flag=True, default=None, help='过滤应付金额为0的账单')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def resource_cycle_v2(ctx, bill_cycle, page, page_size, contract_id, offset,
+                      bill_mode, bill_type, product_code, resource_id, project_id,
+                      group_by_day, pay_method, is_zero_filter, output):
+    """资源按账期/按天账单（新版，包周期+按需合并）"""
+    if not ValidationUtils.validate_bill_cycle(bill_cycle):
+        click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202508", err=True)
+        raise SystemExit(1)
+
+    result = BillingClient(ctx.obj['client']).query_resource_cycle_bill_v2(
+        bill_cycle=bill_cycle,
+        page_no=page,
+        page_size=page_size,
+        contract_id=contract_id,
+        offset=offset,
+        bill_mode=bill_mode,
+        bill_type=bill_type,
+        product_code=product_code,
+        resource_id=resource_id,
+        project_id=project_id,
+        group_by_day=group_by_day,
+        pay_method=pay_method,
+        is_zero_filter=is_zero_filter
+    )
+
+    _output_bill_v2(
+        result,
+        output or ctx.obj.get('output', 'table'),
+        f"账期 {bill_cycle} 资源按账期/按天账单（新版）",
+        _RESOURCE_CYCLE_V2_FIELDS
+    )
+
+
+@billing.command('usage-detail-v2')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
+@click.option('--contract-id', help='合同ID')
+@click.option('--offset', type=int, help='偏移量（仅按需有效）')
+@click.option('--bill-mode', type=click.IntRange(1, 2), help='计费模式（1-包周期，2-按需）')
+@click.option('--bill-type', type=int, help='账单类型（7-按需，其他-包周期）')
+@click.option('--product-code', help='产品编码')
+@click.option('--resource-id', help='资源ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--pay-method', help='支付方式')
+@click.option('--is-zero-filter', is_flag=True, default=None, help='过滤应付金额为0的账单')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def usage_detail_v2(ctx, bill_cycle, page, page_size, contract_id, offset,
+                    bill_mode, bill_type, product_code, resource_id, project_id,
+                    pay_method, is_zero_filter, output):
+    """使用量明细账单（新版，包周期+按需合并）"""
+    if not ValidationUtils.validate_bill_cycle(bill_cycle):
+        click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202508", err=True)
+        raise SystemExit(1)
+
+    result = BillingClient(ctx.obj['client']).query_usage_detail_bill_v2(
+        bill_cycle=bill_cycle,
+        page_no=page,
+        page_size=page_size,
+        contract_id=contract_id,
+        offset=offset,
+        bill_mode=bill_mode,
+        bill_type=bill_type,
+        product_code=product_code,
+        resource_id=resource_id,
+        project_id=project_id,
+        pay_method=pay_method,
+        is_zero_filter=is_zero_filter
+    )
+
+    _output_bill_v2(
+        result,
+        output or ctx.obj.get('output', 'table'),
+        f"账期 {bill_cycle} 使用量明细账单（新版）",
+        _USAGE_DETAIL_V2_FIELDS
+    )
+
+
+@billing.command('usage-cycle-v2')
+@click.argument('bill_cycle', metavar='BILL_CYCLE')
+@click.option('--page', default=1, type=int, help='页码')
+@click.option('--page-size', default=10, type=int, help='每页条数，默认10')
+@click.option('--contract-id', help='合同ID')
+@click.option('--offset', type=int, help='偏移量（仅按需有效）')
+@click.option('--bill-mode', type=click.IntRange(1, 2), help='计费模式（1-包周期，2-按需）')
+@click.option('--bill-type', type=int, help='账单类型（7-按需，其他-包周期）')
+@click.option('--product-code', help='产品编码')
+@click.option('--resource-id', help='资源ID')
+@click.option('--project-id', help='企业项目ID')
+@click.option('--group-by-day', type=click.IntRange(0, 1), default=None,
+              help='是否按天分组（1-按天，0-按账期）')
+@click.option('--pay-method', help='支付方式')
+@click.option('--is-zero-filter', is_flag=True, default=None, help='过滤应付金额为0的账单')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def usage_cycle_v2(ctx, bill_cycle, page, page_size, contract_id, offset,
+                   bill_mode, bill_type, product_code, resource_id, project_id,
+                   group_by_day, pay_method, is_zero_filter, output):
+    """使用量按账期/按天账单（新版，包周期+按需合并）"""
+    if not ValidationUtils.validate_bill_cycle(bill_cycle):
+        click.echo("错误: 账期格式不正确，应为YYYYMM格式，如：202508", err=True)
+        raise SystemExit(1)
+
+    result = BillingClient(ctx.obj['client']).query_usage_cycle_bill_v2(
+        bill_cycle=bill_cycle,
+        page_no=page,
+        page_size=page_size,
+        contract_id=contract_id,
+        offset=offset,
+        bill_mode=bill_mode,
+        bill_type=bill_type,
+        product_code=product_code,
+        resource_id=resource_id,
+        project_id=project_id,
+        group_by_day=group_by_day,
+        pay_method=pay_method,
+        is_zero_filter=is_zero_filter
+    )
+
+    _output_bill_v2(
+        result,
+        output or ctx.obj.get('output', 'table'),
+        f"账期 {bill_cycle} 使用量按账期/按天账单（新版）",
+        _USAGE_CYCLE_V2_FIELDS
+    )

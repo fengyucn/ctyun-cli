@@ -4,6 +4,37 @@
 
 ---
 
+## v1.32.3 (2026-10-25)
+
+### 🆕 CDA 云专线新增 3 个 QOS 查询命令
+
+- `cda qos list`：查询物理专线关联的 QOS（`GET /v4/cda/qos/list`）
+- `cda qos policy list`：查询 QOS 策略，支持 `--policy-id` 过滤（`GET /v4/cda/qos/policy/list`）
+- `cda qos rule list`：查询 QOS 规则，支持 `--qos-rule-id`、`--in-use/--no-in-use` 过滤（`GET /v4/cda/qos/rule/list`）
+
+### 🔧 CDA 查询修复
+
+- `cda vpc list` / `cda vpc count`：改为 `GET` 并使用 `vrfName` 传参（原 `POST` + `gatewayName` 全部失败）
+- `cda static-route list`：改用 `vrfName` 传参（`gatewayName` 报 "vrfName can not be null"）
+- 网关/物理专线/静态路由/BGP 路由列表兼容真实响应字段：`vrfName`、`displayName`、`lineID`、`vpcList`
+- 修复静态路由 `dstCidrV6`/`nextHop` 为 `null` 时的表格输出崩溃
+
+---
+
+## v1.32.2 (2026-10-25)
+
+### 🆕 Billing 模块新增 5 个新版账单详情查询命令
+
+- `billing product-cycle-v2`：产品按账期/按天账单（`POST /acct/acct-openapi/queryProductCycleBill`）
+- `billing resource-detail-v2`：资源明细账单（`POST /acct/acct-openapi/queryResourceDetailBill`）
+- `billing resource-cycle-v2`：资源按账期/按天账单（`POST /acct/acct-openapi/queryResourceCycleBill`）
+- `billing usage-detail-v2`：使用量明细账单（`POST /acct/acct-openapi/queryUsageDetailBill`）
+- `billing usage-cycle-v2`：使用量按账期/按天账单（`POST /acct/acct-openapi/queryUsageCycleBill`）
+- 统一支持包周期+按需合并查询、分页、按天分组（`--group-by-day`）、企业项目/资源/产品过滤、零金额过滤
+- 兼容 `statusCode` 与 `success/errorCode` 两种响应结构；表格金额统一保留两位小数
+
+---
+
 ## v1.32.1 (2026-09-20)
 
 ### 🚀 LTS 模块首批可用命令（v1 检索接口）

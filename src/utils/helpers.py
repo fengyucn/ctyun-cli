@@ -37,7 +37,7 @@ class OutputFormatter:
 
     @staticmethod
     def format_table(data: List[Dict[str, Any]], headers: Optional[List[str]] = None,
-                    tablefmt: str = 'grid') -> str:
+                    tablefmt: str = 'grid', disable_numparse: bool = False) -> str:
         """
         格式化为表格输出
 
@@ -45,6 +45,7 @@ class OutputFormatter:
             data: 数据列表
             headers: 表头列表
             tablefmt: 表格格式
+            disable_numparse: 是否禁止 tabulate 自动数值化（保留金额等字符串原样）
 
         Returns:
             格式化后的表格字符串
@@ -70,7 +71,8 @@ class OutputFormatter:
                 row.append(value)
             table_data.append(row)
 
-        return tabulate(table_data, headers=headers, tablefmt=tablefmt)
+        return tabulate(table_data, headers=headers, tablefmt=tablefmt,
+                        disable_numparse=disable_numparse)
 
     @staticmethod
     def format_json(data: Any, indent: int = 2) -> str:

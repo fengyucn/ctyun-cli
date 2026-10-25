@@ -186,30 +186,14 @@ class CDAClient:
         """
         logger.info(f"查询专线网关VPC列表: gateway_name={gateway_name}, account={account}")
 
-        # 首先尝试使用POST方法，因为很多天翼云API文档虽然是GET但实际需要POST
+        # 实际接口要求 gatewayName 以 vrfName 字段传递，且必须使用 GET
         body_data = {
-            'gatewayName': gateway_name,
+            'vrfName': gateway_name,
             'account': account
         }
 
-        # 尝试不同的API路径
-        for path in ['/v4/cda/vpc/list', '/v4/dcaas/vpc/list', '/v4/cda/vpc-list', '/v4/dcaas/vpc-list']:
-            try:
-                result = self.make_eop_request(
-                    method='POST',
-                    endpoint_path=path,
-                    body_data=body_data
-                )
-                if result.get('success'):
-                    return result
-                logger.debug(f"路径 {path} 返回失败: {result}")
-            except Exception as e:
-                logger.debug(f"路径 {path} 异常: {str(e)}")
-                continue
-
-        # 所有路径都失败，返回最后一个路径的结果
         return self.make_eop_request(
-            method='POST',
+            method='GET',
             endpoint_path='/v4/cda/vpc/list',
             body_data=body_data
         )
@@ -232,12 +216,12 @@ class CDAClient:
         logger.info(f"查询专线网关VPC数量: gateway_name={gateway_name}, account={account}")
 
         body_data = {
-            'gatewayName': gateway_name,
+            'vrfName': gateway_name,
             'account': account
         }
 
         return self.make_eop_request(
-            method='POST',  # 使用POST方法，因为需要请求体
+            method='GET',
             endpoint_path='/v4/cda/vpc/count',
             body_data=body_data
         )
@@ -521,8 +505,9 @@ class CDAClient:
         """
         logger.info(f"查询静态路由列表: gateway_name={gateway_name}, account={account}")
 
+        # 实际接口要求 gatewayName 以 vrfName 字段传递
         body_data = {
-            'gatewayName': gateway_name,
+            'vrfName': gateway_name,
             'account': account
         }
 
@@ -592,6 +577,133 @@ class CDAClient:
             method='GET',  # API文档明确要求GET方法
             endpoint_path='/v4/cda/bgp-route/list',
             body_data=body_data  # GET方法但传递body数据（天翼云特殊模式）
+        )
+
+    # ============ QOS相关API ============
+
+    def list_qos(
+        self,
+        region_id: str,
+        line_id: str,
+        page_no: int = 1,
+        page_size: int = 10
+    ) -> Dict[str, Any]:
+        """
+        查询物理专线下关联的QOS
+
+        Args:
+            region_id: 资源池ID（必填）
+            line_id: 物理专线ID（必填）
+            page_no: 页码，默认1
+            page_size: 每页数量，默认10
+
+        Returns:
+            QOS列表信息
+        """
+        logger.info(
+            f"查询QOS列表: region_id={region_id}, line_id={line_id}, "
+            f"page_no={page_no}"
+        )
+
+        body_data = {
+            'regionID': region_id,
+            'lineID': line_id,
+            'pageNo': page_no,
+            'pageSize': page_size
+        }
+
+        return self.make_eop_request(
+            method='GET',
+            endpoint_path='/v4/cda/qos/list',
+            body_data=body_data
+        )
+
+    def list_qos_policies(
+        self,
+        region_id: str,
+        line_id: str,
+        page_no: int = 1,
+        page_size: int = 10,
+        policy_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        查询物理专线下关联的QOS策略
+
+        Args:
+            region_id: 资源池ID（必填）
+            line_id: 物理专线ID（必填）
+            page_no: 页码，默认1
+            page_size: 每页数量，默认10
+            policy_id: QOS策略ID（可选）
+
+        Returns:
+            QOS策略列表信息
+        """
+        logger.info(
+            f"查询QOS策略列表: region_id={region_id}, line_id={line_id}, "
+            f"policy_id={policy_id}"
+        )
+
+        body_data = {
+            'regionID': region_id,
+            'lineID': line_id,
+            'pageNo': page_no,
+            'pageSize': page_size
+        }
+
+        if policy_id:
+            body_data['policyID'] = policy_id
+
+        return self.make_eop_request(
+            method='GET',
+            endpoint_path='/v4/cda/qos/policy/list',
+            body_data=body_data
+        )
+
+    def list_qos_rules(
+        self,
+        region_id: str,
+        line_id: str,
+        page_no: int = 1,
+        page_size: int = 10,
+        qos_rule_id: Optional[str] = None,
+        in_use: Optional[bool] = None
+    ) -> Dict[str, Any]:
+        """
+        查询物理专线下关联的QOS规则
+
+        Args:
+            region_id: 资源池ID（必填）
+            line_id: 物理专线ID（必填）
+            page_no: 页码，默认1
+            page_size: 每页数量，默认10
+            qos_rule_id: QOS规则ID（可选）
+            in_use: 是否在用（可选）
+
+        Returns:
+            QOS规则列表信息
+        """
+        logger.info(
+            f"查询QOS规则列表: region_id={region_id}, line_id={line_id}, "
+            f"qos_rule_id={qos_rule_id}, in_use={in_use}"
+        )
+
+        body_data = {
+            'regionID': region_id,
+            'lineID': line_id,
+            'pageNo': page_no,
+            'pageSize': page_size
+        }
+
+        if qos_rule_id:
+            body_data['qosRuleID'] = qos_rule_id
+        if in_use is not None:
+            body_data['inUse'] = in_use
+
+        return self.make_eop_request(
+            method='GET',
+            endpoint_path='/v4/cda/qos/rule/list',
+            body_data=body_data
         )
 
     def list_account_authorizations(

@@ -26,6 +26,76 @@ class BillingClient:
         # 初始化EOP签名认证器
         self.eop_auth = CTYUNEOPAuth(client.access_key, client.secret_key)
 
+    def _post_acct_openapi(self, path: str, body_data: Dict[str, Any],
+                           desc: str) -> Dict[str, Any]:
+        """POST /acct/acct-openapi/<path>，统一签名与日志"""
+        url = f"https://{self.base_endpoint}/acct/acct-openapi/{path}"
+        body = json.dumps(body_data)
+
+        headers = self.eop_auth.sign_request(
+            method='POST',
+            url=url,
+            query_params=None,
+            body=body
+        )
+
+        logger.debug(f"{desc}请求URL: {url}")
+        logger.debug(f"{desc}请求体: {body}")
+
+        try:
+            response = self.client.session.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=30
+            )
+
+            logger.debug(f"{desc}响应状态码: {response.status_code}")
+            logger.debug(f"{desc}响应内容: {response.text}")
+
+            response.raise_for_status()
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"{desc}失败: {str(e)}")
+            raise
+
+    def _query_bill_v2(self, path: str, desc: str, bill_cycle: str,
+                       page_no: int = 1, page_size: int = 10,
+                       contract_id: Optional[str] = None,
+                       offset: Optional[int] = None,
+                       bill_mode: Optional[int] = None,
+                       bill_type: Optional[int] = None,
+                       product_code: Optional[str] = None,
+                       resource_id: Optional[str] = None,
+                       project_id: Optional[str] = None,
+                       group_by_day: Optional[int] = None,
+                       pay_method: Optional[str] = None,
+                       is_zero_filter: Optional[bool] = None) -> Dict[str, Any]:
+        """新版账单详情查询公共实现（5 个接口参数一致）"""
+        body_data = {
+            'billingCycleId': bill_cycle,
+            'pageNo': page_no,
+            'pageSize': page_size
+        }
+
+        optional_params = {
+            'contractId': contract_id,
+            'offset': offset,
+            'billMode': bill_mode,
+            'billType': bill_type,
+            'productCode': product_code,
+            'resourceId': resource_id,
+            'projectId': project_id,
+            'groupByonDay': group_by_day,
+            'payMethod': pay_method,
+            'isZeroFileter': is_zero_filter
+        }
+        body_data.update({k: v for k, v in optional_params.items() if v is not None})
+
+        logger.info(f"{desc}: bill_cycle={bill_cycle}, page={page_no}, pageSize={page_size}")
+        return self._post_acct_openapi(path, body_data, desc)
+
     def query_bill_list(self, bill_cycle: str, page_no: int = 1,
                        page_size: int = 10, product_code: Optional[str] = None,
                        resource_id: Optional[str] = None) -> Dict[str, Any]:
@@ -816,3 +886,116 @@ class BillingClient:
         except Exception as e:
             logger.error(f"查询账单明细资源+账期(按需)失败: {str(e)}")
             raise
+
+    def query_product_cycle_bill_v2(self, bill_cycle: str, page_no: int = 1,
+                                    page_size: int = 10,
+                                    contract_id: Optional[str] = None,
+                                    offset: Optional[int] = None,
+                                    bill_mode: Optional[int] = None,
+                                    bill_type: Optional[int] = None,
+                                    product_code: Optional[str] = None,
+                                    resource_id: Optional[str] = None,
+                                    project_id: Optional[str] = None,
+                                    group_by_day: Optional[int] = None,
+                                    pay_method: Optional[str] = None,
+                                    is_zero_filter: Optional[bool] = None
+                                    ) -> Dict[str, Any]:
+        """产品按账期/按天账单（新版，包周期+按需合并）"""
+        return self._query_bill_v2(
+            'queryProductCycleBill', '查询产品按账期/按天账单(新版)', bill_cycle,
+            page_no=page_no, page_size=page_size, contract_id=contract_id,
+            offset=offset, bill_mode=bill_mode, bill_type=bill_type,
+            product_code=product_code, resource_id=resource_id,
+            project_id=project_id, group_by_day=group_by_day,
+            pay_method=pay_method, is_zero_filter=is_zero_filter
+        )
+
+    def query_resource_detail_bill_v2(self, bill_cycle: str, page_no: int = 1,
+                                      page_size: int = 10,
+                                      contract_id: Optional[str] = None,
+                                      offset: Optional[int] = None,
+                                      bill_mode: Optional[int] = None,
+                                      bill_type: Optional[int] = None,
+                                      product_code: Optional[str] = None,
+                                      resource_id: Optional[str] = None,
+                                      project_id: Optional[str] = None,
+                                      pay_method: Optional[str] = None,
+                                      is_zero_filter: Optional[bool] = None
+                                      ) -> Dict[str, Any]:
+        """资源明细账单（新版，包周期+按需合并）"""
+        return self._query_bill_v2(
+            'queryResourceDetailBill', '查询资源明细账单(新版)', bill_cycle,
+            page_no=page_no, page_size=page_size, contract_id=contract_id,
+            offset=offset, bill_mode=bill_mode, bill_type=bill_type,
+            product_code=product_code, resource_id=resource_id,
+            project_id=project_id, pay_method=pay_method,
+            is_zero_filter=is_zero_filter
+        )
+
+    def query_resource_cycle_bill_v2(self, bill_cycle: str, page_no: int = 1,
+                                     page_size: int = 10,
+                                     contract_id: Optional[str] = None,
+                                     offset: Optional[int] = None,
+                                     bill_mode: Optional[int] = None,
+                                     bill_type: Optional[int] = None,
+                                     product_code: Optional[str] = None,
+                                     resource_id: Optional[str] = None,
+                                     project_id: Optional[str] = None,
+                                     group_by_day: Optional[int] = None,
+                                     pay_method: Optional[str] = None,
+                                     is_zero_filter: Optional[bool] = None
+                                     ) -> Dict[str, Any]:
+        """资源按账期/按天账单（新版，包周期+按需合并）"""
+        return self._query_bill_v2(
+            'queryResourceCycleBill', '查询资源按账期/按天账单(新版)', bill_cycle,
+            page_no=page_no, page_size=page_size, contract_id=contract_id,
+            offset=offset, bill_mode=bill_mode, bill_type=bill_type,
+            product_code=product_code, resource_id=resource_id,
+            project_id=project_id, group_by_day=group_by_day,
+            pay_method=pay_method, is_zero_filter=is_zero_filter
+        )
+
+    def query_usage_detail_bill_v2(self, bill_cycle: str, page_no: int = 1,
+                                   page_size: int = 10,
+                                   contract_id: Optional[str] = None,
+                                   offset: Optional[int] = None,
+                                   bill_mode: Optional[int] = None,
+                                   bill_type: Optional[int] = None,
+                                   product_code: Optional[str] = None,
+                                   resource_id: Optional[str] = None,
+                                   project_id: Optional[str] = None,
+                                   pay_method: Optional[str] = None,
+                                   is_zero_filter: Optional[bool] = None
+                                   ) -> Dict[str, Any]:
+        """使用量明细账单（新版，包周期+按需合并）"""
+        return self._query_bill_v2(
+            'queryUsageDetailBill', '查询使用量明细账单(新版)', bill_cycle,
+            page_no=page_no, page_size=page_size, contract_id=contract_id,
+            offset=offset, bill_mode=bill_mode, bill_type=bill_type,
+            product_code=product_code, resource_id=resource_id,
+            project_id=project_id, pay_method=pay_method,
+            is_zero_filter=is_zero_filter
+        )
+
+    def query_usage_cycle_bill_v2(self, bill_cycle: str, page_no: int = 1,
+                                  page_size: int = 10,
+                                  contract_id: Optional[str] = None,
+                                  offset: Optional[int] = None,
+                                  bill_mode: Optional[int] = None,
+                                  bill_type: Optional[int] = None,
+                                  product_code: Optional[str] = None,
+                                  resource_id: Optional[str] = None,
+                                  project_id: Optional[str] = None,
+                                  group_by_day: Optional[int] = None,
+                                  pay_method: Optional[str] = None,
+                                  is_zero_filter: Optional[bool] = None
+                                  ) -> Dict[str, Any]:
+        """使用量按账期/按天账单（新版，包周期+按需合并）"""
+        return self._query_bill_v2(
+            'queryUsageCycleBill', '查询使用量按账期/按天账单(新版)', bill_cycle,
+            page_no=page_no, page_size=page_size, contract_id=contract_id,
+            offset=offset, bill_mode=bill_mode, bill_type=bill_type,
+            product_code=product_code, resource_id=resource_id,
+            project_id=project_id, group_by_day=group_by_day,
+            pay_method=pay_method, is_zero_filter=is_zero_filter
+        )
