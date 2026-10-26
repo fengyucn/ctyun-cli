@@ -4500,7 +4500,7 @@ def export_task(ctx, task_id, region_id, output):
 @click.option('--page-size', type=int, help='每页条数（1-100），默认10')
 @click.option('--task-type-str', help='任务类型（多个逗号分隔）')
 @click.option('--prod-inst-id', help='实例ID过滤')
-@click.option('--start-time-desc', type=click.Choice([0, 1]), default=0, help='0自然序/1降序')
+@click.option('--start-time-desc', type=click.Choice(['0', '1']), default='0', help='0自然序/1降序')
 @click.option('--region-id', '-r', required=True, help='资源池ID')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default='table')
 @click.pass_context

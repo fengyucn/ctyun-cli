@@ -4,6 +4,25 @@
 
 ---
 
+## v1.32.4 (2026-10-26)
+
+### 🔧 Aone 边缘安全加速平台接口修复与输出优化
+
+- `aone query-domain-protocol`：修正 API 路径（原 `/v1/ipa/domain/query-domain-pro` 返回 "API Not Found"，改为文档路径 `/v1/ipa/domain/query-domain-protocol`）
+- `aone query-resource-packages`：修正 API 路径（原 `queryResourcePackagesDBT` 需要 loginEmail 恒报"参数校验失败"，改为 `queryResourcePackages`）
+- `aone query-domain-protocol`：增加参数校验（`--product-code` 仅支持 009/024；`--access-mode=1` 需 `--domain`，`=2` 需 `--instance`），错误返回业务错误码与详情
+- `aone query-service-detail`：表格输出重构，展开 `attribute` 字段，补充产品类型/业务状态（按需与资源包状态字典）/计费方式/版本/域名数等列
+- `aone query-bandwidth-data`：表格输出增加可读时间（本地时区）、动态聚合维度列，带宽同时输出 bps 原值与 Kbps/Mbps/Gbps 可读值
+- Aone 业务错误统一输出 `查询失败 [错误码]: 摘要 - 详情` 格式
+
+### 🔧 CLI 选项类型修复
+
+- 修复 4 处 `click.Choice` 使用整型枚举导致 `--help` 崩溃（`TypeError: sequence item 0: expected str instance, int found`）：
+  `vpc price nat create` / `vpc price nat modify`（--spec）、`ctmysql batch-monitor`（--period）、`redis task-center-list`（--start-time-desc）
+- 枚举值改为字符串后在调用处转回整型，请求体字段类型保持不变
+
+---
+
 ## v1.32.3 (2026-10-25)
 
 ### 🆕 CDA 云专线新增 3 个 QOS 查询命令

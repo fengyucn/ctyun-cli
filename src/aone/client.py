@@ -132,7 +132,7 @@ class AoneClient:
         if access_mode is not None: body['access_mode'] = access_mode
         if domain: body['domain'] = domain
         if instance: body['instance'] = instance
-        return self._request('POST', '/v1/ipa/domain/query-domain-pro', body_data=body)
+        return self._request('POST', '/v1/ipa/domain/query-domain-protocol', body_data=body)
 
     def query_domain_list_basic(self, domain: Optional[str] = None,
                                 product_code: Optional[str] = None,
@@ -160,7 +160,7 @@ class AoneClient:
     def query_resource_packages(self) -> Dict[str, Any]:
         """查询安全与加速资源包列表"""
         logger.info("查询安全与加速资源包列表")
-        return self._request('POST', '/ctapi/v1/accessone/purchase/queryResourcePackagesDBT', body_data={})
+        return self._request('POST', '/ctapi/v1/accessone/purchase/queryResourcePackages', body_data={})
 
     # ==================== 证书管理 ====================
 

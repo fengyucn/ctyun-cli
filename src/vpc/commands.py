@@ -2189,7 +2189,7 @@ def nat():
 @click.option('--region-id', required=True, help='区域ID')
 @click.option('--vpc-id', required=True, help='VPC ID')
 @click.option('--name', required=True, help='NAT网关名称')
-@click.option('--spec', required=True, type=click.Choice([1,2,3,4]), help='规格：1小/2中/3大/4超大')
+@click.option('--spec', required=True, type=click.Choice(['1', '2', '3', '4']), help='规格：1小/2中/3大/4超大')
 @click.option('--az-name', required=True, help='可用区')
 @click.option('--cycle-type', required=True, type=click.Choice(['month','year']), help='订购类型')
 @click.option('--cycle-count', required=True, type=int, help='订购时长')
@@ -2197,19 +2197,19 @@ def nat():
 @handle_error
 def price_nat_create(ctx, region_id, vpc_id, name, spec, az_name, cycle_type, cycle_count):
     """NAT创建询价"""
-    result = get_vpc_client(ctx).nat_create_price(region_id, vpc_id, name, spec, az_name, cycle_type, cycle_count)
+    result = get_vpc_client(ctx).nat_create_price(region_id, vpc_id, name, int(spec), az_name, cycle_type, cycle_count)
     format_output(result, ctx.obj.get('output', 'table'))
 
 
 @nat.command('modify')
 @click.option('--region-id', required=True, help='区域ID')
 @click.option('--nat-gateway-id', required=True, help='NAT网关ID')
-@click.option('--spec', required=True, type=click.Choice([1,2,3,4]), help='规格：1小/2中/3大/4超大')
+@click.option('--spec', required=True, type=click.Choice(['1', '2', '3', '4']), help='规格：1小/2中/3大/4超大')
 @click.pass_context
 @handle_error
 def price_nat_modify(ctx, region_id, nat_gateway_id, spec):
     """NAT变配询价"""
-    result = get_vpc_client(ctx).nat_modify_price(region_id, nat_gateway_id, spec)
+    result = get_vpc_client(ctx).nat_modify_price(region_id, nat_gateway_id, int(spec))
     format_output(result, ctx.obj.get('output', 'table'))
 
 

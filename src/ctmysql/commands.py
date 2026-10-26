@@ -175,7 +175,7 @@ def batch_label(ctx, region_id: str, action: str, instance_ids: str,
               help='实例ID列表，逗号分隔(最多20个)')
 @click.option('--metric', required=True,
               help='监控指标名，如 mysql_monitor_cpu_util')
-@click.option('--period', required=True, type=click.Choice([15, 60, 900, 3600]),
+@click.option('--period', required=True, type=click.Choice(['15', '60', '900', '3600']),
               help='采样周期(秒): 15/60/900/3600')
 @click.option('--start-time', type=int, default=None,
               help='开始时间戳(秒)，如 1733207910')
@@ -219,7 +219,7 @@ def batch_monitor(ctx, region_id: str, engine: str, instance_ids: str,
 
     result = rds_client.batch_metric_data(
         region_id=region_id, prod_engine_name=engine,
-        inst_ids=inst_ids, metrics_type=metric, period=period,
+        inst_ids=inst_ids, metrics_type=metric, period=int(period),
         start_time=start_time, end_time=end_time, agg_func=agg_func
     )
     fmt = _output(ctx, result, output)

@@ -197,7 +197,11 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.32.3 (2026-10-25)
+**最新版本**: v1.32.4 (2026-10-26)
+- 🔧 **Aone 边缘安全加速平台接口修复**：`query-domain-protocol` / `query-resource-packages` 修正 API 路径（此前分别返回 "API Not Found" 和"参数校验失败"），`query-service-detail` 与 `query-bandwidth-data` 表格输出重构（状态字典、可读时间、带宽 bps/Mbps 双列）
+- 🔧 **修复 4 处选项 `--help` 崩溃**：`click.Choice` 整型枚举导致 `vpc price nat create/modify`、`ctmysql batch-monitor`、`redis task-center-list` 的帮助信息抛 TypeError
+
+**v1.32.3** (2026-10-25)
 - 🆕 **CDA 云专线新增 3 个 QOS 查询命令**：`qos list` / `qos policy list` / `qos rule list`，并修复 `vpc list`、`vpc count`、`static-route list` 的真实传参（`GET` + `vrfName`）
 
 **v1.32.2** (2026-10-25)

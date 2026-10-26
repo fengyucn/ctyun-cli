@@ -60,6 +60,86 @@ def _get_data(result):
     return result.get('returnObj', result.get('data', {}))
 
 
+# Aone 业务状态码：按需产品与资源包的状态含义不同
+_SERVICE_STATUS = {
+    'bss_product': {
+        1: '服务中', 2: '已过期', 3: '已退订', 4: '已冻结(暂停)', 5: '已删除',
+        6: '已销户', 7: '冻结中', 8: '恢复中', 9: '删除中(销户中)', 10: '其它'
+    },
+    'flow_packet': {
+        2: '可用', 3: '流量用完', 4: '到期', 5: '关停', 6: '退订'
+    }
+}
+
+
+def _fail(result):
+    """输出 Aone 业务错误详情（含 errorMessage 与错误码）"""
+    message = result.get('message', '未知错误')
+    detail = result.get('errorMessage') or result.get('error') or ''
+    code = result.get('statusCode', result.get('code', ''))
+    if detail and detail != message:
+        click.echo(f"查询失败 [{code}]: {message} - {detail}", err=True)
+    else:
+        click.echo(f"查询失败 [{code}]: {message}", err=True)
+
+
+def _format_ts(ts):
+    """时间戳(秒) → 可读时间（本地时区，与其它模块一致）"""
+    if not isinstance(ts, (int, float)) or ts <= 0:
+        return str(ts) if ts is not None else ''
+    from datetime import datetime
+    return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _format_bps(value):
+    """带宽(bps) → 可读值"""
+    if not isinstance(value, (int, float)):
+        return str(value)
+    if value >= 1_000_000_000:
+        return f'{value / 1_000_000_000:.2f} Gbps'
+    if value >= 1_000_000:
+        return f'{value / 1_000_000:.2f} Mbps'
+    if value >= 1_000:
+        return f'{value / 1_000:.2f} Kbps'
+    return f'{value:.2f} bps'
+
+
+# 统计类接口的聚合维度字段（按 group_by 顺序）
+_STATS_DIMENSIONS = ['product_type', 'domain', 'province', 'isp',
+                     'network_layer_protocol', 'application_layer_protocol', 'abroad']
+
+_STATS_DIMENSION_LABELS = {
+    'product_type': '产品类型',
+    'domain': '域名',
+    'province': '省编码',
+    'isp': '运营商',
+    'network_layer_protocol': '网络层协议',
+    'application_layer_protocol': '应用层协议',
+    'abroad': '区域'
+}
+
+
+def _format_stats_rows(data_list, value_keys):
+    """统计类接口数据 → 表格行（时间 + 聚合维度 + 指标值）"""
+    value_keys = set(value_keys)
+    dims = [k for k in _STATS_DIMENSIONS
+            if any(k in item for item in data_list if isinstance(item, dict))]
+    rows = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+        row = {'时间': _format_ts(item.get('time_stamp'))}
+        for dim in dims:
+            row[_STATS_DIMENSION_LABELS.get(dim, dim)] = item.get(dim, '')
+        for key in value_keys:
+            if key in item:
+                row[key] = item.get(key)
+        rows.append(row)
+    headers = ['时间'] + [_STATS_DIMENSION_LABELS.get(d, d) for d in dims] + \
+        [k for k in value_keys if any(k in i for i in data_list if isinstance(i, dict))]
+    return rows, headers
+
+
 # ==================== 域名管理 ====================
 
 
@@ -161,23 +241,38 @@ def cmd_query_domain_status(ctx, domains, product_code, page_index, page_size, o
 
 @aone.command('query-domain-protocol')
 @click.option('--product-code', required=True, help='产品类型: 009(应用加速), 024(边缘接入)')
-@click.option('--access-mode', type=int, help='接入方式: 1(域名接入), 2(无域名接入)')
-@click.option('--domain', help='加速域名')
-@click.option('--instance', help='实例名称')
+@click.option('--access-mode', type=int, help='接入方式: 1(域名接入,默认), 2(无域名接入)')
+@click.option('--domain', help='加速域名(access_mode=1时必填)')
+@click.option('--instance', help='实例名称(access_mode=2时必填)')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
 @click.pass_context
 def cmd_query_domain_protocol(ctx, product_code, access_mode, domain, instance, output):
     """查询域名协议类型"""
     client = ctx.obj['client']
     output_format = output or ctx.obj.get('output', 'table')
+    if product_code not in ('009', '024'):
+        click.echo("参数错误: --product-code 仅支持 009(应用加速) 或 024(边缘接入)", err=True)
+        import sys; sys.exit(2)
+    if access_mode == 2:
+        if not instance:
+            click.echo("参数错误: --access-mode=2 时必须指定 --instance", err=True)
+            import sys; sys.exit(2)
+    elif not domain:
+        click.echo("参数错误: --access-mode=1 或不传时必须指定 --domain", err=True)
+        import sys; sys.exit(2)
     aone_client = AoneClient(client)
     result = aone_client.query_domain_protocol(
         product_code=product_code, access_mode=access_mode,
         domain=domain, instance=instance
     )
     if not _is_success(result):
-        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(_get_data(result), output_format)
+        _fail(result); return
+    data = _get_data(result)
+    if output_format == 'json':
+        format_output(data, output_format)
+        return
+    rows = [{'加速域名': data.get('domain', ''), '协议类型': data.get('protocol', '')}]
+    click.echo(OutputFormatter.format_table(rows, ['加速域名', '协议类型']))
 
 
 @aone.command('query-domain-list-basic')
@@ -213,7 +308,7 @@ def cmd_query_domain_list_basic(ctx, domain, product_code, status,
 
 
 @aone.command('query-service-detail')
-@click.option('--product-code', multiple=True, help='产品类型编码(可多次指定，如 024)')
+@click.option('--product-code', multiple=True, help='产品类型编码(可多次指定，如 020)')
 @click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
 @click.pass_context
 def cmd_query_service_detail(ctx, product_code, output):
@@ -225,12 +320,40 @@ def cmd_query_service_detail(ctx, product_code, output):
         product_code=list(product_code) if product_code else None
     )
     if not _is_success(result):
-        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
+        _fail(result); return
     return_obj = _get_data(result)
     service_list = return_obj.get('result', [])
     if not service_list:
         click.echo("未查询到服务信息"); return
-    format_output(service_list, output_format)
+    if output_format != 'table':
+        format_output(service_list, output_format)
+        return
+    rows = []
+    for svc in service_list:
+        attr = svc.get('attribute') or {}
+        status_map = _SERVICE_STATUS.get(svc.get('product_type'), {})
+        product_type = svc.get('product_type', '')
+        rows.append({
+            '产品编码': svc.get('product_code', ''),
+            '产品名称': svc.get('product_cname', ''),
+            '产品类型': '按需' if product_type == 'bss_product' else product_type,
+            '状态': status_map.get(svc.get('status'), svc.get('status', '')),
+            '计费方式': svc.get('billing_type_cname', ''),
+            '下次计费方式': svc.get('next_billing_type_cname', ''),
+            '开通时间': svc.get('eff_date', ''),
+            '失效时间': svc.get('exp_date', ''),
+            '版本': attr.get('version', ''),
+            '主域名数': attr.get('main_domain_num', ''),
+            '子域名数': attr.get('sub_domain_num', ''),
+            '保底带宽(Kbps)': attr.get('bp_bottom', ''),
+            '业务带宽(Kbps)': attr.get('business_bandwidth', ''),
+            '试用': '是' if svc.get('is_trail') else '否'
+        })
+    headers = ['产品编码', '产品名称', '产品类型', '状态', '计费方式', '下次计费方式',
+               '开通时间', '失效时间', '版本', '主域名数', '子域名数',
+               '保底带宽(Kbps)', '业务带宽(Kbps)', '试用']
+    click.echo(f"\n开通服务基本信息 (共 {len(rows)} 条)\n")
+    click.echo(OutputFormatter.format_table(rows, headers))
 
 
 @aone.command('query-resource-packages')
@@ -243,8 +366,24 @@ def cmd_query_resource_packages(ctx, output):
     aone_client = AoneClient(client)
     result = aone_client.query_resource_packages()
     if not _is_success(result):
-        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
-    format_output(_get_data(result), output_format)
+        _fail(result); return
+    data = _get_data(result)
+    package_list = data if isinstance(data, list) else data.get('result', [])
+    if not package_list:
+        click.echo("未查询到资源包"); return
+    if output_format != 'table' or not isinstance(package_list, list):
+        format_output(package_list, output_format)
+        return
+    rows = []
+    for pkg in package_list:
+        if not isinstance(pkg, dict):
+            continue
+        rows.append(pkg)
+    if not rows:
+        click.echo("未查询到资源包"); return
+    headers = list(rows[0].keys())
+    click.echo(f"\n安全与加速资源包 (共 {len(rows)} 个)\n")
+    click.echo(OutputFormatter.format_table(rows, headers))
 
 
 # ==================== 证书管理 ====================
@@ -439,7 +578,15 @@ def cmd_query_bandwidth_data(ctx, start_time, end_time, interval,
                              product_type, access_mode, domain, instance,
                              province, isp, network_layer_protocol, abroad,
                              group_by, output):
-    """查询带宽数据"""
+    """查询带宽数据
+
+    接口约束（/ctapi/v2/statisticsanalysis/query_bandwidth_data）：
+    - 单次查询域名数不超过 100 个
+    - interval=24h 时起止时间需跨天，否则返回空数据
+    - 单次最多返回 50000 条记录
+    - 1m 粒度可查最近 7 天（延迟 5 分钟，单次跨度 3 小时）；
+      5m/1h/24h 粒度可查最近 365 天（延迟 20 分钟，单次跨度 31 天）
+    """
     client = ctx.obj['client']
     output_format = output or ctx.obj.get('output', 'table')
     aone_client = AoneClient(client)
@@ -456,13 +603,25 @@ def cmd_query_bandwidth_data(ctx, start_time, end_time, interval,
         group_by=list(group_by) if group_by else None
     )
     if not _is_success(result):
-        click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
+        _fail(result); return
     return_obj = _get_data(result)
     data_list = return_obj.get('req_bandwidth_data_interval', [])
     if not data_list:
         click.echo("未查询到带宽数据"); return
-    click.echo(f"\n带宽数据 ({return_obj.get('start_time')} ~ {return_obj.get('end_time')})\n")
-    format_output(data_list, output_format)
+    if output_format != 'table':
+        format_output(data_list, output_format)
+        return
+    rows, headers = _format_stats_rows(data_list, ['bandwidth'])
+    for row in rows:
+        bps = row.get('bandwidth')
+        row['带宽(bps)'] = f'{bps:.2f}' if isinstance(bps, (int, float)) else bps
+        row['带宽'] = _format_bps(bps)
+        row.pop('bandwidth', None)
+    headers = [h for h in headers if h != 'bandwidth'] + ['带宽(bps)', '带宽']
+    click.echo(f"\n带宽数据 ({_format_ts(return_obj.get('start_time'))} ~ "
+               f"{_format_ts(return_obj.get('end_time'))}, "
+               f"粒度 {return_obj.get('interval', '5m')})\n")
+    click.echo(OutputFormatter.format_table(rows, headers, disable_numparse=True))
 
 
 @aone.command('query-flow-data')
