@@ -93,6 +93,10 @@ AKSK
 !CHANGELOG.md
 !COMMAND_MANUAL.md
 
+# AI agent instruction files (local only)
+AGENTS.md
+CLAUDE.md
+
 # Project management files (internal use only)
 PROJECT_RULES.md
 PROJECT_SUMMARY.md
@@ -157,4 +161,6 @@ Thumbs.db
 .marscode/
 .claude/
 .playwright-mcp/
+.mimosa/
+.qoder/
 test/

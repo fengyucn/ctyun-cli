@@ -148,6 +148,18 @@ class AoneClient:
         if area_scope is not None: params['area_scope'] = area_scope
         return self._request('GET', '/ctapi/v2/domain/query', query_params=params)
 
+    def change_domain_status(self, product_code: str, action: int,
+                             access_mode: Optional[int] = None,
+                             domain: Optional[str] = None,
+                             instance: Optional[str] = None) -> Dict[str, Any]:
+        """删除/启用/停用域名"""
+        logger.info(f"删除/启用/停用域名: domain={domain}, instance={instance}, action={action}")
+        body = {'product_code': product_code, 'action': action}
+        if access_mode is not None: body['access_mode'] = access_mode
+        if domain: body['domain'] = domain
+        if instance: body['instance'] = instance
+        return self._request('POST', '/v1/ipa/domain/change-domain-status', body_data=body)
+
     # ==================== 服务管理 ====================
 
     def query_service_detail(self, product_code: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -683,6 +695,18 @@ class AoneClient:
         logger.info(f"查询访问控制限流开关: domain={domain}")
         return self._request('POST', '/ctapi/v1/scdn/domain/queryAccessControlAct',
                              body_data={'domain': domain, 'productCode': product_code})
+
+    def insert_access_control(self, domains: List[str], product_code: str,
+                              access_control_configs: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """新增访问控制策略"""
+        logger.info(f"新增访问控制策略: domains={domains}, product_code={product_code}, "
+                    f"规则数={len(access_control_configs)}")
+        return self._request('POST', '/ctapi/v1/scdn/domain/accessControlInsert',
+                             body_data={
+                                 'domains': domains,
+                                 'productCode': product_code,
+                                 'accessControlConfigs': access_control_configs
+                             })
 
     def query_tamper_protect(self, domain: str, product_code: str,
                              page_index: int = 1, page_size: int = 10) -> Dict[str, Any]:

@@ -913,6 +913,52 @@ def get_listener(ctx, region_id: str, listener_id: str, id: Optional[str], outpu
             click.echo(f"  {key}: {value}")
 
 
+@listener.command('stop')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--listener-id', required=True, help='监听器ID')
+@click.option('--client-token', help='客户端存根，用于保证订单幂等性，长度1-64')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+@handle_error
+def stop_listener(ctx, region_id: str, listener_id: str,
+                  client_token: Optional[str], output: Optional[str]):
+    """
+    停止监听器
+
+    示例:
+    \b
+    # 停止指定监听器
+    elb listener stop --region-id 200000001852 --listener-id listener-xxxxxxxx
+
+    # 指定幂等性存根
+    elb listener stop --region-id 200000001852 --listener-id listener-xxxxxxxx \\
+        --client-token 79fa97e3-c48b-xxxx-9f46-6a13d8163678
+    """
+    elb_client = get_elb_client(ctx)
+
+    result = elb_client.stop_listener(
+        region_id=region_id,
+        listener_id=listener_id,
+        client_token=client_token
+    )
+
+    output_format = output or ctx.obj.get('output', 'table')
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result))
+        return
+    if output_format == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            click.echo("错误: 需要安装PyYAML库", err=True)
+        return
+
+    return_obj = result.get('returnObj', [])
+    stopped_id = return_obj[0].get('ID', listener_id) if return_obj else listener_id
+    click.echo(f"✓ 监听器已停止: {stopped_id}")
+
+
 @elb.group()
 def monitor():
     """监控数据管理"""

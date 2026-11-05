@@ -507,6 +507,62 @@ class ELBClient:
             logger.error(f"查询监听器详情失败: {str(e)}")
             raise
 
+    def stop_listener(self, region_id: str, listener_id: str,
+                      client_token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        停止监听器
+
+        Args:
+            region_id: 区域ID (必填)
+            listener_id: 监听器ID (必填)
+            client_token: 客户端存根，用于保证订单幂等性，长度1-64
+
+        Returns:
+            停止结果，returnObj中包含监听器ID
+        """
+        logger.info(f"停止监听器: regionId={region_id}, listenerId={listener_id}")
+
+        try:
+            url = f'https://{self.base_endpoint}/v4/elb/stop-listener'
+
+            body = {
+                'regionID': region_id,
+                'listenerID': listener_id
+            }
+            if client_token:
+                body['clientToken'] = client_token
+
+            body_str = json.dumps(body)
+
+            headers = self.eop_auth.sign_request(
+                method='POST',
+                url=url,
+                query_params=None,
+                body=body_str
+            )
+
+            response = self.client.session.post(
+                url,
+                data=body_str,
+                headers=headers,
+                timeout=30
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get('statusCode') != 800:
+                error_code = data.get('errorCode', 'UNKNOWN_ERROR')
+                error_msg = data.get('description', '未知错误')
+                raise Exception(f"ELB API错误 [{error_code}]: {error_msg}")
+
+            logger.info(f"成功停止监听器: {listener_id}")
+            return data
+
+        except Exception as e:
+            logger.error(f"停止监听器失败: {str(e)}")
+            raise
+
     def query_realtime_monitor(self, region_id: str, device_ids: Optional[list] = None,
                                page_no: int = 1, page_size: int = 10) -> Dict[str, Any]:
         """
