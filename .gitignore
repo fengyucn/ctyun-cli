@@ -161,4 +161,6 @@ Thumbs.db
 .marscode/
 .claude/
 .playwright-mcp/
+.mimosa/
+.qoder/
 test/
