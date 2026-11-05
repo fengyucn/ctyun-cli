@@ -1,7 +1,10 @@
 """边缘安全加速平台(Aone)命令行接口"""
 
-import click
+import json
 from typing import Optional
+
+import click
+
 from .client import AoneClient
 from utils import OutputFormatter
 
@@ -207,6 +210,33 @@ def cmd_query_domain_list_basic(ctx, domain, product_code, status,
         click.echo("未找到域名"); return
     click.echo(f"\n域名列表 (总计: {return_obj.get('total', 0)} 个, 第{page}页)\n")
     format_output(record_list, output_format)
+
+
+@aone.command('change-domain-status')
+@click.option('--product-code', required=True, help='产品类型: 009(应用加速), 024(边缘接入)')
+@click.option('--action', required=True, type=int, help='状态操作类型: 1(停用), 2(启用), 3(删除)')
+@click.option('--access-mode', type=int, help='接入方式: 1(域名接入), 2(无域名接入), 不传默认1')
+@click.option('--domain', help='加速域名, 域名接入方式(access_mode=1或不传)时必填')
+@click.option('--instance', help='实例名称, 不超过10个字的中/英文/数字组合, access_mode=2时必填')
+@click.pass_context
+def cmd_change_domain_status(ctx, product_code, action, access_mode, domain, instance):
+    """删除/启用/停用域名"""
+    client = ctx.obj['client']
+    aone_client = AoneClient(client)
+    if action not in (1, 2, 3):
+        click.echo("错误: --action 仅支持 1(停用), 2(启用), 3(删除)", err=True); return
+    if access_mode == 2 and not instance:
+        click.echo("错误: access_mode=2(无域名接入方式)时必须指定 --instance", err=True); return
+    if (access_mode is None or access_mode == 1) and not domain:
+        click.echo("错误: 域名接入方式(access_mode=1或不传)时必须指定 --domain", err=True); return
+    result = aone_client.change_domain_status(
+        product_code=product_code, action=action,
+        access_mode=access_mode, domain=domain, instance=instance
+    )
+    if not _is_success(result):
+        message = result.get('message') or result.get('errorMessage') or '未知错误'
+        click.echo(f"操作失败: {message}", err=True); return
+    click.echo(f"✓ 操作成功: {result.get('message', '')}")
 
 
 # ==================== 服务管理 ====================
@@ -1261,6 +1291,46 @@ def cmd_query_access_control_switch(ctx, domain, product_code, output):
     if not _is_success(result):
         click.echo(f"查询失败: {result.get('message', '未知错误')}", err=True); return
     format_output(_get_data(result), output_format)
+
+
+@aone.command('access-control-insert')
+@click.option('--domains', required=True, multiple=True, help='域名列表(可多次指定)')
+@click.option('--product-code', required=True, help='产品业务类型: 010(WAF边缘云版), 020(边缘安全加速)')
+@click.option('--config', 'configs', required=True, multiple=True,
+              help='访问控制规则JSON对象(可多次指定, 每条规则一个JSON), 结构: '
+                   '{"mod":"ON|CLOSE","act":"LOG|ACCEPT|BLOCK|DROP|CHECK|JUMP|JCJS|PIC",'
+                   '"ruleName":"规则名称","ruleDesc":"规则描述","jumpUrl":"重定向URL(act=JUMP时必填)",'
+                   '"publicRange":[[{"equal":"TRUE|FALSE","zone":"粒度, 如IP/URI/PATH/METHOD/GEO/FMT_TIME",'
+                   '"publicContent":"内容, 多个分号隔开","operator":"STR|REGEX",'
+                   '"geoZone":[["EU"]],"datePeriod":"day|week|month"}]]}')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), help='输出格式')
+@click.pass_context
+def cmd_access_control_insert(ctx, domains, product_code, configs, output):
+    """新增访问控制策略"""
+    client = ctx.obj['client']
+    output_format = output or ctx.obj.get('output', 'table')
+    parsed_configs = []
+    for i, cfg in enumerate(configs, 1):
+        try:
+            parsed = json.loads(cfg)
+        except json.JSONDecodeError as e:
+            click.echo(f"错误: 第{i}条 --config 不是合法JSON: {e}", err=True); return
+        if not isinstance(parsed, dict):
+            click.echo(f"错误: 第{i}条 --config 必须为JSON对象", err=True); return
+        parsed_configs.append(parsed)
+    aone_client = AoneClient(client)
+    result = aone_client.insert_access_control(
+        domains=list(domains), product_code=product_code,
+        access_control_configs=parsed_configs
+    )
+    if not _is_success(result):
+        click.echo(f"新增失败: {result.get('message', '未知错误')}", err=True); return
+    data = _get_data(result)
+    if isinstance(data, list) and data:
+        click.echo(f"✓ 已提交 {len(parsed_configs)} 条规则, 覆盖 {len(domains)} 个域名\n")
+        format_output(data, output_format)
+    else:
+        click.echo(f"✓ 新增访问控制策略成功: {result.get('message', '')}")
 
 
 @aone.command('query-tamper-protect')

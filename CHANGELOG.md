@@ -4,6 +4,19 @@
 
 ---
 
+## v1.33.0 (2026-11-05)
+
+### 🆕 Aone 模块新增 2 个管理命令
+
+- `aone change-domain-status`：删除/启用/停用域名（`POST /v1/ipa/domain/change-domain-status`，`--action` 1(停用)/2(启用)/3(删除)，支持域名接入（`--domain`）与无域名接入（`--access-mode 2 --instance`）两种方式）
+- `aone access-control-insert`：新增访问控制策略（`POST /ctapi/v1/scdn/domain/accessControlInsert`，多域名批量下发，规则以 `--config` JSON 对象多次传入，按域名返回成功 ID 与失败原因明细）
+
+### 🆕 ELB 模块新增监听器停止命令
+
+- `elb listener stop`：停止监听器（`POST /v4/elb/stop-listener`，支持 `--client-token` 幂等性存根，返回被停止的监听器 ID）
+
+---
+
 ## v1.32.1 (2026-09-20)
 
 ### 🚀 LTS 模块首批可用命令（v1 检索接口）
