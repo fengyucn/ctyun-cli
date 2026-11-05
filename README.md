@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-1111+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-1059+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![APIs](https://img.shields.io/badge/APIs-1127+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-1075+-orange.svg)](docs/MODULES/README.md#命令统计)
 [![Modules](https://img.shields.io/badge/Modules-31+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -19,7 +19,7 @@
 | 维度 | 官方 CLI | ctyun-cli (本项目) |
 |------|---------|-------------------|
 | 实现 | Go，OpenAPI 自动生成 | Python，手工精编封装 |
-| 规模 | 51 模块 / 3,650 命令 | 31 模块 / 1,054 命令（1,111+ API） |
+| 规模 | 51 模块 / 3,650 命令 | 31 模块 / 1,070 命令（1,127+ API） |
 | 命令风格 | API 名原样 `ctyun-cli ecs ListEcsInstances` | 动词式 `ctyun-cli ecs list` |
 | 参数风格 | API 参数原名（`--instanceIDList`、`--pageNo`） | 人性化 kebab-case 命名 |
 | 命令结构 | 扁平，一模块一长串 | 嵌套子命令组（`vpc eip list`） |
@@ -45,7 +45,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖1,111+个API，支持31大服务模块
+- 📊 **功能全面** - 覆盖1,127+个API，支持31大服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -165,10 +165,10 @@ ctyun-cli cce list-clusters
 | **CSS (云搜索服务)** | 3 | 4 | OpenSearch/Elasticsearch/Logstash 实例管理 | [模块总览](docs/MODULES/README.md) |
 | **EC (云间高速)** | 3 | 3 | 云间高速连接管理 | - |
 | **IMS (镜像服务)** | 2 | 2 | 镜像查询、镜像详细信息 | [模块总览](docs/MODULES/README.md) |
-| **SWR (容器镜像服务)** | 2 | 2 | 镜像实例列表、镜像仓库列表 | - |
-| **总计** | **1,054** | **1,111** | **另有 configure 等 5 个工具命令，合计 1,059+** | [所有模块](docs/MODULES/) |
+| **SWR (容器镜像服务)** | 18 | 18 | 实例列表/详情/配额/数量/存储配置/资源池、命名空间、仓库、Tag、制品、Chart | - |
+| **总计** | **1,070** | **1,127** | **另有 configure 等 5 个工具命令，合计 1,075+** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：71,000+行代码，1,111+个API，1,059+个命令，31大服务模块**
+📊 **规模统计：71,000+行代码，1,127+个API，1,075+个命令，31大服务模块**
 
 ## 📚 完整文档
 
@@ -197,7 +197,11 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.33.0 (2026-11-05)
+**最新版本**: v1.33.1 (2026-11-05)
+- 🆕 **SWR 容器镜像服务新增 16 个只读查询命令**：实例详情/配额/个数/资源池/存储配置、命名空间、仓库详情、Tag 列表与详情、制品列表与详情、Chart 命名空间/仓库/版本，SWR 模块由 2 个命令扩到 18 个
+- 🔧 **SWR 接口修正**：资源池列表兼容 `regionId`/`regionCode`/`regionName` 实际字段，实例详情补充 `enterpriseProjectName`/`chartAddress` 等返回字段，错误输出统一为 `查询失败 [错误码]: 摘要 -- 详情`
+
+**v1.33.0** (2026-11-05)
 - 🆕 **Aone 模块新增 2 个管理命令**：`change-domain-status`（停用/启用/删除域名，支持域名接入与无域名接入）、`access-control-insert`（多域名批量下发访问控制策略）
 - 🆕 **ELB 新增 `listener stop`**：停止监听器（`POST /v4/elb/stop-listener`，支持 `--client-token` 幂等存根）
 

@@ -4,6 +4,26 @@
 
 ---
 
+## v1.33.1 (2026-11-05)
+
+### 🆕 SWR 容器镜像服务新增 16 个只读查询命令
+
+- 实例：`swr get-instance`（详情，`GET /v2/getInstance`）、`swr get-instance-usage`（配额与用量，`GET /v2/getInstanceUsage`）、`swr list-instance-regions`（资源池列表，`GET /v2/listInstanceRegion`）、`swr get-instance-count`（实例个数，`GET /v2/getInstanceCount`）、`swr get-storage-config`（对象存储配置，`GET /v2/getStorageConfig`）
+- 命名空间：`swr list-namespaces`（`GET /v2/listNamespace`）、`swr get-namespace`（`GET /v2/getNamespace`）
+- 仓库：`swr get-repository`（详情，`GET /v2/getRepository`）
+- 镜像版本：`swr list-tags`（`GET /v2/listRepoTag`）、`swr get-tag`（指定版本，`GET /v2/getRepoTag`）
+- 制品：`swr list-artifacts`（`GET /v2/listArtifact`）、`swr get-artifact`（详情，`GET /v2/getArtifact`）
+- Chart：`swr list-chart-namespaces` / `swr get-chart-namespace`（`/v2/listChartNamespace`、`/v2/getChartNamespace`）、`swr list-chart-repositories`（`/v2/listChartRepository`）、`swr list-chart-tags`（`/v2/listChartTag`）
+- SWR 模块命令数由 2 个扩到 18 个，覆盖 实例 → 命名空间 → 仓库 → Tag → 制品 → Chart 全链路只读查询
+
+### 🔧 SWR 接口修正
+
+- 资源池列表实际响应字段为 `regionId`/`regionCode`/`regionName`（文档写作 `region`），已兼容两种字段
+- 实例详情补充 `enterpriseProjectName`、`chartAddress`、`protocol`、`billMode` 等实际返回字段
+- 错误输出统一为 `查询失败 [错误码]: 摘要 -- 详情` 格式
+
+---
+
 ## v1.33.0 (2026-11-05)
 
 ### 🆕 Aone 模块新增 2 个管理命令

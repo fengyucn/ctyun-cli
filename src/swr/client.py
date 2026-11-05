@@ -27,7 +27,8 @@ class SWRClient:
                 extra_headers={'regionId': region_id})
             # 与签名编码保持一致（quote 空格->%20），避免 requests params= 编码差异导致 403
             encoded_qs = urlencode(qp, quote_via=quote)
-            response = self.client.session.get(f"{url}?{encoded_qs}", headers=headers,
+            full_url = f"{url}?{encoded_qs}" if encoded_qs else url
+            response = self.client.session.get(full_url, headers=headers,
                                                timeout=30)
             logger.debug(f"{desc}响应: {response.text[:500]}")
             if response.status_code != 200:
@@ -71,3 +72,149 @@ class SWRClient:
         return self._get('/v2/listRepository', region_id, {
             'instanceId': instance_id, 'pageNum': page_num,
             'pageSize': page_size}, desc='查询SWR镜像仓库列表')
+
+    def get_instance(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """查询实例详情 - GET /v2/getInstance
+
+        Args:
+            region_id: 资源池ID（header regionId）
+            instance_id: 实例ID
+        """
+        logger.info(f"查询SWR实例详情: regionId={region_id}, instanceId={instance_id}")
+        return self._get('/v2/getInstance', region_id, {'instanceId': instance_id},
+                         desc='查询SWR实例详情')
+
+    def get_instance_usage(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """查询实例配额 - GET /v2/getInstanceUsage
+
+        Args:
+            region_id: 资源池ID（header regionId）
+            instance_id: 实例ID
+        """
+        logger.info(f"查询SWR实例配额: regionId={region_id}, instanceId={instance_id}")
+        return self._get('/v2/getInstanceUsage', region_id, {'instanceId': instance_id},
+                         desc='查询SWR实例配额')
+
+    def list_instance_regions(self, region_id: str) -> Dict[str, Any]:
+        """查询实例Region列表 - GET /v2/listInstanceRegion
+
+        Args:
+            region_id: 资源池ID（header regionId）
+        """
+        logger.info(f"查询SWR实例Region列表: regionId={region_id}")
+        return self._get('/v2/listInstanceRegion', region_id, None,
+                         desc='查询SWR实例Region列表')
+
+    def get_instance_count(self, region_id: str, all_region: bool = False) -> Dict[str, Any]:
+        """查询用户实例个数 - GET /v2/getInstanceCount"""
+        logger.info(f"查询SWR实例个数: regionId={region_id}, allRegion={all_region}")
+        return self._get('/v2/getInstanceCount', region_id, {'allRegion': all_region},
+                         desc='查询SWR实例个数')
+
+    def get_storage_config(self, region_id: str, instance_id: str) -> Dict[str, Any]:
+        """查询对象存储配置 - GET /v2/getStorageConfig"""
+        logger.info(f"查询SWR对象存储配置: instanceId={instance_id}")
+        return self._get('/v2/getStorageConfig', region_id, {'instanceId': instance_id},
+                         desc='查询SWR对象存储配置')
+
+    # ==================== 命名空间 / 仓库 / 版本 ====================
+
+    def list_namespaces(self, region_id: str, instance_id: str,
+                        namespace_name: Optional[str] = None, page_num: int = 1,
+                        page_size: int = 10) -> Dict[str, Any]:
+        """查询镜像命名空间列表 - GET /v2/listNamespace"""
+        logger.info(f"查询SWR命名空间列表: instanceId={instance_id}, page={page_num}")
+        return self._get('/v2/listNamespace', region_id, {
+            'instanceId': instance_id, 'namespaceName': namespace_name,
+            'pageNum': page_num, 'pageSize': page_size}, desc='查询SWR命名空间列表')
+
+    def get_namespace(self, region_id: str, instance_id: str,
+                      namespace_name: str) -> Dict[str, Any]:
+        """查询镜像命名空间详情 - GET /v2/getNamespace"""
+        logger.info(f"查询SWR命名空间详情: namespace={namespace_name}")
+        return self._get('/v2/getNamespace', region_id, {
+            'instanceId': instance_id, 'namespaceName': namespace_name},
+            desc='查询SWR命名空间详情')
+
+    def get_repository(self, region_id: str, instance_id: str,
+                       repository_id: str) -> Dict[str, Any]:
+        """查询镜像仓库详情 - GET /v2/getRepository"""
+        logger.info(f"查询SWR仓库详情: repositoryId={repository_id}")
+        return self._get('/v2/getRepository', region_id, {
+            'instanceId': instance_id, 'repositoryId': repository_id},
+            desc='查询SWR仓库详情')
+
+    def list_repo_tags(self, region_id: str, instance_id: str, repository_id: str,
+                       tag_name: Optional[str] = None, page_num: int = 1,
+                       page_size: int = 10) -> Dict[str, Any]:
+        """查询镜像版本(Tag)列表 - GET /v2/listRepoTag"""
+        logger.info(f"查询SWR镜像版本列表: repositoryId={repository_id}, page={page_num}")
+        return self._get('/v2/listRepoTag', region_id, {
+            'instanceId': instance_id, 'repositoryId': repository_id,
+            'tagName': tag_name, 'pageNum': page_num, 'pageSize': page_size},
+            desc='查询SWR镜像版本列表')
+
+    def get_repo_tag(self, region_id: str, instance_id: str, repository_id: str,
+                     tag_name: str) -> Dict[str, Any]:
+        """查询指定版本镜像 - GET /v2/getRepoTag"""
+        logger.info(f"查询SWR镜像版本详情: tag={tag_name}")
+        return self._get('/v2/getRepoTag', region_id, {
+            'instanceId': instance_id, 'repositoryId': repository_id,
+            'tagName': tag_name}, desc='查询SWR镜像版本详情')
+
+    def list_artifacts(self, region_id: str, instance_id: str, repository_id: str,
+                       page_num: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """查询制品列表 - GET /v2/listArtifact"""
+        logger.info(f"查询SWR制品列表: repositoryId={repository_id}, page={page_num}")
+        return self._get('/v2/listArtifact', region_id, {
+            'instanceId': instance_id, 'repositoryId': repository_id,
+            'pageNum': page_num, 'pageSize': page_size}, desc='查询SWR制品列表')
+
+    def get_artifact(self, region_id: str, instance_id: str, repository_id: str,
+                     reference: str) -> Dict[str, Any]:
+        """查询制品详情 - GET /v2/getArtifact"""
+        logger.info(f"查询SWR制品详情: reference={reference}")
+        return self._get('/v2/getArtifact', region_id, {
+            'instanceId': instance_id, 'repositoryId': repository_id,
+            'reference': reference}, desc='查询SWR制品详情')
+
+    # ==================== Chart 命名空间 / 仓库 / 版本 ====================
+
+    def list_chart_namespaces(self, region_id: str, instance_id: str,
+                              namespace_name: Optional[str] = None, page_num: int = 1,
+                              page_size: int = 10) -> Dict[str, Any]:
+        """查询HelmChart命名空间列表 - GET /v2/listChartNamespace"""
+        logger.info(f"查询SWR Chart命名空间列表: instanceId={instance_id}, page={page_num}")
+        return self._get('/v2/listChartNamespace', region_id, {
+            'instanceId': instance_id, 'namespaceName': namespace_name,
+            'pageNum': page_num, 'pageSize': page_size},
+            desc='查询SWR Chart命名空间列表')
+
+    def get_chart_namespace(self, region_id: str, instance_id: str,
+                            namespace_name: str) -> Dict[str, Any]:
+        """查询HelmChart命名空间详情 - GET /v2/getChartNamespace"""
+        logger.info(f"查询SWR Chart命名空间详情: namespace={namespace_name}")
+        return self._get('/v2/getChartNamespace', region_id, {
+            'instanceId': instance_id, 'namespaceName': namespace_name},
+            desc='查询SWR Chart命名空间详情')
+
+    def list_chart_repositories(self, region_id: str, instance_id: str,
+                                namespace_name: Optional[str] = None,
+                                repository_name: Optional[str] = None,
+                                page_num: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """查询Chart仓库列表 - GET /v2/listChartRepository"""
+        logger.info(f"查询SWR Chart仓库列表: instanceId={instance_id}, page={page_num}")
+        return self._get('/v2/listChartRepository', region_id, {
+            'instanceId': instance_id, 'namespaceName': namespace_name,
+            'repositoryName': repository_name, 'pageNum': page_num,
+            'pageSize': page_size}, desc='查询SWR Chart仓库列表')
+
+    def list_chart_tags(self, region_id: str, instance_id: str, repository_id: str,
+                        tag_name: Optional[str] = None, page_num: int = 1,
+                        page_size: int = 10) -> Dict[str, Any]:
+        """查询Chart版本列表 - GET /v2/listChartTag"""
+        logger.info(f"查询SWR Chart版本列表: repositoryId={repository_id}, page={page_num}")
+        return self._get('/v2/listChartTag', region_id, {
+            'instanceId': instance_id, 'repositoryId': repository_id,
+            'tagName': tag_name, 'pageNum': page_num, 'pageSize': page_size},
+            desc='查询SWR Chart版本列表')
