@@ -3,8 +3,8 @@
 [![PyPI version](https://badge.fury.io/py/ctyun-cli.svg)](https://pypi.org/project/ctyun-cli/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![APIs](https://img.shields.io/badge/APIs-1128+-brightgreen.svg)](docs/MODULES/README.md#api统计)
-[![Commands](https://img.shields.io/badge/Commands-1076+-orange.svg)](docs/MODULES/README.md#命令统计)
+[![APIs](https://img.shields.io/badge/APIs-1129+-brightgreen.svg)](docs/MODULES/README.md#api统计)
+[![Commands](https://img.shields.io/badge/Commands-1077+-orange.svg)](docs/MODULES/README.md#命令统计)
 [![Modules](https://img.shields.io/badge/Modules-31+-blue.svg)](docs/MODULES/README.md)
 
 **天翼云CLI工具** 是功能强大的企业级命令行工具，帮助您轻松管理天翼云资源。支持云服务器(ECS)、监控告警、安全防护、Redis分布式缓存、弹性负载均衡(ELB)、容器引擎(CCE)、VPC网络、费用查询等核心功能。
@@ -19,7 +19,7 @@
 | 维度 | 官方 CLI | ctyun-cli (本项目) |
 |------|---------|-------------------|
 | 实现 | Go，OpenAPI 自动生成 | Python，手工精编封装 |
-| 规模 | 51 模块 / 3,650 命令 | 31 模块 / 1,071 命令（1,128+ API） |
+| 规模 | 51 模块 / 3,650 命令 | 31 模块 / 1,072 命令（1,129+ API） |
 | 命令风格 | API 名原样 `ctyun-cli ecs ListEcsInstances` | 动词式 `ctyun-cli ecs list` |
 | 参数风格 | API 参数原名（`--instanceIDList`、`--pageNo`） | 人性化 kebab-case 命名 |
 | 命令结构 | 扁平，一模块一长串 | 嵌套子命令组（`vpc eip list`） |
@@ -45,7 +45,7 @@
 
 - 🚀 **高效便捷** - 一行命令完成云资源查询和管理，告别繁琐的控制台操作
 - 🔐 **安全可靠** - 企业级EOP签名认证，支持环境变量配置保护密钥安全
-- 📊 **功能全面** - 覆盖1,128+个API，支持31大服务模块
+- 📊 **功能全面** - 覆盖1,129+个API，支持31大服务模块
 - 🎯 **简单易用** - 清晰的命令结构，丰富的使用示例，5分钟快速上手
 - 🔧 **灵活配置** - 支持配置文件、环境变量等多种配置方式
 - 📈 **实时监控** - 完整的监控服务支持，包括指标查询、告警管理、Top-N统计
@@ -166,9 +166,9 @@ ctyun-cli cce list-clusters
 | **EC (云间高速)** | 3 | 3 | 云间高速连接管理 | - |
 | **IMS (镜像服务)** | 2 | 2 | 镜像查询、镜像详细信息 | [模块总览](docs/MODULES/README.md) |
 | **SWR (容器镜像服务)** | 18 | 18 | 实例列表/详情/配额/数量/存储配置/资源池、命名空间、仓库、Tag、制品、Chart | - |
-| **总计** | **1,071** | **1,128** | **另有 configure 等 5 个工具命令，合计 1,076+** | [所有模块](docs/MODULES/) |
+| **总计** | **1,072** | **1,129** | **另有 configure 等 5 个工具命令，合计 1,077+** | [所有模块](docs/MODULES/) |
 
-📊 **规模统计：71,000+行代码，1,128+个API，1,076+个命令，31大服务模块**
+📊 **规模统计：71,000+行代码，1,129+个API，1,077+个命令，31大服务模块**
 
 ## 📚 完整文档
 
@@ -197,7 +197,10 @@ ctyun-cli cce list-clusters
 
 ## 📝 更新日志
 
-**最新版本**: v1.33.2 (2026-11-06)
+**最新版本**: v1.33.3 (2026-11-06)
+- 🆕 **Aone 新增 `access-control-modify`**：按 `rule_id` 修改访问控制策略并设置优先级（`POST /ctapi/v1/accessControlConf/updateAccessControl`），规则 JSON 原样透传
+
+**v1.33.2** (2026-11-06)
 - 🆕 **Aone 边缘云版新增 `manage-domain`**：按域名维度停用/启用/删除域名（`POST /ctapi/v1/accessone/domain/manage`），支持 010/011/020 产品；与 `change-domain-status`（009/024，支持无域名接入）是两个不同接口
 
 **v1.33.1** (2026-11-05)

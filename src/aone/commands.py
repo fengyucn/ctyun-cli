@@ -1520,6 +1520,66 @@ def cmd_access_control_insert(ctx, domains, product_code, configs, output):
         click.echo(f"✓ 新增访问控制策略成功: {result.get('message', '')}")
 
 
+@aone.command('access-control-modify')
+@click.option('--domain', required=True, help='域名(该接口按单域名修改)')
+@click.option('--product-code', required=True,
+              help='产品业务类型: 020(边缘安全加速), 010(WAF边缘云版)')
+@click.option('--config', 'configs', required=True, multiple=True,
+              help='规则JSON对象(可多次指定, 每条规则一个JSON), 字段按接口原样透传; '
+                   '必填 rule_id / act / priority, 建议带 rule_name; 结构示例: '
+                   '{"rule_id":17377,"act":"ACCEPT","priority":1,"rule_name":"name",'
+                   '"rule_desc":"desc","access_condition":[{"id":32144,"zone":"HEADER",'
+                   '"equal":"TRUE","operator":"STR","public_content":"1.1.1.1",'
+                   '"key_name":"STR","key_content":"aaa","value_name":"REGEX",'
+                   '"value_content":"bbb","geo_zone":[{"sub_geo":["EU"]}],"datePeriod":"week"}]}')
+@click.option('--mode', type=click.Choice(['ON', 'CLOSE']),
+              help='该域名访问控制总开关, 不传则不修改')
+@click.pass_context
+def cmd_access_control_modify(ctx, domain, product_code, configs, mode):
+    """修改访问控制策略（按 rule_id 更新，含优先级）
+
+    注意：规则内容按 --config 原样透传，不重写字段名——该接口文档表格用下划线命名
+    （rule_name/access_condition/public_content/geo_zone/key_name...），示例里部分字段
+    又是驼峰，请以平台上现有规则的字段名为准。
+    """
+    client = ctx.obj['client']
+    aone_client = AoneClient(client)
+    if product_code not in ('010', '020'):
+        click.echo("错误: --product-code 仅支持 010(WAF边缘云版), 020(边缘安全加速)", err=True); return
+    acts = {'LOG', 'ACCEPT', 'BLOCK', 'DROP', 'CHECK', 'JUMP', 'JCJS', 'PIC'}
+    parsed_configs = []
+    for i, cfg in enumerate(configs, 1):
+        try:
+            parsed = json.loads(cfg)
+        except json.JSONDecodeError as e:
+            click.echo(f"错误: 第{i}条 --config 不是合法JSON: {e}", err=True); return
+        if not isinstance(parsed, dict):
+            click.echo(f"错误: 第{i}条 --config 必须为JSON对象", err=True); return
+        for key in ('rule_id', 'act', 'priority'):
+            if parsed.get(key) in (None, ''):
+                click.echo(f"错误: 第{i}条 --config 缺少必填字段 {key}", err=True); return
+        if str(parsed.get('act')).upper() not in acts:
+            click.echo(f"错误: 第{i}条 --config 的 act 仅支持 {'/'.join(sorted(acts))}", err=True); return
+        try:
+            parsed['priority'] = int(parsed['priority'])
+        except (TypeError, ValueError):
+            click.echo(f"错误: 第{i}条 --config 的 priority 必须为整数", err=True); return
+        if str(parsed.get('act')).upper() == 'JUMP' and not parsed.get('jumpUrl'):
+            click.echo(f"错误: 第{i}条 --config act=JUMP 时必须提供 jumpUrl", err=True); return
+        if not parsed.get('rule_name') and not parsed.get('ruleName'):
+            click.echo(f"提示: 第{i}条 --config 未提供 rule_name，接口可能要求该字段", err=True)
+        parsed_configs.append(parsed)
+    result = aone_client.update_access_control(
+        domain=domain, product_code=product_code,
+        access_control=parsed_configs, mode=mode
+    )
+    if not _is_success(result):
+        message = result.get('message') or result.get('errorMessage') or '未知错误'
+        click.echo(f"修改失败: {message}", err=True); return
+    click.echo(f"✓ 修改成功: {len(parsed_configs)} 条规则, 域名 {domain}, "
+               f"{result.get('message', '')}")
+
+
 @aone.command('query-tamper-protect')
 @click.option('--domain', required=True, help='域名')
 @click.option('--product-code', required=True, help='产品类型: 010(边缘云WAF), 020(边缘安全加速)')

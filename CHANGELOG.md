@@ -4,6 +4,17 @@
 
 ---
 
+## v1.33.3 (2026-11-06)
+
+### 🆕 Aone 新增修改访问控制策略命令
+
+- `aone access-control-modify`：修改访问控制策略，按 `rule_id` 更新并支持设置优先级（`POST /ctapi/v1/accessControlConf/updateAccessControl`）
+  - `--domain` 单域名；`--product-code` 010/020；`--config` 可多次传入，每条规则一个 JSON；`--mode` 可选总开关（ON/CLOSE）
+  - 规则 JSON 原样透传（接口文档表格与示例字段命名不一致，透传以平台实际字段为准）
+  - 本地校验 `rule_id`/`act`/`priority` 必填、`act` 枚举、`priority` 整数、`act=JUMP` 需 `jumpUrl`
+
+---
+
 ## v1.33.2 (2026-11-06)
 
 ### 🆕 Aone 边缘云版新增停用/启用/删除域名命令

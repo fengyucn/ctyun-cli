@@ -714,6 +714,21 @@ class AoneClient:
                                  'accessControlConfigs': access_control_configs
                              })
 
+    def update_access_control(self, domain: str, product_code: str,
+                              access_control: List[Dict[str, Any]],
+                              mode: Optional[str] = None) -> Dict[str, Any]:
+        """修改访问控制策略（含优先级），按单域名、按 rule_id 更新"""
+        logger.info(f"修改访问控制策略: domain={domain}, product_code={product_code}, "
+                    f"规则数={len(access_control)}, mode={mode}")
+        body = {
+            'domain': domain,
+            'product_code': product_code,
+            'access_control': access_control
+        }
+        if mode: body['mode'] = mode
+        return self._request('POST', '/ctapi/v1/accessControlConf/updateAccessControl',
+                             body_data=body)
+
     def query_tamper_protect(self, domain: str, product_code: str,
                              page_index: int = 1, page_size: int = 10) -> Dict[str, Any]:
         """网页防篡改查询接口"""
