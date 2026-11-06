@@ -160,6 +160,12 @@ class AoneClient:
         if instance: body['instance'] = instance
         return self._request('POST', '/v1/ipa/domain/change-domain-status', body_data=body)
 
+    def manage_domain(self, product_code: str, domain: str, action: int) -> Dict[str, Any]:
+        """停用/启用/删除域名（边缘云版产品 010/011/020，按域名维度操作）"""
+        logger.info(f"停用/启用/删除域名: domain={domain}, product_code={product_code}, action={action}")
+        body = {'product_code': product_code, 'domain': domain, 'action': action}
+        return self._request('POST', '/ctapi/v1/accessone/domain/manage', body_data=body)
+
     # ==================== 服务管理 ====================
 
     def query_service_detail(self, product_code: Optional[List[str]] = None) -> Dict[str, Any]:

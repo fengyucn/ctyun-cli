@@ -4,6 +4,18 @@
 
 ---
 
+## v1.33.2 (2026-11-06)
+
+### 🆕 Aone 边缘云版新增停用/启用/删除域名命令
+
+- `aone manage-domain`：按域名维度停用/启用/删除域名（`POST /ctapi/v1/accessone/domain/manage`）
+  - `--product-code` 支持 010（WAF 边缘云版）、011（DDoS 高防边缘云版）、020（边缘安全加速）
+  - `--action` 1（停用）/ 2（启用）/ 3（删除）
+- 状态流转约束由服务端校验：启用前须为停用，停用前须为启用，删除前须为停用
+- 与 `aone change-domain-status`（`/v1/ipa/domain/change-domain-status`，产品 009/024，支持无域名接入实例）是两个不同接口，命令分开保留
+
+---
+
 ## v1.33.1 (2026-11-05)
 
 ### 🆕 SWR 容器镜像服务新增 16 个只读查询命令

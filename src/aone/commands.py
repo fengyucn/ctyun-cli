@@ -334,6 +334,34 @@ def cmd_change_domain_status(ctx, product_code, action, access_mode, domain, ins
     click.echo(f"✓ 操作成功: {result.get('message', '')}")
 
 
+@aone.command('manage-domain')
+@click.option('--product-code', required=True,
+              help='产品业务类型: 010(WAF边缘云版), 011(DDoS高防边缘云版), 020(边缘安全加速)')
+@click.option('--domain', required=True, help='域名')
+@click.option('--action', required=True, type=int,
+              help='操作: 1(停用), 2(启用), 3(删除); 启用前须为停用, 停用前须为启用, 删除前须为停用')
+@click.pass_context
+def cmd_manage_domain(ctx, product_code, domain, action):
+    """停用/启用/删除域名（边缘云版产品 010/011/020）
+
+    与 change-domain-status 是两个不同接口：本命令按域名维度操作，不支持无域名接入实例。
+    状态流转约束：启用前须为停用，停用前须为启用，删除前须为停用。
+    """
+    client = ctx.obj['client']
+    aone_client = AoneClient(client)
+    if product_code not in ('010', '011', '020'):
+        click.echo("错误: --product-code 仅支持 010(WAF边缘云版), 011(DDoS高防边缘云版), 020(边缘安全加速)", err=True); return
+    if action not in (1, 2, 3):
+        click.echo("错误: --action 仅支持 1(停用), 2(启用), 3(删除)", err=True); return
+    result = aone_client.manage_domain(
+        product_code=product_code, domain=domain, action=action
+    )
+    if not _is_success(result):
+        message = result.get('message') or result.get('errorMessage') or '未知错误'
+        click.echo(f"操作失败: {message}", err=True); return
+    click.echo(f"✓ 操作成功: {result.get('message', '')}")
+
+
 # ==================== 服务管理 ====================
 
 
