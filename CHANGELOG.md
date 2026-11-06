@@ -4,6 +4,17 @@
 
 ---
 
+## v1.33.4 (2026-11-06)
+
+### 🆕 ELB 补齐访问控制策略组管理命令
+
+- `elb create-access-control`：创建访问控制策略组（`POST /v4/elb/create-access-control`），`--name` 2-32 字符、`--source-ips` 逗号分隔的 IP/CIDR，返回新策略组 ID
+- `elb update-access-control`：更新策略组（`POST /v4/elb/update-access-control`），按 `--access-control-id` 只更新传入字段，`--source-ips` 单次最多 10 条
+- `elb delete-access-control`：删除策略组（`POST /v4/elb/delete-access-control`）
+- 三个命令的 `clientToken` 不传时自动生成 uuid4，保证幂等；成功按 `statusCode=800` 判定
+
+---
+
 ## v1.33.3 (2026-11-06)
 
 ### 🆕 Aone 新增修改访问控制策略命令
