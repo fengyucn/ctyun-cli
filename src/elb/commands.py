@@ -1587,6 +1587,92 @@ def list_access_controls(ctx, region_id, page_no, page_size, output):
         region_id, page_no=page_no, page_size=page_size)
     format_elb_output(result, output or ctx.obj.get('output', 'table'))
 
+
+def _print_ac_write_result(result, action, output_format):
+    """输出访问控制写操作结果（statusCode 800 成功 / 900 失败）"""
+    if output_format == 'json':
+        click.echo(OutputFormatter.format_json(result)); return
+    if output_format == 'yaml':
+        import yaml
+        click.echo(yaml.dump(result, allow_unicode=True, default_flow_style=False)); return
+    if result.get('statusCode') not in (800, 200):
+        msg = result.get('description') or result.get('message') or '未知错误'
+        code = result.get('errorCode', result.get('statusCode'))
+        click.echo(f"{action}失败 [{code}]: {msg}", err=True)
+        import sys; sys.exit(1)
+    return_obj = result.get('returnObj')
+    ac_id = return_obj.get('ID') if isinstance(return_obj, dict) else None
+    if ac_id:
+        click.echo(f"✓ {action}成功: {ac_id}")
+    else:
+        click.echo(f"✓ {action}成功: {result.get('description') or result.get('message') or '成功'}")
+
+
+@elb.command('create-access-control')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--name', required=True, help='策略组名称(唯一, 2-32字符)')
+@click.option('--source-ips', required=True, help='IP/CIDR列表, 逗号分隔, 如 10.0.0.1/32,192.168.0.1/24')
+@click.option('--description', help='描述')
+@click.option('--client-token', help='客户端存根(幂等), 不传自动生成')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def create_access_control(ctx, region_id, name, source_ips, description, client_token, output):
+    """创建访问控制策略组（地址组，供监听器黑白名单引用）"""
+    from elb.client import ELBClient
+    if not (2 <= len(name) <= 32):
+        click.echo("错误: --name 长度需为 2-32 个字符", err=True); return
+    ips = [x.strip() for x in source_ips.split(',') if x.strip()]
+    if not ips:
+        click.echo("错误: --source-ips 不能为空", err=True); return
+    result = ELBClient(ctx.obj['client']).create_access_control(
+        region_id, name=name, source_ips=ips,
+        description=description, client_token=client_token)
+    _print_ac_write_result(result, '创建访问控制策略组', output or ctx.obj.get('output', 'table'))
+
+
+@elb.command('update-access-control')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--access-control-id', required=True, help='访问控制策略组ID')
+@click.option('--name', help='新名称(2-32字符)')
+@click.option('--description', help='新描述')
+@click.option('--source-ips', help='新IP/CIDR列表, 逗号分隔, 单次最多10条')
+@click.option('--client-token', help='客户端存根(幂等), 不传自动生成')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def update_access_control(ctx, region_id, access_control_id, name,
+                          description, source_ips, client_token, output):
+    """更新访问控制策略组（只更新传入的字段）"""
+    from elb.client import ELBClient
+    if name is None and description is None and source_ips is None:
+        click.echo("错误: 至少指定 --name / --description / --source-ips 之一", err=True); return
+    if name is not None and not (2 <= len(name) <= 32):
+        click.echo("错误: --name 长度需为 2-32 个字符", err=True); return
+    ips = None
+    if source_ips is not None:
+        ips = [x.strip() for x in source_ips.split(',') if x.strip()]
+        if not ips:
+            click.echo("错误: --source-ips 不能为空", err=True); return
+        if len(ips) > 10:
+            click.echo(f"错误: --source-ips 单次最多 10 条, 当前 {len(ips)} 条", err=True); return
+    result = ELBClient(ctx.obj['client']).update_access_control(
+        region_id, access_control_id, name=name, description=description,
+        source_ips=ips, client_token=client_token)
+    _print_ac_write_result(result, '更新访问控制策略组', output or ctx.obj.get('output', 'table'))
+
+
+@elb.command('delete-access-control')
+@click.option('--region-id', required=True, help='区域ID')
+@click.option('--access-control-id', required=True, help='访问控制策略组ID')
+@click.option('--client-token', help='客户端存根(幂等), 不传自动生成')
+@click.option('--output', type=click.Choice(['table', 'json', 'yaml']), default=None)
+@click.pass_context
+def delete_access_control(ctx, region_id, access_control_id, client_token, output):
+    """删除访问控制策略组"""
+    from elb.client import ELBClient
+    result = ELBClient(ctx.obj['client']).delete_access_control(
+        region_id, access_control_id, client_token=client_token)
+    _print_ac_write_result(result, '删除访问控制策略组', output or ctx.obj.get('output', 'table'))
+
 # ==================== 监控(旧版) ====================
 
 @elb.command('legacy-history-monitor')

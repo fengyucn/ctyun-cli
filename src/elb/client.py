@@ -2,8 +2,9 @@
 弹性负载均衡(ELB)管理模块 - 使用OpenAPI V4
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import json
+import uuid
 from core import CTYUNClient
 from auth.eop_signature import CTYUNEOPAuth
 from utils import logger
@@ -965,6 +966,52 @@ class ELBClient:
         return self._get('/v4/elb/list-access-control', {
             'regionID': region_id, 'pageNo': page_no, 'pageSize': page_size,
         })
+
+    def create_access_control(self, region_id: str, name: str, source_ips: List[str],
+                              description: Optional[str] = None,
+                              client_token: Optional[str] = None) -> Dict[str, Any]:
+        """创建访问控制策略组 - POST /v4/elb/create-access-control"""
+        body = {
+            'clientToken': client_token or str(uuid.uuid4()),
+            'regionID': region_id,
+            'name': name,
+            'sourceIps': source_ips,
+        }
+        if description is not None:
+            body['description'] = description
+        logger.info(f"创建访问控制策略组: name={name}, ips={len(source_ips)} 条")
+        return self._post('/v4/elb/create-access-control', body)
+
+    def update_access_control(self, region_id: str, access_control_id: str,
+                              name: Optional[str] = None,
+                              description: Optional[str] = None,
+                              source_ips: Optional[List[str]] = None,
+                              client_token: Optional[str] = None) -> Dict[str, Any]:
+        """更新访问控制策略组 - POST /v4/elb/update-access-control"""
+        body = {
+            'clientToken': client_token or str(uuid.uuid4()),
+            'regionID': region_id,
+            'accessControlID': access_control_id,
+        }
+        if name is not None:
+            body['name'] = name
+        if description is not None:
+            body['description'] = description
+        if source_ips is not None:
+            body['sourceIps'] = source_ips
+        logger.info(f"更新访问控制策略组: id={access_control_id}, 字段={list(body)}")
+        return self._post('/v4/elb/update-access-control', body)
+
+    def delete_access_control(self, region_id: str, access_control_id: str,
+                              client_token: Optional[str] = None) -> Dict[str, Any]:
+        """删除访问控制策略组 - POST /v4/elb/delete-access-control"""
+        body = {
+            'clientToken': client_token or str(uuid.uuid4()),
+            'regionID': region_id,
+            'accessControlID': access_control_id,
+        }
+        logger.info(f"删除访问控制策略组: id={access_control_id}")
+        return self._post('/v4/elb/delete-access-control', body)
 
     # ==================== 监控(旧版) ====================
 
